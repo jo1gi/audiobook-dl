@@ -16,10 +16,18 @@ from the browser.
 
 ### Installation
 ```shell
-python3 setup.py install --user
+python3 setup.py install
 ```
 
 ### Downloading audiobooks
 ```shell
 audiobook-dl -c <cookie file> <url>
 ```
+
+### Arguments
+
+| Argument    | Value                                                 |
+|-------------|-------------------------------------------------------|
+| Url         | The url of the page where you listen to the audiobook |
+| -c/--cookie | Path to a Netscape cookie file                        |
+| --combine   | Combine the give output files into a single file      |
