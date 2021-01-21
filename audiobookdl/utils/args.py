@@ -18,4 +18,10 @@ def parse_arguments():
         action='store_true',
         help="Combine output files into a single file",
     )
+    parser.add_argument(
+            '-o',
+            '--output',
+            dest="output",
+            help="Output folder",
+    )
     return parser.parse_args()

@@ -29,4 +29,5 @@ def run():
     # Download audiobook
     s.download(
         combine = options.combine,
+        output_dir = options.output,
     )
