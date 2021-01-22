@@ -23,5 +23,6 @@ def parse_arguments():
             '--output',
             dest="output",
             help="Output folder",
+            default="."
     )
     return parser.parse_args()
