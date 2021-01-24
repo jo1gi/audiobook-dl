@@ -13,15 +13,17 @@ def find_compatible_service(url):
 
 def run():
     options = args.parse_arguments()
+    logging.set_loglevel(options.loglevel)
+    logging.log("Checking for missing dependencies", "debug")
     missing = dependencies.check_dependencies(options)
     if not missing == True:
-        logging.error(f"Missing dependency: {missing}")
+        logging.log(f"Missing dependency: {missing}", "error")
         exit(1)
     # Find service
-    logging.status("Finding compatible service")
+    logging.log("Finding compatible service")
     s = find_compatible_service(options.url)
     if s == None:
-        loggin.error("Could not find any mathing service")
+        loggin.log("Could not find any mathing service", "error")
         exit()
     # Load cookie file
     if not options.cookie_file == None:

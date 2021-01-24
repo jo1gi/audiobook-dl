@@ -1,6 +1,6 @@
 # Internal imports
 from .exceptions import *
-from . import networking, dependencies, metadata, output
+from . import networking, dependencies, metadata, output, logging
 
 # External imports
 import requests, json, re, shutil, os, rich
@@ -89,7 +89,7 @@ class Service:
         files = self.get_files()
         filenames = self.download_files(files, output_dir)
         if combine and len(filenames) > 1:
-            print("Combining files")
+            logging.log("Combining files")
             tmp_dir = os.path.join(output_dir, f"{self.title}")
             output_path = os.path.join(output_dir, f"{self.title}.mp3")
             output.combine_audiofiles(filenames, tmp_dir, output_path)
