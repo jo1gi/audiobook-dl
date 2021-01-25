@@ -80,7 +80,7 @@ class Service:
         """Placeholder function for services to get metadata about the audiobook"""
         pass
 
-    def download(self, combine=False, output_dir=".", output_format="m4b"):
+    def download(self, combine=False, output_dir=".", output_format="mp3"):
         """Downloads the audiobook from the given url"""
         if self.require_cookies and not self._cookies_loaded:
             raise CookiesNotLoadedException
@@ -88,17 +88,18 @@ class Service:
         self.title = self.get_title()
         files = self.get_files()
         filenames = self.download_files(files, output_dir)
+        meta = self.get_metadata()
+        tmp_dir = os.path.join(output_dir, f"{self.title}")
         if combine and len(filenames) > 1:
             logging.log("Combining files")
-            tmp_dir = os.path.join(output_dir, f"{self.title}")
             output_path = os.path.join(output_dir, f"{self.title}.mp3")
             output.combine_audiofiles(filenames, tmp_dir, output_path)
             shutil.rmtree(tmp_dir)
-        if not output_format == "mp3":
-            return
-        meta = self.get_metadata()
-        if not meta == None:
-            self.add_metadata(meta)
+            if not meta == None:
+                metadata.add_metadata(output_path, meta)
+        else:
+            for i in filenames:
+                metadata.add_metadata(os.path.join(tmp_dir, i), meta)
 
     def setup_download_dir(self):
         """Creates output folder"""
