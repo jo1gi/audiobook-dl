@@ -25,7 +25,7 @@ def parse_arguments():
             help="Output folder",
             default="."
     )
-    parse.add_argument(
+    parser.add_argument(
         '--log-level',
         dest="loglevel",
         help="Log level",
