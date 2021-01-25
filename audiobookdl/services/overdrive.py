@@ -1,5 +1,5 @@
 from ..utils.service import Service
-import re, json, rich
+import re, json
 
 class OverdriveService(Service):
     require_cookies = True
@@ -10,16 +10,28 @@ class OverdriveService(Service):
     def before(self):
         raw = self.find_in_page(self.url, 'window.bData = {.+;')[15:][:-1]
         self.meta = json.loads(raw)
+        # Table of contents
         self.toc = []
         for part in self.meta["nav"]["toc"]:
             if "contents" in part:
-                for i in range(len(part["contents"])):
-                    self.toc.append(part["title"])
+                self.toc = []
+                for i in range(len(self.meta["spine"])):
+                    self.toc.append(self.meta["nav"]["toc"][0]["title"])
+                break
             else:
                 self.toc.append(part["title"])
 
     def get_title(self):
         return self.meta["title"]["main"]
+
+    def get_metadata(self):
+        authors = []
+        for creator in self.meta["creator"]:
+            if creator["role"] == "author":
+                authors.append(creator["name"])
+        return {
+                'artist': "; ".join(authors)
+                }
 
     def get_files(self):
         prefix = re.search(self.match[0], self.url).group(0)
