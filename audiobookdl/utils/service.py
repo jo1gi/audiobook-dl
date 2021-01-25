@@ -48,7 +48,8 @@ class Service:
     def download_files(self, files, output_dir=".", **kwargs):
         """Downloads the given files and uses `**kwargs` as input to requests"""
         if len(files) > 1:
-            self.setup_download_dir()
+            audio_dir = os.path.join(output_dir, self.title)
+            self.setup_download_dir(audio_dir)
             print(f"Downloading {len(files)} files")
             filenames = []
             for i in files:
@@ -57,7 +58,6 @@ class Service:
                     i,
                     "{booktitle} - Part {part}.{ext}"
                 )
-                audio_dir = os.path.join(output_dir, self.title)
                 path = os.path.join(audio_dir, name)
                 self.download_file(path, i["url"], name, **kwargs)
                 if "title" in i:
@@ -78,6 +78,10 @@ class Service:
 
     def get_metadata(self):
         """Placeholder function for services to get metadata about the audiobook"""
+        pass
+
+    def get_cover(self):
+        """Returns the image data for the audiobook"""
         pass
 
     def download(self, combine=False, output_dir=".", output_format="mp3"):
@@ -101,9 +105,8 @@ class Service:
             for i in filenames:
                 metadata.add_metadata(os.path.join(tmp_dir, i), meta)
 
-    def setup_download_dir(self):
+    def setup_download_dir(self, path):
         """Creates output folder"""
-        path = self.title
         if os.path.isdir(path):
             rich.print(f"The folder '{path}' already exists. Do you want to remove the files inside? [Y/n] ", end="")
             answer = input()
