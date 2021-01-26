@@ -9,9 +9,7 @@ class AudiobooksdotcomService(Service):
         r"{}\d+(/\d)?".format(BASEURL)
     ]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
-        # Setup variables thats used in multiple places
+    def before(self):
         self.iden = re.search(r"(?<=({}))\d+".format(BASEURL), url).group(0)
         self.scrape_url = f"{BASEURL}{self.iden}/1"
 
