@@ -70,7 +70,7 @@ class Service:
             name = f"{self.title}.{f['ext']}"
             path = os.path.join(output_dir, name)
             self.download_file(path, f['url'], name, **kwargs)
-            return [filenames]
+            return [name]
 
     def before(self):
         """Placeholder function for services to do things before the rest of the functions are loaded"""
@@ -94,11 +94,12 @@ class Service:
         filenames = self.download_files(files, output_dir)
         meta = self.get_metadata()
         tmp_dir = os.path.join(output_dir, f"{self.title}")
-        if combine and len(filenames) > 1:
-            logging.log("Combining files")
-            output_path = os.path.join(output_dir, f"{self.title}.mp3")
-            output.combine_audiofiles(filenames, tmp_dir, output_path)
-            shutil.rmtree(tmp_dir)
+        if combine:
+            if len(filenames) > 1:
+                logging.log("Combining files")
+                output_path = os.path.join(output_dir, f"{self.title}.mp3")
+                output.combine_audiofiles(filenames, tmp_dir, output_path)
+                shutil.rmtree(tmp_dir)
             if not meta == None:
                 metadata.add_metadata(output_path, meta)
         else:
