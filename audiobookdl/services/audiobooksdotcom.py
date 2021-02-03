@@ -1,5 +1,5 @@
 from ..utils.service import Service
-import re
+import re, requests
 
 BASEURL = "https://www.audiobooks.com/book/stream/"
 
@@ -9,10 +9,8 @@ class AudiobooksdotcomService(Service):
         r"{}\d+(/\d)?".format(BASEURL)
     ]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
-        # Setup variables thats used in multiple places
-        self.iden = re.search(r"(?<=({}))\d+".format(BASEURL), url).group(0)
+    def before(self):
+        self.iden = re.search(r"(?<=({}))\d+".format(BASEURL), self.url).group(0)
         self.scrape_url = f"{BASEURL}{self.iden}/1"
 
     def get_title(self):
@@ -20,11 +18,14 @@ class AudiobooksdotcomService(Service):
 
     def get_files(self):
         headers = {
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:83.0) Gecko/20100101 Firefox/83.0"
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0",
         }
-        media_url = self.find_in_page(self.scrape_url, r"(?<=(mp3: \")).+(?=(&rs))", headers=headers)
+        page = self._session.get(self.scrape_url, headers=headers).content.decode('utf8')
+        media_url = re.search(r"(?<=(mp3: \")).+(?=(&rs))", page)
+        if media_url == None:
+            return []
         files = [{
-            "url": media_url,
+            "url": media_url.group(0),
             "ext": "mp3"
         }]
         return files
