@@ -1,6 +1,7 @@
 import re
 from mutagen.easyid3 import EasyID3
 from mutagen.mp3 import MP3
+from mutagen.id3 import ID3, APIC
 
 # List of file formats that use ID3 metadata
 ID3_FORMATS = ["mp3", "mp4", "m4v", "m4a", "m4b"]
@@ -19,3 +20,8 @@ def add_metadata(filepath, metadata):
     if ext in ID3_FORMATS:
         add_id3_metadata(filepath, metadata)
 
+def embed_cover(filepath, image):
+    """Emebds an image into the given audiofile"""
+    audio = ID3(filepath)
+    audio.add(APIC(type=3, data=image))
+    audio.save()

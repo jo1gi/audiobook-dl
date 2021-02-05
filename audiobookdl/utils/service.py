@@ -84,6 +84,10 @@ class Service:
         """Returns the image data for the audiobook"""
         pass
 
+    def get_cover_filetype(self):
+        """Returns the filetype of the cover from `get_cover`"""
+        return "jpg"
+
     def download(self, combine=False, output_dir=".", output_format="mp3"):
         """Downloads the audiobook from the given url"""
         if self.require_cookies and not self._cookies_loaded:
@@ -94,17 +98,27 @@ class Service:
         filenames = self.download_files(files, output_dir)
         meta = self.get_metadata()
         tmp_dir = os.path.join(output_dir, f"{self.title}")
-        if combine:
+        if combine or len(filenames) == 1:
+            output_path = os.path.join(output_dir, f"{self.title}.mp3")
             if len(filenames) > 1:
                 logging.log("Combining files")
-                output_path = os.path.join(output_dir, f"{self.title}.mp3")
                 output.combine_audiofiles(filenames, tmp_dir, output_path)
                 shutil.rmtree(tmp_dir)
             if not meta == None:
                 metadata.add_metadata(output_path, meta)
+            cover = self.get_cover()
+            logging.log("Adding cover")
+            if not cover == None:
+                metadata.embed_cover(output_path, cover)
         else:
             for i in filenames:
                 metadata.add_metadata(os.path.join(tmp_dir, i), meta)
+            cover = self.get_cover()
+            if not cover == None:
+                logging.log("Adding cover")
+                cover_path = os.path.join(tmp_dir, f"cover.{self.get_cover_filetype()}")
+                with open(cover_path, 'wb') as f:
+                    f.write(cover)
 
     def setup_download_dir(self, path):
         """Creates output folder"""
@@ -120,7 +134,7 @@ class Service:
     def _get_page(self, url, **kwargs):
         """Downloads a page and caches it"""
         if not url in self._pages:
-            resp = self.get(url, **kwargs)
+            resp = self._session.get(url, **kwargs).content
             if resp == None:
                 return None
             self._pages[url] = resp.decode('utf8')
