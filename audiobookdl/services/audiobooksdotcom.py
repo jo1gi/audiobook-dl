@@ -16,6 +16,10 @@ class AudiobooksdotcomService(Service):
     def get_title(self):
         return self.find_elem_in_page(self.scrape_url, "h2#bookTitle")
 
+    def get_cover(self):
+        cover_url = "http:" + self.find_elem_in_page(self.scrape_url, "img.bookimage", data="src")
+        return self.get(cover_url)
+
     def get_files(self):
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0",
