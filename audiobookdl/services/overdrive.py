@@ -1,5 +1,5 @@
 from ..utils.service import Service
-import re, json
+import re, json, rich
 
 class OverdriveService(Service):
     require_cookies = True
@@ -32,6 +32,10 @@ class OverdriveService(Service):
         return {
                 'artist': "; ".join(authors)
                 }
+
+    def get_cover(self):
+        cover_url = re.search(self.match[0], self.url).group(0) + self.meta['-odread-furbish-uri']
+        return self.get(cover_url)
 
     def get_files(self):
         prefix = re.search(self.match[0], self.url).group(0)
