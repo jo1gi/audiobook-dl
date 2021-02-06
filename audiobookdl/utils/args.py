@@ -31,4 +31,10 @@ def parse_arguments():
         help="Log level",
         default="info",
     )
+    parser.add_argument(
+        '--print-output',
+        dest="print_output",
+        help="Prints the output locations instead of downloading",
+        action='store_true',
+    )
     return parser.parse_args()

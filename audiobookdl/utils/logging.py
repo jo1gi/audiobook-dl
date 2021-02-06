@@ -10,6 +10,7 @@ LOG_MSGS = [
         ]
 
 def set_loglevel(loglevel):
+    global global_loglevel
     new = get_loglevel(loglevel)
     if not loglevel == None:
         global_loglevel = new

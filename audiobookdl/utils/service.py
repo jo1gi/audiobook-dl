@@ -45,11 +45,10 @@ class Service:
         self._session.cookies.update(cookie_jar)
         self._cookies_loaded = True
 
-    def download_files(self, files, output_dir=".", **kwargs):
+    def download_files(self, files, output_dir, **kwargs):
         """Downloads the given files and uses `**kwargs` as input to requests"""
         if len(files) > 1:
-            audio_dir = os.path.join(output_dir, self.title)
-            self.setup_download_dir(audio_dir)
+            self.setup_download_dir(output_dir)
             print(f"Downloading {len(files)} files")
             filenames = []
             for i in files:
@@ -58,7 +57,7 @@ class Service:
                     i,
                     "{booktitle} - Part {part}.{ext}"
                 )
-                path = os.path.join(audio_dir, name)
+                path = os.path.join(output_dir, name)
                 self.download_file(path, i["url"], name, **kwargs)
                 if "title" in i:
                     metadata.add_metadata(path, {"title": i["title"]})
@@ -88,35 +87,35 @@ class Service:
         """Returns the filetype of the cover from `get_cover`"""
         return "jpg"
 
-    def download(self, combine=False, output_dir=".", output_format="mp3"):
+    def download(self, combine=False, output_template="{title}", output_format="mp3"):
         """Downloads the audiobook from the given url"""
         if self.require_cookies and not self._cookies_loaded:
             raise CookiesNotLoadedException
         self.before()
         self.title = self.get_title()
         files = self.get_files()
-        filenames = self.download_files(files, output_dir)
         meta = self.get_metadata()
-        tmp_dir = os.path.join(output_dir, f"{self.title}")
+        output_dir = output.gen_output_location(output_template, self.title, meta)
+        filenames = self.download_files(files, output_dir)
         if combine or len(filenames) == 1:
-            output_path = os.path.join(output_dir, f"{self.title}.mp3")
+            output_file = f"{output_dir}.mp3"
             if len(filenames) > 1:
                 logging.log("Combining files")
-                output.combine_audiofiles(filenames, tmp_dir, output_path)
-                shutil.rmtree(tmp_dir)
+                output.combine_audiofiles(filenames, output_dir, output_file)
+                shutil.rmtree(output_dir)
             if not meta == None:
-                metadata.add_metadata(output_path, meta)
+                metadata.add_metadata(output_file, meta)
             cover = self.get_cover()
             logging.log("Adding cover")
             if not cover == None:
-                metadata.embed_cover(output_path, cover)
+                metadata.embed_cover(output_file, cover)
         else:
             for i in filenames:
-                metadata.add_metadata(os.path.join(tmp_dir, i), meta)
+                metadata.add_metadata(os.path.join(output_dir, i), meta)
             cover = self.get_cover()
             if not cover == None:
                 logging.log("Adding cover")
-                cover_path = os.path.join(tmp_dir, f"cover.{self.get_cover_filetype()}")
+                cover_path = os.path.join(output_dir, f"cover.{self.get_cover_filetype()}")
                 with open(cover_path, 'wb') as f:
                     f.write(cover)
 
@@ -129,7 +128,7 @@ class Service:
                 shutil.rmtree(path)
             else:
                 exit()
-        os.mkdir(path)
+        os.makedirs(path)
 
     def _get_page(self, url, **kwargs):
         """Downloads a page and caches it"""

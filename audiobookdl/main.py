@@ -1,5 +1,5 @@
 from .services import get_service_classes
-from .utils import args, dependencies, logging
+from .utils import args, dependencies, logging, output
 import re, subprocess, os, shutil, rich
 
 def find_compatible_service(url):
@@ -14,6 +14,8 @@ def find_compatible_service(url):
 def run():
     options = args.parse_arguments()
     logging.set_loglevel(options.loglevel)
+    if options.print_output:
+        logging.set_loglevel("error")
     logging.log("Checking for missing dependencies", "debug")
     missing = dependencies.check_dependencies(options)
     if not missing == True:
@@ -28,8 +30,19 @@ def run():
     # Load cookie file
     if not options.cookie_file == None:
         s.load_cookie_file(options.cookie_file)
+    if options.print_output:
+        print_output(s, options.output)
+        exit()
     # Download audiobook
     s.download(
         combine = options.combine,
-        output_dir = options.output,
+        output_template = options.output,
     )
+
+def print_output(service, template):
+    """Prints output location"""
+    service.before()
+    title = service.get_title()
+    meta = service.get_metadata()
+    location = output.gen_output_location(template, title, meta)
+    print(location)

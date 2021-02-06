@@ -18,3 +18,19 @@ def combine_audiofiles(filenames, tmp_dir, output_path):
 def convert_output(paths):
     """Converts a list of audio files into another format"""
     pass
+
+LOCATION_DEFAULTS = {
+        'album': 'NA',
+        'artist': 'NA',
+        }
+
+def gen_output_location(template, title, metadata):
+    """Generates the location of the output based on attributes of the audiobook"""
+    if metadata == None:
+        metadata = {}
+    metadata = {**LOCATION_DEFAULTS, **metadata}
+    return template.format(
+        title=title,
+        author=metadata['artist'],
+        series=metadata['album'],
+    )
