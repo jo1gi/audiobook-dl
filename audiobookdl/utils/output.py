@@ -31,6 +31,5 @@ def gen_output_location(template, title, metadata):
     metadata = {**LOCATION_DEFAULTS, **metadata}
     return template.format(
         title=title,
-        author=metadata['artist'],
-        series=metadata['album'],
+        **metadata
     )

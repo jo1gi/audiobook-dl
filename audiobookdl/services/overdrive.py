@@ -30,8 +30,8 @@ class OverdriveService(Service):
             if creator["role"] == "author":
                 authors.append(creator["name"])
         return {
-                'artist': "; ".join(authors)
-                }
+            'author': "; ".join(authors)
+        }
 
     def get_cover(self):
         cover_url = re.search(self.match[0], self.url).group(0) + self.meta['-odread-furbish-uri']
