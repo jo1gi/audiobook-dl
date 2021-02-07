@@ -1,7 +1,7 @@
 import argparse
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Get list of items from scraped websites")
+    parser = argparse.ArgumentParser(description="Download audiobooks from websites")
     parser.add_argument(
         'url',
         help="Url to download from"
@@ -10,7 +10,7 @@ def parse_arguments():
         '-c',
         '--cookies',
         dest='cookie_file',
-        help="File with cookies",
+        help="Path to Netscape cookie file",
     )
     parser.add_argument(
         '--combine',
@@ -19,16 +19,16 @@ def parse_arguments():
         help="Combine output files into a single file",
     )
     parser.add_argument(
-            '-o',
-            '--output',
-            dest="output",
-            help="Output folder",
-            default="{title}"
+        '-o',
+        '--output',
+        dest="output",
+        help="Output location",
+        default="{title}"
     )
     parser.add_argument(
         '--log-level',
         dest="loglevel",
-        help="Log level",
+        help="Log level (debug, info, warning, or error)",
         default="info",
     )
     parser.add_argument(
