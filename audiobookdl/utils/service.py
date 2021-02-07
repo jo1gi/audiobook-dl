@@ -67,7 +67,7 @@ class Service:
             print("Downloading 1 file")
             f = files[0]
             name = f"{self.title}.{f['ext']}"
-            path = os.path.join(output_dir, name)
+            path = f"{output_dir}.{f['ext']}"
             self.download_file(path, f['url'], name, **kwargs)
             return [name]
 
