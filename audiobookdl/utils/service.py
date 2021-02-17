@@ -72,11 +72,11 @@ class Service:
             return [name]
 
     def before(self):
-        """Placeholder function for services to do things before the rest of the functions are loaded"""
+        """Operations to be run before the audiobook is downloaded"""
         pass
 
     def get_metadata(self):
-        """Placeholder function for services to get metadata about the audiobook"""
+        """Returns metadata of the audiobook"""
         pass
 
     def get_cover(self):
@@ -86,6 +86,11 @@ class Service:
     def get_cover_filetype(self):
         """Returns the filetype of the cover from `get_cover`"""
         return "jpg"
+
+    def get_chapters(self):
+        """Returns a list of tuples with the starting point of the chapter and
+        the title of the chapter"""
+        pass
 
     def download(self, combine=False, output_template="{title}", output_format="mp3"):
         """Downloads the audiobook from the given url"""
@@ -106,9 +111,13 @@ class Service:
             if not meta == None:
                 metadata.add_metadata(output_file, meta)
             cover = self.get_cover()
-            logging.log("Adding cover")
             if not cover == None:
+                logging.log("Adding cover")
                 metadata.embed_cover(output_file, cover)
+            chapters = self.get_chapters()
+            if not chapters == None:
+                logging.log("Adding chapters")
+                metadata.add_chapters(output_file, chapters)
         else:
             for i in filenames:
                 metadata.add_metadata(os.path.join(output_dir, i), meta)
