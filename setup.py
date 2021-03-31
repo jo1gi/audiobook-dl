@@ -7,7 +7,6 @@ setup(
     description="Downloads audiobooks",
     install_requires=[
         "requests",
-        "argparse",
         "lxml",
         "rich",
         "mutagen"
