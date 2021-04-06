@@ -1,4 +1,4 @@
-from .services import get_service_classes
+from .services.__init__ import get_service_classes
 from .utils import args, dependencies, logging, output
 import re, subprocess, os, shutil, rich
 
