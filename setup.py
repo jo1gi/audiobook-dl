@@ -1,9 +1,9 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name="audiobook-dl",
     version="0.0.0",
-    packages=find_packages(),
+    packages=["audiobookdl"],
     description="Downloads audiobooks",
     install_requires=[
         "requests",
