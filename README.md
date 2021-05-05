@@ -1,5 +1,5 @@
 # audiobook-dl
-[![GitHub release](https://img.shields.io/github/release/jo1gi/audiobook-dl.svg)](https://github.com/jo1gi/audiobook-dl/releases)
+[![GitHub release]()](https://img.shields.io/github/v/release/jo1gi/audiobook-dl)](https://github.com/jo1gi/audiobook-dl/releases)
 ![GitHub top language](https://img.shields.io/github/languages/top/jo1gi/audiobook-dl)
 ![License](https://img.shields.io/github/license/jo1gi/audiobook-dl)
 
