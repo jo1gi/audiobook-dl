@@ -25,7 +25,7 @@ def run():
     logging.log("Finding compatible service")
     s = find_compatible_service(options.url)
     if s == None:
-        loggin.log("Could not find any mathing service", "error")
+        logging.log("Could not find any mathing service", "error")
         exit()
     # Load cookie file
     if not options.cookie_file == None:
