@@ -25,6 +25,8 @@ from the browser.
 ```shell
 audiobook-dl -c <cookie file> <url>
 ```
+**You have to use a link to the listening page and not just to the information
+page**
 
 ## Arguments
 
