@@ -10,10 +10,12 @@ setup(
         "lxml",
         "rich",
         "mutagen"
+        "pillow"
+        "pydub"
     ],
     entry_points={
         'console_scripts': [
-            'audiobook-dl=audiobookdl.main:run'
+            'audiobook-dl=audiobookdl:run'
         ]
     },
 )

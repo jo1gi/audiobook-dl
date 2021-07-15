@@ -12,6 +12,7 @@ def find_compatible_service(url):
     return None
 
 def run():
+    """Main function"""
     options = args.parse_arguments()
     logging.set_loglevel(options.loglevel)
     if options.print_output:
@@ -46,3 +47,6 @@ def print_output(service, template):
     meta = service.get_metadata()
     location = output.gen_output_location(template, title, meta)
     print(location)
+
+if __name__ == "__main__":
+    run()
