@@ -1,6 +1,7 @@
 from .services.__init__ import get_service_classes
 from .utils import args, dependencies, logging, output
 import re, subprocess, os, shutil, rich
+from .utils.exceptions import UserNotAuthenticated
 
 def find_compatible_service(url):
     """Finds the first service that supports the given url"""
@@ -35,10 +36,13 @@ def run():
         print_output(s, options.output)
         exit()
     # Download audiobook
-    s.download(
-        combine = options.combine,
-        output_template = options.output,
-    )
+    try:
+        s.download(
+                combine = options.combine,
+                output_template = options.output,
+                )
+    except UserNotAuthenticated:
+        logging.error("Authentication did not work correctly")
 
 def print_output(service, template):
     """Prints output location"""

@@ -27,3 +27,7 @@ def log(msg, level="info"):
     level_num = get_loglevel(level)
     if global_loglevel <= level_num:
         rich.print(LOG_MSGS[level_num].format(msg=msg))
+
+def error(msg):
+    """Show error message"""
+    log(msg, "error")

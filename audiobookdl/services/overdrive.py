@@ -1,4 +1,5 @@
 from ..utils.service import Service
+from ..utils.exceptions import UserNotAuthenticated
 import re, json, rich
 
 class OverdriveService(Service):
@@ -8,8 +9,11 @@ class OverdriveService(Service):
     ]
 
     def before(self):
-        raw = self.find_in_page(self.url, 'window.bData = {.+;')[15:][:-1]
-        self.meta = json.loads(raw)
+        raw = self.find_in_page(self.url, 'window.bData = {.+;')
+        if raw == None:
+            raise UserNotAuthenticated
+        raw_trimmed = raw[15:-1]
+        self.meta = json.loads(raw_trimmed)
         # rich.print(self.meta)
         # rich.print(self.get_chapters())
         # exit()
