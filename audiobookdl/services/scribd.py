@@ -2,9 +2,10 @@ from ..utils.service import Service
 from PIL import Image
 import time
 
+
 class ScribdService(Service):
     match = [
-        "https?://www.scribd.com/listen/\d+"
+        r"https?://www.scribd.com/listen/\d+"
     ]
     require_cookies = True
 
@@ -43,14 +44,14 @@ class ScribdService(Service):
         return files
 
     def before(self, *args):
-        user_id = self.find_in_page(self.url, '(?<=(account_id":"scribd-))\d+')
-        book_id = self.find_in_page(self.url, '(?<=(external_id":"))\d+')
-        headers =  {
+        user_id = self.find_in_page(self.url, r'(?<=(account_id":"scribd-))\d+')
+        book_id = self.find_in_page(self.url, r'(?<=(external_id":"))\d+')
+        headers = {
             'Session-Key': self.find_in_page(self.url, '(?<=(session_key":"))[^"]+')
         }
         misc = self.get_json(
             f"https://api.findawayworld.com/v4/accounts/scribd-{user_id}/audiobooks/{book_id}",
-            headers = headers,
+            headers=headers,
         )
         self.meta = misc['audiobook']
         self.media = self.post_json(

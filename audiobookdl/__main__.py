@@ -1,16 +1,18 @@
+import re
 from .services.__init__ import get_service_classes
 from .utils import args, dependencies, logging, output
-import re, subprocess, os, shutil, rich
 from .utils.exceptions import UserNotAuthenticated
+
 
 def find_compatible_service(url):
     """Finds the first service that supports the given url"""
     services = get_service_classes()
     for service in services:
-        for n,m in enumerate(service.match):
-            if not re.match(m, url) == None:
+        for n, m in enumerate(service.match):
+            if not re.match(m, url) is None:
                 return service(url, n)
     return None
+
 
 def run():
     """Main function"""
@@ -20,17 +22,17 @@ def run():
         logging.set_loglevel("error")
     logging.log("Checking for missing dependencies", "debug")
     missing = dependencies.check_dependencies(options)
-    if not missing == True:
+    if missing is not True:
         logging.log(f"Missing dependency: {missing}", "error")
         exit(1)
     # Find service
     logging.log("Finding compatible service")
     s = find_compatible_service(options.url)
-    if s == None:
+    if s is None:
         logging.log("Could not find any mathing service", "error")
         exit()
     # Load cookie file
-    if not options.cookie_file == None:
+    if options.cookie_file is not None:
         s.load_cookie_file(options.cookie_file)
     if options.print_output:
         print_output(s, options.output)
@@ -38,11 +40,12 @@ def run():
     # Download audiobook
     try:
         s.download(
-                combine = options.combine,
-                output_template = options.output,
+                combine=options.combine,
+                output_template=options.output,
                 )
     except UserNotAuthenticated:
         logging.error("Authentication did not work correctly")
+
 
 def print_output(service, template):
     """Prints output location"""
@@ -51,6 +54,7 @@ def print_output(service, template):
     meta = service.get_metadata()
     location = output.gen_output_location(template, title, meta)
     print(location)
+
 
 if __name__ == "__main__":
     run()

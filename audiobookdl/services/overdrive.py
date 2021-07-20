@@ -1,6 +1,8 @@
 from ..utils.service import Service
 from ..utils.exceptions import UserNotAuthenticated
-import re, json, rich
+import re
+import json
+
 
 class OverdriveService(Service):
     require_cookies = True
@@ -10,7 +12,7 @@ class OverdriveService(Service):
 
     def before(self):
         raw = self.find_in_page(self.url, 'window.bData = {.+;')
-        if raw == None:
+        if raw is None:
             raise UserNotAuthenticated
         raw_trimmed = raw[15:-1]
         self.meta = json.loads(raw_trimmed)
