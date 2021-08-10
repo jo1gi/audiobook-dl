@@ -30,8 +30,8 @@ page**
 
 ## Arguments
 
-| Argument    | Value                                                 |
-|-------------|-------------------------------------------------------|
-| Url         | The url of the page where you listen to the audiobook |
-| -c/--cookie | Path to a Netscape cookie file                        |
-| --combine   | Combine all output files into a single file           |
+| Argument    | Value                                                         |
+|-------------|---------------------------------------------------------------|
+| Url         | The url of the page where you listen to the audiobook         |
+| -c/--cookie | Path to a Netscape cookie file                                |
+| --combine   | Combine all output files into a single file (requires ffmpeg) |
