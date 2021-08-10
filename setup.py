@@ -9,13 +9,14 @@ setup(
         "requests",
         "lxml",
         "rich",
-        "mutagen"
-        "pillow"
-        "pydub"
+        "mutagen",
+        "pillow",
+        "pydub",
+        "cssselect"
     ],
     entry_points={
         'console_scripts': [
-            'audiobook-dl=audiobookdl:run'
+            'audiobook-dl=audiobookdl.__main__:run'
         ]
     },
 )

@@ -44,10 +44,16 @@ class ScribdService(Service):
         return files
 
     def before(self, *args):
-        user_id = self.find_in_page(self.url, r'(?<=(account_id":"scribd-))\d+')
-        book_id = self.find_in_page(self.url, r'(?<=(external_id":"))\d+')
+        user_id = self.find_in_page(
+                self.url,
+                r'(?<=(account_id":"scribd-))\d+')
+        book_id = self.find_in_page(
+                self.url,
+                r'(?<=(external_id":"))\d+')
         headers = {
-            'Session-Key': self.find_in_page(self.url, '(?<=(session_key":"))[^"]+')
+            'Session-Key': self.find_in_page(
+                self.url,
+                '(?<=(session_key":"))[^"]+')
         }
         misc = self.get_json(
             f"https://api.findawayworld.com/v4/accounts/scribd-{user_id}/audiobooks/{book_id}",
