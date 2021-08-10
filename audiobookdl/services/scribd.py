@@ -29,7 +29,7 @@ class ScribdService(Service):
         # Cover image
         files.append({
             "name": "Cover.jpg",
-            "url": self.meta["cover_url"]
+            "url": self.meta["cover_url"],
         })
         # Audio files
         for i in self.media["playlist"]:
@@ -37,7 +37,7 @@ class ScribdService(Service):
             chapter_str = "0"*(3-len(str(chapter)))+str(chapter)
             files.append({
                 "url": i["url"],
-                "title": "Chapter {chapter}",
+                "title": f"Chapter {chapter}",
                 "part": chapter_str,
                 "ext": "mp3"
             })

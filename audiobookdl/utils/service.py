@@ -60,11 +60,14 @@ class Service:
             print(f"Downloading {len(files)} files")
             filenames = []
             for i in files:
-                name = output.gen_output_filename(
-                    self.title,
-                    i,
-                    "{booktitle} - Part {part}.{ext}"
-                )
+                if "name" in i:
+                    name = i["name"]
+                else:
+                    name = output.gen_output_filename(
+                            self.title,
+                            i,
+                            "{booktitle} - Part {part}.{ext}"
+                        )
                 path = os.path.join(output_dir, name)
                 self.download_file(path, i["url"], name, **kwargs)
                 if "title" in i:
