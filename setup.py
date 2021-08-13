@@ -13,6 +13,7 @@ setup(
         "pillow",
         "pydub",
         "cssselect"
+        "platform"
     ],
     entry_points={
         'console_scripts': [

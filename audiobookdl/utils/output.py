@@ -1,5 +1,6 @@
 import os
 import subprocess
+import platform
 
 
 LOCATION_DEFAULTS = {
@@ -13,7 +14,7 @@ def gen_output_filename(booktitle, file, template):
     file"""
     arguments = {**file, **{"booktitle": booktitle}}
     filename = template.format(**arguments)
-    return filename
+    return fix_output(filename)
 
 
 def combine_audiofiles(filenames, tmp_dir, output_path):
@@ -39,7 +40,21 @@ def gen_output_location(template, title, metadata):
     if metadata is None:
         metadata = {}
     metadata = {**LOCATION_DEFAULTS, **metadata}
-    return template.format(
+    return fix_output(template.format(
         title=title,
         **metadata
-    )
+    ))
+
+
+def fix_output(title):
+    """Returns title without characters system can't handle"""
+    if platform.system() == "Windows":
+        return remove_chars(title, ':*/\\?<>|"')
+    return title
+
+
+def remove_chars(s, chars):
+    """Removes `chars` from `s`"""
+    for i in chars:
+        s = s.replace(i, "")
+    return s
