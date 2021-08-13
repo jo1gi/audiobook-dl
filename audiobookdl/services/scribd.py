@@ -16,6 +16,10 @@ class ScribdService(Service):
         if len(split) == 2:
             return f"{split[1]} {split[0]}"
 
+    def get_cover(self):
+        cover = self.get(self.meta["cover_url"])
+        return cover
+
     def _fix_cover(self):
         image = f"{self.title}/Cover.jpg"
         im = Image.open(image)
@@ -26,12 +30,6 @@ class ScribdService(Service):
 
     def get_files(self):
         files = []
-        # Cover image
-        files.append({
-            "name": "Cover.jpg",
-            "url": self.meta["cover_url"],
-        })
-        # Audio files
         for i in self.media["playlist"]:
             chapter = i["chapter_number"]
             chapter_str = "0"*(3-len(str(chapter)))+str(chapter)
