@@ -88,7 +88,7 @@ class Service:
 
     def get_metadata(self):
         """Returns metadata of the audiobook"""
-        pass
+        return {}
 
     def get_cover(self):
         """Returns the image data for the audiobook"""
