@@ -57,7 +57,7 @@ class OverdriveService(Service):
         for chapter in self.meta["nav"]["toc"]:
             timepoint = 0
             if '#' in chapter["path"]:
-                timepoint = int(chapter["path"].split("#")[1])
+                timepoint = float(chapter["path"].split("#")[1])
             part = int(re.search(r"(?<=(Part))\d+", chapter["path"]).group(0))-1
             start = (self._get_previous_length(part)+timepoint)*1000
             chapters.append((start, chapter["title"]))
