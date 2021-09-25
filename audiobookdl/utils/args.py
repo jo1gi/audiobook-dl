@@ -39,4 +39,10 @@ def parse_arguments():
         help="Prints the output locations instead of downloading",
         action='store_true',
     )
+    parser.add_argument(
+        '--cover',
+        dest="cover",
+        help="Download only cover",
+        action='store_true',
+    )
     return parser.parse_args()

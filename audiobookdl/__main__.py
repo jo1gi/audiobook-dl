@@ -37,6 +37,12 @@ def run():
     if options.print_output:
         print_output(s, options.output)
         exit()
+    if options.cover:
+        s.before()
+        cover = s.get_cover()
+        with open(f"cover.{s.get_cover_filetype()}", 'wb') as f:
+            f.write(cover)
+        exit()
     # Download audiobook
     try:
         s.download(

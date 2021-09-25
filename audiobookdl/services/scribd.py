@@ -1,6 +1,6 @@
 from ..utils.service import Service
 from PIL import Image
-import time
+import io
 
 
 class ScribdService(Service):
@@ -17,16 +17,13 @@ class ScribdService(Service):
             return f"{split[1]} {split[0]}"
 
     def get_cover(self):
-        cover = self.get(self.meta["cover_url"])
-        return cover
-
-    def _fix_cover(self):
-        image = f"{self.title}/Cover.jpg"
-        im = Image.open(image)
+        raw_cover = self.get(self.meta["cover_url"])
+        im = Image.open(io.BytesIO(raw_cover))
         width, height = im.size
         cropped = im.crop((0, (height-width)/2, width, width+(height-width)/2))
-        cropped.save(image)
-        time.sleep(2)
+        cover = io.BytesIO()
+        cropped.save(cover, format="jpeg")
+        return cover.getvalue()
 
     def get_files(self):
         files = []
