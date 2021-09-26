@@ -16,9 +16,6 @@ class OverdriveService(Service):
             raise UserNotAuthenticated
         raw_trimmed = raw[15:-1]
         self.meta = json.loads(raw_trimmed)
-        # rich.print(self.meta)
-        # rich.print(self.get_chapters())
-        # exit()
         # Table of contents
         self.toc = []
         for part in self.meta["nav"]["toc"]:
