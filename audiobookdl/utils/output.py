@@ -22,7 +22,8 @@ def combine_audiofiles(filenames, tmp_dir, output_path):
     combine_file = os.path.join(tmp_dir, "combine.txt")
     with open(combine_file, "a") as f:
         for i in filenames:
-            f.write(f"file '{i}'\n")
+            filename = i.replace("'", "\\'").replace(" ", "\\ ")
+            f.write(f"file {filename}\n")
     subprocess.run(
             ["ffmpeg", "-f", "concat", "-safe", "0", "-i",
                 combine_file, "-c", "copy", output_path],
