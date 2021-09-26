@@ -107,57 +107,6 @@ class Service:
         the title of the chapter"""
         pass
 
-    def download(self, combine=False, output_template="{title}",
-                 output_format="mp3"):
-        """Downloads the audiobook from the given url"""
-        if self.require_cookies and not self._cookies_loaded:
-            raise CookiesNotLoadedException
-        # Downloading audiobook info
-        self.before()
-        self.title = self.get_title()
-        files = self.get_files()
-        meta = self.get_metadata()
-        output_dir = output.gen_output_location(
-                output_template,
-                self.title,
-                meta)
-        # Downloading audio files
-        filenames = self.download_files(files, output_dir)
-        # Single audiofile
-        if combine or len(filenames) == 1:
-            output_file = f"{output_dir}.{output_format}"
-            # Combining files if audiobook contains multiple files
-            if len(filenames) > 1:
-                logging.log("Combining files")
-                output.combine_audiofiles(filenames, output_dir, output_file)
-                if not os.path.exists(output_file):
-                    logging.error("Could not combine audio files")
-                    exit()
-                shutil.rmtree(output_dir)
-            # Adding metadata
-            if meta is not None:
-                metadata.add_metadata(output_file, meta)
-            cover = self.get_cover()
-            if cover is not None:
-                logging.log("Embedding cover")
-                metadata.embed_cover(output_file, cover)
-            chapters = self.get_chapters()
-            if chapters is not None:
-                logging.log("Adding chapters")
-                metadata.add_chapters(output_file, chapters)
-        # Multiple audiofiles
-        else:
-            for i in filenames:
-                metadata.add_metadata(os.path.join(output_dir, i), meta)
-            cover = self.get_cover()
-            if cover is not None:
-                logging.log("Downloading cover")
-                cover_path = os.path.join(
-                    output_dir,
-                    f"cover.{self.get_cover_filetype()}")
-                with open(cover_path, 'wb') as f:
-                    f.write(cover)
-
     def setup_download_dir(self, path):
         """Creates output folder"""
         if os.path.isdir(path):

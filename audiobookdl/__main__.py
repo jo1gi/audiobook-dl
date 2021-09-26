@@ -2,6 +2,7 @@ import re
 from .services.__init__ import get_service_classes
 from .utils import args, dependencies, logging, output
 from .utils.exceptions import UserNotAuthenticated
+from .download import download
 
 
 def find_compatible_service(url):
@@ -45,7 +46,8 @@ def run():
         exit()
     # Download audiobook
     try:
-        s.download(
+        download(
+                s,
                 combine=options.combine,
                 output_template=options.output,
                 )
