@@ -28,6 +28,14 @@ class ScribdService(Service):
         cropped.save(cover, format="jpeg")
         return cover.getvalue()
 
+    def get_metadata(self):
+        metadata = {}
+        if len(self.meta["authors"]):
+            metadata["author"] = "; ".join(self.meta["authors"])
+        if len(self.meta["series"]):
+            metadata["series"] = self.meta["series"][0]
+        return metadata
+
     def get_files(self):
         files = []
         for i in self.media["playlist"]:
