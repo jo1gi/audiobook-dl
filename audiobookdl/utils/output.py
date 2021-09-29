@@ -51,8 +51,9 @@ def gen_output_location(template, title, metadata):
 
 def fix_output(title):
     """Returns title without characters system can't handle"""
+    title = title.replace("/", "-")
     if platform.system() == "Windows":
-        return remove_chars(title, ':*/\\?<>|"')
+        title = remove_chars(title, ':*\\?<>|"')
     return title
 
 

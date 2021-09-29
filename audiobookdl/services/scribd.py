@@ -38,9 +38,9 @@ class ScribdService(Service):
 
     def get_files(self):
         files = []
-        for i in self.media["playlist"]:
+        for part, i in enumerate(self.media["playlist"]):
             chapter = i["chapter_number"]
-            chapter_str = "0"*(3-len(str(chapter)))+str(chapter)
+            chapter_str = "0"*(3-len(str(part)))+str(part)
             files.append({
                 "url": i["url"],
                 "title": f"Chapter {chapter}",
