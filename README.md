@@ -7,14 +7,17 @@ CLI tool for downloading audiobooks from online services.
 
 ## Supported Services
 audiobook-dl currently supports downloading from the following services:
-- audiobooks.com
-- overdrive
-- scribd
+- [audiobooks.com](https://audiobooks.com)
+- [Overdrive (Library service)](https://www.overdrive.com/)
+- [Scribd](https://scribd.com)
 
 ## Installation
 ```shell
 python3 setup.py install
 ```
+
+Some features require [ffmpeg](https://ffmpeg.org/) which can be installed
+through most package managers or from [ffmpeg.org/download.html](https://ffmpeg.org/download.html).
 
 ## Cookies
 audiobook-dl uses Netscape cookie files for authentication. I use
