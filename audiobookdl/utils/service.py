@@ -1,6 +1,6 @@
 # Internal imports
-from .exceptions import CookiesNotLoadedException
-from . import networking, metadata, output, logging
+from . import networking, output
+from ..download import DownloadThread
 
 # External imports
 import requests
@@ -11,7 +11,7 @@ import rich
 import lxml.html
 from http.cookiejar import MozillaCookieJar
 from lxml.cssselect import CSSSelector
-from rich.progress import Progress
+from rich.progress import Progress, BarColumn
 
 
 class Service:
@@ -33,18 +33,6 @@ class Service:
         self.match_num = match_num
         self._session = requests.Session()
 
-    def download_file(self, path, url, name, **kwargs):
-        """Downloads a file to the correct output folder"""
-        req = self._session.get(url, stream=True)
-        with Progress() as progress:
-            with open(path, "wb") as f:
-                task = progress.add_task(
-                        f"Downloading [blue]{name}[/blue]",
-                        total=int(req.headers['Content-length']))
-                for chunk in req.iter_content(chunk_size=1024):
-                    f.write(chunk)
-                    progress.update(task, advance=1024)
-
     def load_cookie_file(self, cookie_file):
         """Loads cookies from a cookie file into session"""
         cookie_jar = MozillaCookieJar()
@@ -52,35 +40,52 @@ class Service:
         self._session.cookies.update(cookie_jar)
         self._cookies_loaded = True
 
+    def create_filename(self, length, output_dir, file):
+        if length == 1:
+            name = f"{self.title}.{file['ext']}"
+            path = f"{output_dir}.{file['ext']}"
+        else:
+            name = output.gen_output_filename(
+                self.title,
+                file,
+                "{booktitle} - Part {part}.{ext}"
+            )
+            path = os.path.join(output_dir, name)
+        return name, path
+
     def download_files(self, files, output_dir, **kwargs):
         """Downloads the given files and uses `**kwargs` as input to
         requests"""
-        if len(files) > 1:
-            self.setup_download_dir(output_dir)
-            print(f"Downloading {len(files)} files")
+        self.setup_download_dir(output_dir)
+        info = [
+            "{task.description}",
+            BarColumn(),
+            "[progress.percentage]{task.percentage:>3.0f}%"
+        ]
+        with Progress(*info) as progress:
+            # Creating progress bar
+            task = progress.add_task(
+                f"Downloading {len(files)} file(s) - [blue]{self.title}",
+            )
+            # Adding download data for all files
+            total = 0
             filenames = []
-            for i in files:
-                if "name" in i:
-                    name = i["name"]
-                else:
-                    name = output.gen_output_filename(
-                            self.title,
-                            i,
-                            "{booktitle} - Part {part}.{ext}"
-                        )
-                path = os.path.join(output_dir, name)
-                self.download_file(path, i["url"], name, **kwargs)
-                if "title" in i:
-                    metadata.add_metadata(path, {"title": i["title"]})
+            threads = []
+            for n, file in enumerate(files):
+                name, path = self.create_filename(len(files), output_dir, file)
                 filenames.append(name)
+                t = DownloadThread(self._session,
+                                   path, file["url"], file, progress, task)
+                t.start()
+                total += t.get_length()
+                progress.update(task, total=len(files)*(total/(n+1)))
+                threads.append(t)
+            # Setting total time of progress bar
+            # Starting thread
+            # Waiting for threads
+            for t in threads:
+                t.join()
             return filenames
-        elif len(files) == 1:
-            print("Downloading 1 file")
-            f = files[0]
-            name = f"{self.title}.{f['ext']}"
-            path = f"{output_dir}.{f['ext']}"
-            self.download_file(path, f['url'], name, **kwargs)
-            return [name]
 
     def before(self):
         """Operations to be run before the audiobook is downloaded"""
@@ -110,8 +115,7 @@ class Service:
     def setup_download_dir(self, path):
         """Creates output folder"""
         if os.path.isdir(path):
-            rich.print(f"The folder '{path}' already exists. Do you want to\
-                remove the files inside? [Y/n] ", end="")
+            rich.print(f"The folder '{path}' already exists. Do you want to override it? [Y/n] ", end="")
             answer = input()
             if answer.lower == 'y' or answer == '':
                 shutil.rmtree(path)
