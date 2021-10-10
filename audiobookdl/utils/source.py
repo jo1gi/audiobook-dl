@@ -133,18 +133,22 @@ class Source:
 
     def find_elem_in_page(self, url, selector, data=None, **kwargs):
         """Finds an element in a page based on a css selector"""
-        sel = CSSSelector(selector)
-        page = self._get_page(url, **kwargs)
-        if page is None:
-            return None
-        tree = lxml.html.fromstring(page)
-        results = sel(tree)
+        results = self.find_elems_in_page(url, selector, **kwargs)
         if len(results) == 0:
             return None
         elem = results[0]
         if data is None:
             return elem.text
         return elem.get(data)
+
+    def find_elems_in_page(self, url, selector, **kwargs):
+        sel = CSSSelector(selector)
+        page = self._get_page(url, **kwargs)
+        if page is None:
+            return None
+        tree = lxml.html.fromstring(page)
+        results = sel(tree)
+        return results
 
     def find_in_page(self, url, regex, **kwargs):
         """Find some text in a page based on a regex"""
