@@ -41,3 +41,7 @@ page**
 | Url         | The url of the page where you listen to the audiobook         |
 | -c/--cookie | Path to a Netscape cookie file                                |
 | --combine   | Combine all output files into a single file (requires ffmpeg) |
+
+## Contributions
+Issues, bug-reports, pull requests or ideas for features and improvements are
+**very welcome**.
