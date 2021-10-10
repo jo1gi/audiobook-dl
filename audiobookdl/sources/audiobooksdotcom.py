@@ -1,10 +1,10 @@
-from ..utils.service import Service
+from ..utils.source import Source
 import re
 
 BASEURL = "https://www.audiobooks.com/book/stream/"
 
 
-class AudiobooksdotcomService(Service):
+class AudiobooksdotcomSource(Source):
     require_cookies = True
     match = [
         r"{}\d+(/\d)?".format(BASEURL)

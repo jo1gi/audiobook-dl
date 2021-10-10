@@ -1,9 +1,9 @@
-from ..utils.service import Service
+from ..utils.source import Source
 from PIL import Image
 import io
 
 
-class ScribdService(Service):
+class ScribdSource(Source):
     match = [
         r"https?://(www)?.scribd.com/listen/\d+",
         r"https?://(www)?.scribd.com/audiobook/\d+/"

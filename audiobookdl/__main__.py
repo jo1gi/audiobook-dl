@@ -1,17 +1,17 @@
 import re
-from .services.__init__ import get_service_classes
+from .sources.__init__ import get_source_classes
 from .utils import args, dependencies, logging, output
 from .utils.exceptions import UserNotAuthenticated
 from .download import download
 
 
-def find_compatible_service(url):
-    """Finds the first service that supports the given url"""
-    services = get_service_classes()
-    for service in services:
-        for n, m in enumerate(service.match):
+def find_compatible_source(url):
+    """Finds the first source that supports the given url"""
+    sources = get_source_classes()
+    for source in sources:
+        for n, m in enumerate(source.match):
             if not re.match(m, url) is None:
-                return service(url, n)
+                return source(url, n)
     return None
 
 
@@ -26,11 +26,11 @@ def run():
     if missing is not True:
         logging.log(f"Missing dependency: {missing}", "error")
         exit(1)
-    # Find service
-    logging.log("Finding compatible service")
-    s = find_compatible_service(options.url)
+    # Find source
+    logging.log("Finding compatible source")
+    s = find_compatible_source(options.url)
     if s is None:
-        logging.log("Could not find any mathing service", "error")
+        logging.log("Could not find any mathing source", "error")
         exit()
     # Load cookie file
     if options.cookie_file is not None:
@@ -55,11 +55,11 @@ def run():
         logging.error("Authentication did not work correctly")
 
 
-def print_output(service, template):
+def print_output(source, template):
     """Prints output location"""
-    service.before()
-    title = service.get_title()
-    meta = service.get_metadata()
+    source.before()
+    title = source.get_title()
+    meta = source.get_metadata()
     location = output.gen_output_location(template, title, meta)
     print(location)
 

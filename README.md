@@ -3,10 +3,10 @@
 ![GitHub top language](https://img.shields.io/github/languages/top/jo1gi/audiobook-dl)
 ![License](https://img.shields.io/github/license/jo1gi/audiobook-dl)
 
-CLI tool for downloading audiobooks from online services.
+CLI tool for downloading audiobooks from online sources.
 
 ## Supported Services
-audiobook-dl currently supports downloading from the following services:
+audiobook-dl currently supports downloading from the following sources:
 - [audiobooks.com](https://audiobooks.com)
 - [Overdrive (Library service)](https://www.overdrive.com/)
 - [Scribd](https://scribd.com)

@@ -1,10 +1,10 @@
-from ..utils.service import Service
+from ..utils.source import Source
 from ..utils.exceptions import UserNotAuthenticated
 import re
 import json
 
 
-class OverdriveService(Service):
+class OverdriveSource(Source):
     require_cookies = True
     match = [
         r"https://.+\.listen\.overdrive\.com"

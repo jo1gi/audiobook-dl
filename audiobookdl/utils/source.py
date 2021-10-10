@@ -14,13 +14,13 @@ from lxml.cssselect import CSSSelector
 from rich.progress import Progress, BarColumn
 
 
-class Service:
+class Source:
     """An abstract class for downloading audiobooks from a specific
-    online service."""
+    online source."""
 
     # A list of regexes that indicates which website a sevice supports
     match = []
-    # If cookies need to be loaded to be able to use service
+    # If cookies need to be loaded to be able to use source
     require_cookies = False
     # If cookies are loaded
     _cookies_loaded = False
