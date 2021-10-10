@@ -54,8 +54,7 @@ class Service:
         return name, path
 
     def download_files(self, files, output_dir, **kwargs):
-        """Downloads the given files and uses `**kwargs` as input to
-        requests"""
+        """Downloads the given files"""
         self.setup_download_dir(output_dir)
         info = [
             "{task.description}",

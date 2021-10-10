@@ -11,11 +11,11 @@ class ScribdService(Service):
     require_cookies = True
 
     def get_title(self):
-        split = self.meta['title'].split(', ')
-        if len(split) == 1:
-            return split[0]
-        if len(split) == 2:
-            return f"{split[1]} {split[0]}"
+        if self.meta['title'][-5:] == ", The":
+            split = self.meta['title'].split(', ')
+            if len(split) == 2:
+                return f"{split[1]} {split[0]}"
+        return self.meta['title']
 
     def get_cover(self):
         # Downloading image from scribd
@@ -76,3 +76,4 @@ class ScribdService(Service):
                 "license_id": misc['licenses'][0]['id']
             }
         )
+        self.misc = misc
