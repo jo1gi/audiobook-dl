@@ -14,6 +14,8 @@ audiobook-dl currently supports downloading from the following sources:
 
 ## Installation
 ```shell
+git clone https://github.com/jo1gi/audiobook-dl.git
+cd audiobook-dl
 python3 setup.py install
 ```
 
