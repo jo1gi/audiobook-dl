@@ -1,39 +1,12 @@
 from .utils import output
 from .utils import logging
 from .utils import metadata
-from .utils.source import Source
 import os
 import shutil
-import threading
 from typing import Dict, List
 
 
-class DownloadThread(threading.Thread):
-    """Thread for downloading a file"""
-
-    def __init__(self, session, path, url, metadata, progress, task):
-        threading.Thread.__init__(self)
-        self.session = session
-        self.path = path
-        self.metadata = metadata
-        self.task = task
-        self.progress = progress
-        self.req = self.session.get(url, stream=True)
-        self.length = int(self.req.headers['Content-length'])
-
-    def run(self):
-        with open(self.path, "wb") as f:
-            for chunk in self.req.iter_content(chunk_size=1024):
-                f.write(chunk)
-                self.progress.update(self.task, advance=1024)
-        if "title" in self.metadata:
-            metadata.add_metadata(self.path, {"title": self.metadata["title"]})
-
-    def get_length(self):
-        return self.length
-
-
-def download(source: Source,
+def download(source,
              combine: bool = False,
              output_template: str = "{title}",
              output_format: str = "mp3"):
@@ -57,7 +30,7 @@ def download(source: Source,
         add_metadata_to_dir(source, filenames, output_dir, meta)
 
 
-def combined_audiobook(source: Source,
+def combined_audiobook(source,
                        filenames: List[str],
                        output_dir: str,
                        output_format: str,
@@ -70,7 +43,7 @@ def combined_audiobook(source: Source,
     shutil.rmtree(output_dir)
 
 
-def combine_files(source: Source,
+def combine_files(source,
                   filenames: List[str],
                   output_dir: str,
                   output_file: str):
@@ -82,7 +55,7 @@ def combine_files(source: Source,
         exit()
 
 
-def embed_metadata_in_file(source: Source,
+def embed_metadata_in_file(source,
                            meta: Dict[str, str],
                            output_file: str):
     """Embed metadata into combined audiobook file"""
@@ -98,7 +71,7 @@ def embed_metadata_in_file(source: Source,
         metadata.add_chapters(output_file, chapters)
 
 
-def add_metadata_to_dir(source: Source,
+def add_metadata_to_dir(source,
                         filenames: List[str],
                         output_dir: str,
                         meta: Dict[str, str]):

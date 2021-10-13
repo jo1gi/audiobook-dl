@@ -1,6 +1,6 @@
 # Internal imports
 from . import networking, output
-from ..download import DownloadThread
+from .downloadthread import DownloadThread
 
 # External imports
 import requests
