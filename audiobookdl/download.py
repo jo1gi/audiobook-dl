@@ -5,7 +5,7 @@ from .utils.source import Source
 import os
 import shutil
 import threading
-from typing import List, Dict, Any
+from typing import Dict, List
 
 
 class DownloadThread(threading.Thread):
@@ -61,7 +61,7 @@ def combined_audiobook(source: Source,
                        filenames: List[str],
                        output_dir: str,
                        output_format: str,
-                       meta: Dict[Any, Any]):
+                       meta: Dict[str, str]):
     """Combines audiobook into a single audio file and embeds metadata"""
     output_file = f"{output_dir}.{output_format}"
     if len(filenames) > 1:
@@ -83,7 +83,7 @@ def combine_files(source: Source,
 
 
 def embed_metadata_in_file(source: Source,
-                           meta: Dict[Any, Any],
+                           meta: Dict[str, str],
                            output_file: str):
     """Embed metadata into combined audiobook file"""
     if meta is not None:
@@ -101,7 +101,7 @@ def embed_metadata_in_file(source: Source,
 def add_metadata_to_dir(source: Source,
                         filenames: List[str],
                         output_dir: str,
-                        meta: Dict[Any, Any]):
+                        meta: Dict[str, str]):
     """Adds metadata to dir of audiobook files"""
     for i in filenames:
         metadata.add_metadata(os.path.join(output_dir, i), meta)
