@@ -2,10 +2,12 @@ import re
 from .sources.__init__ import get_source_classes
 from .utils import args, dependencies, logging, output
 from .utils.exceptions import UserNotAuthenticated
+from .utils.source import Source
 from .download import download
+from typing import Optional
 
 
-def find_compatible_source(url):
+def find_compatible_source(url: str) -> Optional[Source]:
     """Finds the first source that supports the given url"""
     sources = get_source_classes()
     for source in sources:
@@ -55,7 +57,7 @@ def run():
         logging.error("Authentication did not work correctly")
 
 
-def print_output(source, template):
+def print_output(source: Source, template: str):
     """Prints output location"""
     source.before()
     title = source.get_title()

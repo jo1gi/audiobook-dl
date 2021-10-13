@@ -11,6 +11,7 @@ mkShell {
       pydub
       cssselect
       pillow
+      mypy
     ]))
   ];
 }

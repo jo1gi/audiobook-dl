@@ -12,7 +12,8 @@ setup(
         "mutagen",
         "pillow",
         "pydub",
-        "cssselect"
+        "cssselect",
+        "mypy"
     ],
     entry_points={
         'console_scripts': [

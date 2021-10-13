@@ -12,6 +12,7 @@ import lxml.html
 from http.cookiejar import MozillaCookieJar
 from lxml.cssselect import CSSSelector
 from rich.progress import Progress, BarColumn
+from typing import Dict, List, Optional
 
 
 class Source:
@@ -19,14 +20,14 @@ class Source:
     online source."""
 
     # A list of regexes that indicates which website a sevice supports
-    match = []
+    match: List[str] = []
     # If cookies need to be loaded to be able to use source
     require_cookies = False
     # If cookies are loaded
     _cookies_loaded = False
     # Cache of previously loaded pages
-    _pages = {}
-    title = None
+    _pages: Dict[str, str] = {}
+    title: Optional[str] = None
 
     def __init__(self, url, match_num):
         self.url = url
@@ -94,6 +95,9 @@ class Source:
         """Operations to be run after the audiobook is downloaded"""
         pass
 
+    def get_title(self) -> str:
+        return ""
+
     def get_metadata(self):
         """Returns metadata of the audiobook"""
         return {}
@@ -105,6 +109,9 @@ class Source:
     def get_cover_filetype(self):
         """Returns the filetype of the cover from `get_cover`"""
         return "jpg"
+
+    def get_files(self):
+        pass
 
     def get_chapters(self):
         """Returns a list of tuples with the starting point of the chapter and
