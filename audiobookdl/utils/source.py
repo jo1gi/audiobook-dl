@@ -106,7 +106,7 @@ class Source:
         """Returns the image data for the audiobook"""
         pass
 
-    def get_cover_filetype(self):
+    def get_cover_extension(self):
         """Returns the filetype of the cover from `get_cover`"""
         return "jpg"
 

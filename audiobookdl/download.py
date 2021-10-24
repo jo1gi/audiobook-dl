@@ -64,7 +64,7 @@ def embed_metadata_in_file(source,
     cover = source.get_cover()
     if cover is not None:
         logging.log("Embedding cover")
-        metadata.embed_cover(output_file, cover)
+        metadata.embed_cover(output_file, cover, source.get_cover_extension())
     chapters = source.get_chapters()
     if chapters is not None:
         logging.log("Adding chapters")
@@ -83,6 +83,6 @@ def add_metadata_to_dir(source,
         logging.log("Downloading cover")
         cover_path = os.path.join(
             output_dir,
-            f"cover.{source.get_cover_filetype()}")
+            f"cover.{source.get_cover_extension()}")
         with open(cover_path, 'wb') as f:
             f.write(cover)

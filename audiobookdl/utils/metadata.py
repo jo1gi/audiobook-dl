@@ -3,6 +3,7 @@ from mutagen import File as MutagenFile
 from mutagen.easyid3 import EasyID3
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, APIC, CHAP, TIT2, CTOC, CTOCFlags
+from typing import Dict
 
 # List of file formats that use ID3 metadata
 ID3_FORMATS = ["mp3", "mp4", "m4v", "m4a", "m4b"]
@@ -13,8 +14,14 @@ ID3_CONVERT = {
     "title": "title",
 }
 
+EXTENSION_TO_MIMETYPE = {
+    "jpeg": "image/jpeg",
+    "jpg": "image/jpeg",
+    "png": "image/png",
+}
 
-def add_id3_metadata(filepath, metadata):
+
+def add_id3_metadata(filepath: str, metadata: Dict[str, str]):
     """Add ID3 metadata tags to the given audio file"""
     audio = MP3(filepath, ID3=EasyID3)
     for key, value in metadata.items():
@@ -23,21 +30,24 @@ def add_id3_metadata(filepath, metadata):
     audio.save(v2_version=3)
 
 
-def add_metadata(filepath, metadata):
+def add_metadata(filepath: str, metadata: Dict[str, str]):
     """Adds metadata to the given audio file"""
-    ext = re.search(r"(?<=(\.))\w+$", filepath).group(0)
-    if ext in ID3_FORMATS:
+    ext = re.search(r"(?<=(\.))\w+$", filepath)
+    if ext is None:
+        return
+    if ext.group(0) in ID3_FORMATS:
         add_id3_metadata(filepath, metadata)
 
 
-def embed_cover(filepath, image):
+def embed_cover(filepath: str, image: bytes, extension: str):
     """Embeds an image into the given audio file"""
+    mimetype = EXTENSION_TO_MIMETYPE[extension]
     audio = ID3(filepath)
-    audio.add(APIC(type=3, data=image))
+    audio.add(APIC(type=0, data=image, mime=mimetype))
     audio.save()
 
 
-def add_chapter(audio, start, end, title, index):
+def add_chapter(audio: ID3, start: int, end: int, title: str, index: int):
     """Adds a single chapter to the given audio file"""
     audio.add(CHAP(
         element_id=u"chp"+str(index),
