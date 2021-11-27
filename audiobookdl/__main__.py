@@ -32,7 +32,7 @@ def run():
     logging.log("Finding compatible source")
     s = find_compatible_source(options.url)
     if s is None:
-        logging.log("Could not find any mathing source", "error")
+        logging.error("Could not find any mathing source")
         exit()
     # Load cookie file
     if options.cookie_file is not None:
@@ -54,7 +54,7 @@ def run():
                 output_template=options.output,
                 )
     except UserNotAuthenticated:
-        logging.error("Authentication did not work correctly")
+        logging.error("Authentication did not work correctly.\nMake sure you have provided a valid cookie file if the source requires it")
 
 
 def print_output(source: Source, template: str):

@@ -6,7 +6,7 @@ LOG_MSGS = [
         "[yellow bold]DEBUG[/yellow bold] {msg}",
         "{msg}",
         "[orange bold]WARNING[/orange bold] {msg}",
-        "[red bold]ERROR[/red bold] {msg}",
+        "[red bold][ERROR][/red bold] {msg}",
         ]
 
 

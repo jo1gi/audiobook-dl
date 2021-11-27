@@ -1,6 +1,7 @@
 from .utils import output
 from .utils import logging
 from .utils import metadata
+from .utils.exceptions import UserNotAuthenticated
 import os
 import shutil
 from typing import Dict, List
@@ -11,7 +12,9 @@ def download(source,
              output_template: str = "{title}",
              output_format: str = "mp3"):
     """Downloads audiobook from source object"""
-    # Downloading audiobok info
+    # Downloading audiobook info
+    if source.require_cookies and not source._cookies_loaded:
+        raise UserNotAuthenticated
     source.before()
     source.title = source.get_title()
     files = source.get_files()
