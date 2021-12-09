@@ -173,3 +173,4 @@ class Source:
     get = networking.get
     post_json = networking.post_json
     get_json = networking.get_json
+    get_stream_files = networking.get_stream_files
