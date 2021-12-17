@@ -22,6 +22,8 @@ class ScribdSource(Source):
         # Downloading image from scribd
         raw_cover = self.get(self._cover)
         # Removing padding on the top and bottom
+        if self._original:
+            return raw_cover
         im = Image.open(io.BytesIO(raw_cover))
         width, height = im.size
         cropped = im.crop((0, (height-width)/2, width, width+(height-width)/2))

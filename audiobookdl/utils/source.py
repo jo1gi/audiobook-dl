@@ -135,7 +135,7 @@ class Source:
             resp = self._session.get(url, **kwargs).content
             if resp is None:
                 return None
-            self._pages[url] = resp.decode('utf8')
+            self._pages[url] = resp
         return self._pages[url]
 
     def find_elem_in_page(self, url, selector, data=None, **kwargs):
@@ -153,20 +153,20 @@ class Source:
         page = self._get_page(url, **kwargs)
         if page is None:
             return None
-        tree = lxml.html.fromstring(page)
+        tree = lxml.html.fromstring(page.decode("utf8"))
         results = sel(tree)
         return results
 
     def find_in_page(self, url, regex, **kwargs):
         """Find some text in a page based on a regex"""
-        m = re.search(regex, self._get_page(url, **kwargs))
+        m = re.search(regex, self._get_page(url, **kwargs).decode("utf8"))
         if m is None:
             return None
         return m.group(0)
 
     def find_all_in_page(self, url, regex, **kwargs):
         """Finds all places in a page that matches the regex"""
-        return re.findall(regex, self._get_page(url, **kwargs))
+        return re.findall(regex, self._get_page(url, **kwargs).decode("utf8"))
 
     # Networking
     post = networking.post

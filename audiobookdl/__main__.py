@@ -43,7 +43,7 @@ def run():
     if options.cover:
         s.before()
         cover = s.get_cover()
-        with open(f"cover.{s.get_cover_filetype()}", 'wb') as f:
+        with open(f"cover.{s.get_cover_extension()}", 'wb') as f:
             f.write(cover)
         exit()
     # Download audiobook

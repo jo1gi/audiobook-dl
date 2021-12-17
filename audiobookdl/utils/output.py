@@ -1,6 +1,7 @@
 import os
 import subprocess
 import platform
+from typing import List
 
 
 LOCATION_DEFAULTS = {
@@ -29,12 +30,25 @@ def combine_audiofiles(filenames, tmp_dir, output_path):
     subprocess.run(
             ["ffmpeg", "-f", "concat", "-safe", "0", "-i",
                 combine_file, "-c", "copy", output_path],
-            capture_output=True)
+            capture_output=False)
 
 
-def convert_output(paths):
-    """Converts a list of audio files into another format"""
-    pass
+def convert_output(filenames: List[str], output_dir: str, output_format: str):
+    """Converts a list of audio files into another format and return new
+    files"""
+    new_paths = []
+    for name in filenames:
+        full_path = os.path.join(output_dir, name)
+        split_path = os.path.splitext(full_path)
+        new_path = f"{split_path[0]}.{output_format}"
+        if not output_format == split_path[1][1:]:
+            subprocess.run(
+                ["ffmpeg", "-i", full_path, new_path],
+                capture_output=True)
+            os.remove(full_path)
+
+        new_paths.append(f"{os.path.splitext(name)[0]}.{output_format}")
+    return new_paths
 
 
 def gen_output_location(template, title, metadata):

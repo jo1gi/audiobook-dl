@@ -12,6 +12,8 @@ mkShell {
       cssselect
       pillow
       mypy
+      m3u8
+      pycrypto
     ]))
   ];
 }

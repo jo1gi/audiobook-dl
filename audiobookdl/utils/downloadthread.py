@@ -1,5 +1,6 @@
 import threading
 from . import metadata
+from Crypto.Cipher import AES
 
 
 class DownloadThread(threading.Thread):
@@ -12,7 +13,8 @@ class DownloadThread(threading.Thread):
         self.metadata = metadata
         self.task = task
         self.progress = progress
-        self.req = self.session.get(url, stream=True)
+        headers = {} if "headers" not in metadata else metadata["headers"]
+        self.req = self.session.get(url, headers=headers, stream=True)
         self.length = int(self.req.headers['Content-length'])
 
     def run(self):
@@ -20,6 +22,16 @@ class DownloadThread(threading.Thread):
             for chunk in self.req.iter_content(chunk_size=1024):
                 f.write(chunk)
                 self.progress.update(self.task, advance=1024)
+        if "encryption_key" in self.metadata:
+            with open(self.path, "rb") as f:
+                cipher = AES.new(
+                    self.metadata["encryption_key"],
+                    AES.MODE_CBC,
+                    self.metadata["iv"]
+                )
+                decrypted = cipher.decrypt(f.read())
+            with open(self.path, "wb") as f:
+                f.write(decrypted)
         if "title" in self.metadata:
             metadata.add_metadata(self.path, {"title": self.metadata["title"]})
 

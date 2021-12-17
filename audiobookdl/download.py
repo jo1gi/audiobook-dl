@@ -4,13 +4,13 @@ from .utils import metadata
 from .utils.exceptions import UserNotAuthenticated
 import os
 import shutil
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 
 def download(source,
              combine: bool = False,
              output_template: str = "{title}",
-             output_format: str = "mp3"):
+             output_format: Optional[str] = None):
     """Downloads audiobook from source object"""
     # Downloading audiobook info
     if source.require_cookies and not source._cookies_loaded:
@@ -25,6 +25,13 @@ def download(source,
             meta)
     # Downloading audio files
     filenames = source.download_files(files, output_dir)
+    # Converting audio files to specified format
+    if output_format:
+        logging.log("Converting files")
+        filenames = output.convert_output(filenames, output_dir, output_format)
+    # Finding new output format
+    if not output_format:
+        output_format = os.path.splitext(filenames[0])[1][1:]
     # Single audiofile
     if combine or len(filenames) == 1:
         combined_audiobook(source, filenames, output_dir, output_format, meta)
@@ -36,7 +43,7 @@ def download(source,
 def combined_audiobook(source,
                        filenames: List[str],
                        output_dir: str,
-                       output_format: str,
+                       output_format: Optional[str],
                        meta: Dict[str, str]):
     """Combines audiobook into a single audio file and embeds metadata"""
     output_file = f"{output_dir}.{output_format}"
