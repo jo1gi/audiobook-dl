@@ -13,7 +13,9 @@ setup(
         "pillow",
         "pydub",
         "cssselect",
-        "mypy"
+        "mypy",
+        "m3u8",
+        "pycrypto"
     ],
     entry_points={
         'console_scripts': [
