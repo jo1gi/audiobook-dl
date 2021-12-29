@@ -27,7 +27,6 @@ class Source:
     _cookies_loaded = False
     # Cache of previously loaded pages
     _pages: Dict[str, str] = {}
-    title: Optional[str] = None
 
     def __init__(self, url, match_num):
         self.url = url

@@ -62,7 +62,7 @@ def print_output(source: Source, template: str):
     source.before()
     title = source.get_title()
     meta = source.get_metadata()
-    location = output.gen_output_location(template, title, meta)
+    location = output.gen_output_location(template, meta)
     print(location)
 
 
