@@ -54,7 +54,8 @@ class ScribdSource(Source):
                     "url": i["url"],
                     "title": f"Chapter {chapter}",
                     "part": chapter_str,
-                    "ext": "mp3"
+                    "ext": "mp3",
+                    "album": self.get_title(),
                 })
             return files
 

@@ -15,13 +15,12 @@ def download(source,
     # Downloading audiobook info
     if source.require_cookies and not source._cookies_loaded:
         raise UserNotAuthenticated
+    logging.log("Downloading metadata")
     source.before()
-    source.title = source.get_title()
     files = source.get_files()
-    meta = source.get_metadata()
+    meta = source.metadata
     output_dir = output.gen_output_location(
             output_template,
-            source.title,
             meta)
     # Downloading audio files
     filenames = source.download_files(files, output_dir)

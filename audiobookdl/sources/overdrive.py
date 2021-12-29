@@ -32,11 +32,15 @@ class OverdriveSource(Source):
 
     def get_metadata(self):
         authors = []
+        narrators = []
         for creator in self.meta["creator"]:
             if creator["role"] == "author":
                 authors.append(creator["name"])
+            if creator["role"] == "narrator":
+                narrators.append(creator["name"])
         return {
-            'author': "; ".join(authors)
+            'author': "; ".join(authors),
+            'narrator': "; ".join(narrators)
         }
 
     def get_cover(self):

@@ -1,7 +1,7 @@
 import os
 import subprocess
 import platform
-from typing import List
+from typing import List, Dict
 
 
 LOCATION_DEFAULTS = {
@@ -30,7 +30,7 @@ def combine_audiofiles(filenames, tmp_dir, output_path):
     subprocess.run(
             ["ffmpeg", "-f", "concat", "-safe", "0", "-i",
                 combine_file, "-c", "copy", output_path],
-            capture_output=False)
+            capture_output=True)
 
 
 def convert_output(filenames: List[str], output_dir: str, output_format: str):
@@ -46,21 +46,17 @@ def convert_output(filenames: List[str], output_dir: str, output_format: str):
                 ["ffmpeg", "-i", full_path, new_path],
                 capture_output=True)
             os.remove(full_path)
-
         new_paths.append(f"{os.path.splitext(name)[0]}.{output_format}")
     return new_paths
 
 
-def gen_output_location(template, title, metadata):
+def gen_output_location(template: str, metadata: Dict[str, str]) -> str:
     """Generates the location of the output based on attributes of the
     audiobook"""
     if metadata is None:
         metadata = {}
     metadata = {**LOCATION_DEFAULTS, **metadata}
-    return fix_output(template.format(
-        title=title,
-        **metadata
-    ))
+    return template.format(**metadata)
 
 
 def fix_output(title):

@@ -8,10 +8,12 @@ from typing import Dict
 # List of file formats that use ID3 metadata
 ID3_FORMATS = ["mp3", "mp4", "m4v", "m4a", "m4b"]
 
+# Conversion table between metadata names and ID3 tags
 ID3_CONVERT = {
     "author": "artist",
     "series": "album",
     "title": "title",
+    "narrator": "performer",
 }
 
 EXTENSION_TO_MIMETYPE = {
@@ -25,8 +27,10 @@ def add_id3_metadata(filepath: str, metadata: Dict[str, str]):
     """Add ID3 metadata tags to the given audio file"""
     audio = MP3(filepath, ID3=EasyID3)
     for key, value in metadata.items():
-        if key in EasyID3.valid_keys.keys():
+        if key in ID3_CONVERT:
             audio[ID3_CONVERT[key]] = value
+        if key in EasyID3.valid_keys.keys():
+            audio[key] = value
     audio.save(v2_version=3)
 
 

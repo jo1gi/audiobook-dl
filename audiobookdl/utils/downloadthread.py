@@ -32,8 +32,7 @@ class DownloadThread(threading.Thread):
                 decrypted = cipher.decrypt(f.read())
             with open(self.path, "wb") as f:
                 f.write(decrypted)
-        if "title" in self.metadata:
-            metadata.add_metadata(self.path, {"title": self.metadata["title"]})
+        metadata.add_metadata(self.path, self.metadata)
 
     def get_length(self):
         return self.length

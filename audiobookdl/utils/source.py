@@ -98,9 +98,17 @@ class Source:
     def get_title(self) -> str:
         return ""
 
+    @property
+    def title(self) -> str:
+        return self.get_title()
+
     def get_metadata(self):
         """Returns metadata of the audiobook"""
         return {}
+
+    @property
+    def metadata(self):
+        return {"title": self.title, **self.get_metadata()}
 
     def get_cover(self):
         """Returns the image data for the audiobook"""
