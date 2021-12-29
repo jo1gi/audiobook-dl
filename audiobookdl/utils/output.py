@@ -10,7 +10,7 @@ LOCATION_DEFAULTS = {
         }
 
 
-def gen_output_filename(booktitle, file, template):
+def gen_output_filename(booktitle: str, file: Dict[str, str], template: str) -> str:
     """Generates an output filename based on different attributes of the
     file"""
     arguments = {**file, **{"booktitle": booktitle}}
@@ -18,7 +18,7 @@ def gen_output_filename(booktitle, file, template):
     return fix_output(filename)
 
 
-def combine_audiofiles(filenames, tmp_dir, output_path):
+def combine_audiofiles(filenames: List[str], tmp_dir: str, output_path: str):
     """Combines the given audiofiles in `path` into a new file"""
     combine_file = os.path.join(tmp_dir, "combine.txt")
     with open(combine_file, "a") as f:
@@ -59,7 +59,7 @@ def gen_output_location(template: str, metadata: Dict[str, str]) -> str:
     return template.format(**metadata)
 
 
-def fix_output(title):
+def fix_output(title) -> str:
     """Returns title without characters system can't handle"""
     title = title.replace("/", "-")
     if platform.system() == "Windows":
@@ -67,7 +67,7 @@ def fix_output(title):
     return title
 
 
-def remove_chars(s, chars):
+def remove_chars(s, chars) -> str:
     """Removes `chars` from `s`"""
     for i in chars:
         s = s.replace(i, "")

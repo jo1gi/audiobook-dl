@@ -6,6 +6,7 @@ mkShell {
     (python3.withPackages(ps: with ps; [
       mutagen
       requests
+      types-requests
       rich
       lxml
       pydub

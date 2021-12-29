@@ -90,10 +90,6 @@ class Source:
         """Operations to be run before the audiobook is downloaded"""
         pass
 
-    def after(self):
-        """Operations to be run after the audiobook is downloaded"""
-        pass
-
     def get_title(self) -> str:
         return ""
 
@@ -101,23 +97,23 @@ class Source:
     def title(self) -> str:
         return self.get_title()
 
-    def get_metadata(self):
+    def get_metadata(self) -> Dict[str, str]:
         """Returns metadata of the audiobook"""
         return {}
 
     @property
-    def metadata(self):
+    def metadata(self) -> Dict[str, str]:
         return {"title": self.title, **self.get_metadata()}
 
     def get_cover(self):
         """Returns the image data for the audiobook"""
         pass
 
-    def get_cover_extension(self):
+    def get_cover_extension(self) -> str:
         """Returns the filetype of the cover from `get_cover`"""
         return "jpg"
 
-    def get_files(self):
+    def get_files(self) -> List[Dict[str, str]]:
         pass
 
     def get_chapters(self):
