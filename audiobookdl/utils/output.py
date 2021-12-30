@@ -9,6 +9,8 @@ LOCATION_DEFAULTS = {
         'artist': 'NA',
         }
 
+ffmpeg_output = False
+
 
 def gen_output_filename(booktitle: str, file: Dict[str, str], template: str) -> str:
     """Generates an output filename based on different attributes of the
@@ -30,7 +32,7 @@ def combine_audiofiles(filenames: List[str], tmp_dir: str, output_path: str):
     subprocess.run(
             ["ffmpeg", "-f", "concat", "-safe", "0", "-i",
                 combine_file, "-c", "copy", output_path],
-            capture_output=True)
+            capture_output=not ffmpeg_output)
 
 
 def convert_output(filenames: List[str], output_dir: str, output_format: str):
@@ -44,7 +46,7 @@ def convert_output(filenames: List[str], output_dir: str, output_format: str):
         if not output_format == split_path[1][1:]:
             subprocess.run(
                 ["ffmpeg", "-i", full_path, new_path],
-                capture_output=True)
+                capture_output=not ffmpeg_output)
             os.remove(full_path)
         new_paths.append(f"{os.path.splitext(name)[0]}.{output_format}")
     return new_paths

@@ -45,4 +45,10 @@ def parse_arguments():
         help="Download only cover",
         action='store_true',
     )
+    parser.add_argument(
+        '--verbose-ffmpeg',
+        dest="ffmpeg_output",
+        help="Show ffmpeg output in terminal",
+        action="store_true",
+    )
     return parser.parse_args()

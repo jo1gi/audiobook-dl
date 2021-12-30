@@ -23,6 +23,7 @@ def run():
     logging.set_loglevel(options.loglevel)
     if options.print_output:
         logging.set_loglevel("error")
+    output.ffmpeg_output = options.ffmpeg_output
     logging.log("Checking for missing dependencies", "debug")
     missing = dependencies.check_dependencies(options)
     if missing is not True:
@@ -60,7 +61,6 @@ def run():
 def print_output(source: Source, template: str):
     """Prints output location"""
     source.before()
-    title = source.get_title()
     meta = source.get_metadata()
     location = output.gen_output_location(template, meta)
     print(location)
