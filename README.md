@@ -2,6 +2,7 @@
 ![GitHub release](https://img.shields.io/github/v/release/jo1gi/audiobook-dl)
 ![GitHub top language](https://img.shields.io/github/languages/top/jo1gi/audiobook-dl)
 ![License](https://img.shields.io/github/license/jo1gi/audiobook-dl)
+[![Donate using Liberapay](https://img.shields.io/badge/BuyMeACoffee-donate-yellow?logo=buymeacoffee)](https://buymeacoffee.com/joakimholm)
 
 CLI tool for downloading audiobooks from online sources.
 
