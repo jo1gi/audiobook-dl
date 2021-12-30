@@ -1,13 +1,14 @@
 from .utils import output
 from .utils import logging
 from .utils import metadata
+from .utils.source import Source
 from .utils.exceptions import UserNotAuthenticated
 import os
 import shutil
 from typing import Dict, List, Optional
 
 
-def download(source,
+def download(source: Source,
              combine: bool = False,
              output_template: str = "{title}",
              output_format: Optional[str] = None):
@@ -39,7 +40,7 @@ def download(source,
         add_metadata_to_dir(source, filenames, output_dir, meta)
 
 
-def combined_audiobook(source,
+def combined_audiobook(source: Source,
                        filenames: List[str],
                        output_dir: str,
                        output_format: Optional[str],
@@ -47,13 +48,12 @@ def combined_audiobook(source,
     """Combines audiobook into a single audio file and embeds metadata"""
     output_file = f"{output_dir}.{output_format}"
     if len(filenames) > 1:
-        combine_files(source, filenames, output_dir, output_file)
+        combine_files(filenames, output_dir, output_file)
     embed_metadata_in_file(source, meta, output_file)
     shutil.rmtree(output_dir)
 
 
-def combine_files(source,
-                  filenames: List[str],
+def combine_files(filenames: List[str],
                   output_dir: str,
                   output_file: str):
     """Combines audiobook files and cleanes up afterward"""
@@ -64,7 +64,7 @@ def combine_files(source,
         exit()
 
 
-def embed_metadata_in_file(source,
+def embed_metadata_in_file(source: Source,
                            meta: Dict[str, str],
                            output_file: str):
     """Embed metadata into combined audiobook file"""
@@ -80,7 +80,7 @@ def embed_metadata_in_file(source,
         metadata.add_chapters(output_file, chapters)
 
 
-def add_metadata_to_dir(source,
+def add_metadata_to_dir(source: Source,
                         filenames: List[str],
                         output_dir: str,
                         meta: Dict[str, str]):

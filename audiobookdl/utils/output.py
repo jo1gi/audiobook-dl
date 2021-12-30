@@ -55,11 +55,12 @@ def gen_output_location(template: str, metadata: Dict[str, str]) -> str:
     audiobook"""
     if metadata is None:
         metadata = {}
+    metadata["title"] = fix_output(metadata["title"])
     metadata = {**LOCATION_DEFAULTS, **metadata}
     return template.format(**metadata)
 
 
-def fix_output(title) -> str:
+def fix_output(title: str) -> str:
     """Returns title without characters system can't handle"""
     title = title.replace("/", "-")
     if platform.system() == "Windows":
@@ -67,7 +68,7 @@ def fix_output(title) -> str:
     return title
 
 
-def remove_chars(s, chars) -> str:
+def remove_chars(s: str, chars: str) -> str:
     """Removes `chars` from `s`"""
     for i in chars:
         s = s.replace(i, "")

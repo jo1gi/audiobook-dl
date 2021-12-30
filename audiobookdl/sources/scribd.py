@@ -1,7 +1,7 @@
 from ..utils.source import Source
 from PIL import Image
 import io
-
+import json
 
 class ScribdSource(Source):
     match = [
@@ -83,9 +83,9 @@ class ScribdSource(Source):
                 self.url,
                 r'(?<=("jwt_token":"))[^"]+')
             self._stream_url = f"https://audio.production.scribd.com/audiobooks/{book_id[7:]}/192kbps.m3u8"
-            self._title = self.find_in_page(
+            self._title = self.find_all_in_page(
                 self.url,
-                r'(?<=("title":"))[^"]+')
+                r'(?:("title":"))([^"]+)')[1][1]
             self._cover = self.find_in_page(
                 self.url,
                 r'(?<=("cover_url":"))[^"]+')
