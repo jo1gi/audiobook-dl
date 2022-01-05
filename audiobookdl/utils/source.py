@@ -26,7 +26,7 @@ class Source:
     # If cookies are loaded
     _cookies_loaded = False
     # Cache of previously loaded pages
-    _pages: Dict[str, str] = {}
+    _pages: Dict[str, bytes] = {}
 
     def __init__(self, url, match_num):
         self.url = url
@@ -105,16 +105,16 @@ class Source:
     def metadata(self) -> Dict[str, str]:
         return {"title": self.title, **self.get_metadata()}
 
-    def get_cover(self):
+    def get_cover(self) -> bytes:
         """Returns the image data for the audiobook"""
-        pass
+        raise NotImplemented
 
     def get_cover_extension(self) -> str:
         """Returns the filetype of the cover from `get_cover`"""
         return "jpg"
 
     def get_files(self) -> List[Dict[str, str]]:
-        pass
+        raise NotImplemented
 
     def get_chapters(self):
         """Returns a list of tuples with the starting point of the chapter and
@@ -132,7 +132,7 @@ class Source:
                 exit()
         os.makedirs(path)
 
-    def _get_page(self, url, **kwargs):
+    def _get_page(self, url: str, **kwargs) -> Optional[bytes]:
         """Downloads a page and caches it"""
         if url not in self._pages:
             resp = self._session.get(url, **kwargs).content
@@ -155,7 +155,7 @@ class Source:
         sel = CSSSelector(selector)
         page = self._get_page(url, **kwargs)
         if page is None:
-            return None
+            return []
         tree = lxml.html.fromstring(page.decode("utf8"))
         results = sel(tree)
         return results

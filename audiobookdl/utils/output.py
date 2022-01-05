@@ -66,7 +66,9 @@ def fix_output(title: str) -> str:
     """Returns title without characters system can't handle"""
     title = title.replace("/", "-")
     if platform.system() == "Windows":
-        title = remove_chars(title, ':*\\?<>|"')
+        title = remove_chars(title, ':*\\?<>|"\'')
+    else:
+        title = remove_chars(title, '\'')
     return title
 
 
