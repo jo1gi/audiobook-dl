@@ -1,7 +1,7 @@
 from ..utils.source import Source
 from PIL import Image
 import io
-import json
+from typing import Dict
 
 class ScribdSource(Source):
     match = [
@@ -40,6 +40,22 @@ class ScribdSource(Source):
                 metadata["series"] = self.meta["series"][0]
         return metadata
 
+    def _get_chapter_title(self, chapter):
+        number = chapter["chapter_number"]
+        if number == 0:
+            return "Introduction"
+        return f"Chapter {number}"
+
+    def get_chapters(self):
+        chapters = []
+        if not self._original and "chapters" in self.meta:
+            start_time = 0
+            for chapter in self.meta["chapters"]:
+                title = self._get_chapter_title(chapter)
+                chapters.append((start_time, title))
+                start_time += chapter["duration"]
+        return chapters
+
     def get_files(self):
         if self._original:
             return self.get_stream_files(
@@ -75,20 +91,7 @@ class ScribdSource(Source):
                 '(?<=(session_key":"))[^"]+')
         }
         if book_id[:7] == "scribd_":
-            self._original = True
-            self._csrf = self.get_json(
-                "https://www.scribd.com/csrf_token",
-                headers={"href": self.url})
-            self._jwt = self.find_in_page(
-                self.url,
-                r'(?<=("jwt_token":"))[^"]+')
-            self._stream_url = f"https://audio.production.scribd.com/audiobooks/{book_id[7:]}/192kbps.m3u8"
-            self._title = self.find_all_in_page(
-                self.url,
-                r'(?:("title":"))([^"]+)')[1][1]
-            self._cover = self.find_in_page(
-                self.url,
-                r'(?<=("cover_url":"))[^"]+')
+            self._original_before(book_id)
         else:
             misc = self.get_json(
                 f"https://api.findawayworld.com/v4/accounts/scribd-{user_id}/audiobooks/{book_id}",
@@ -105,3 +108,21 @@ class ScribdSource(Source):
                 }
             )
             self.misc = misc
+            # print(self.meta)
+            # exit()
+
+    def _original_before(self, book_id: str):
+        self._original = True
+        self._csrf = self.get_json(
+            "https://www.scribd.com/csrf_token",
+            headers={"href": self.url})
+        self._jwt = self.find_in_page(
+            self.url,
+            r'(?<=("jwt_token":"))[^"]+')
+        self._stream_url = f"https://audio.production.scribd.com/audiobooks/{book_id[7:]}/192kbps.m3u8"
+        self._title = self.find_all_in_page(
+            self.url,
+            r'(?:("title":"))([^"]+)')[1][1]
+        self._cover = self.find_in_page(
+            self.url,
+            r'(?<=("cover_url":"))[^"]+')
