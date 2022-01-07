@@ -1,6 +1,6 @@
 # Internal imports
-from . import networking, output
-from .downloadthread import DownloadThread
+from . import networking, output, metadata
+# from .downloadthread import DownloadThread
 
 # External imports
 import requests
@@ -13,6 +13,10 @@ from http.cookiejar import MozillaCookieJar
 from lxml.cssselect import CSSSelector
 from rich.progress import Progress, BarColumn
 from typing import Dict, List, Optional
+# from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool
+from functools import partial
+from Crypto.Cipher import AES
 
 
 class Source:
@@ -53,8 +57,30 @@ class Source:
             path = os.path.join(output_dir, name)
         return name, path
 
-    def download_files(self, files, output_dir, **kwargs):
-        """Downloads the given files"""
+    def download_file(self, args):
+        file, length, output_dir, progress = args
+        name, path = self.create_filename(length, output_dir, file)
+        headers = {} if "headers" not in file else file["headers"]
+        req = self._session.get(file["url"], headers=headers, stream=True)
+        file_size = int(req.headers["Content-length"])
+        with open(path, "wb") as f:
+            for chunk in req.iter_content(chunk_size=1024):
+                f.write(chunk)
+                progress(len(chunk)/file_size)
+        if "encryption_key" in file:
+            with open(path, "rb") as f:
+                cipher = AES.new(
+                    file["encryption_key"],
+                    AES.MODE_CBC,
+                    file["iv"]
+                )
+                decrypted = cipher.decrypt(f.read())
+            with open(path, "wb") as f:
+                f.write(decrypted)
+        metadata.add_metadata(path, file)
+        return name
+
+    def download_files(self, files, output_dir):
         self.setup_download_dir(output_dir)
         info = [
             "{task.description}",
@@ -62,28 +88,15 @@ class Source:
             "[progress.percentage]{task.percentage:>3.0f}%"
         ]
         with Progress(*info) as progress:
-            # Creating progress bar
             task = progress.add_task(
-                f"Downloading {len(files)} file(s) - [blue]{self.title}",
+                f"Downloading {len(files)} files - [blue]{self.title}",
+                total = len(files)
             )
-            # Adding download data for all files
-            total = 0
             filenames = []
-            threads = []
-            for n, file in enumerate(files):
-                name, path = self.create_filename(len(files), output_dir, file)
-                filenames.append(name)
-                t = DownloadThread(self._session,
-                                   path, file["url"], file, progress, task)
-                t.start()
-                total += t.get_length()
-                progress.update(task, total=len(files)*(total/(n+1)))
-                threads.append(t)
-            # Setting total time of progress bar
-            # Starting thread
-            # Waiting for threads
-            for t in threads:
-                t.join()
+            p = partial(progress.advance, task)
+            with ThreadPool(processes=20) as pool:
+                for i in pool.imap(self.download_file, [(f, len(files), output_dir, p) for f in files]):
+                    filenames.append(i)
             return filenames
 
     def before(self):
