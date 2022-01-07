@@ -63,10 +63,14 @@ class Source:
         headers = {} if "headers" not in file else file["headers"]
         req = self._session.get(file["url"], headers=headers, stream=True)
         file_size = int(req.headers["Content-length"])
+        total = 0
         with open(path, "wb") as f:
             for chunk in req.iter_content(chunk_size=1024):
                 f.write(chunk)
-                progress(len(chunk)/file_size)
+                new = len(chunk)/file_size
+                total += new
+                progress(new)
+        progress(1-total)
         if "encryption_key" in file:
             with open(path, "rb") as f:
                 cipher = AES.new(
