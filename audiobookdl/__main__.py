@@ -49,11 +49,7 @@ def run():
         exit()
     # Download audiobook
     try:
-        download(
-                s,
-                combine=options.combine,
-                output_template=options.output,
-                )
+        download(s, options)
     except UserNotAuthenticated:
         logging.error("Authentication did not work correctly.\nMake sure you have provided a valid cookie file if the source requires it")
 

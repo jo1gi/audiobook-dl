@@ -23,7 +23,7 @@ def parse_arguments():
     parser.add_argument(
         '-o',
         '--output',
-        dest="output",
+        dest="output_template",
         help="Output location",
         default="{title}"
     )
@@ -50,5 +50,17 @@ def parse_arguments():
         dest="ffmpeg_output",
         help="Show ffmpeg output in terminal",
         action="store_true",
+    )
+    parser.add_argument(
+        '--no-chapters',
+        dest="no_chapters",
+        help="Don't include chapters in final file",
+        action="store_true"
+    )
+    parser.add_argument(
+        '-f',
+        '--output-format',
+        dest="output_format",
+        help="File format to convert audio files to",
     )
     return parser.parse_args()

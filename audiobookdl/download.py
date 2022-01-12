@@ -8,10 +8,7 @@ import shutil
 from typing import Dict, List, Optional
 
 
-def download(source: Source,
-             combine: bool = False,
-             output_template: str = "{title}",
-             output_format: Optional[str] = None):
+def download(source: Source, options):
     """Downloads audiobook from source object"""
     # Downloading audiobook info
     if source.require_cookies and not source._cookies_loaded:
@@ -19,43 +16,41 @@ def download(source: Source,
     logging.log("Downloading metadata")
     source.before()
     files = source.get_files()
-    meta = source.metadata
     output_dir = output.gen_output_location(
-            output_template,
-            meta)
+            options.output_template,
+            source.metadata)
     # Downloading audio files
     filenames = source.download_files(files, output_dir)
     # Converting audio files to specified format
-    if output_format:
+    if options.output_format:
         logging.log("Converting files")
-        filenames = output.convert_output(filenames, output_dir, output_format)
+        filenames = output.convert_output(filenames, output_dir, options.output_format)
+        output_format = options.output_format
     # Finding new output format
-    if not output_format:
+    else:
         output_format = os.path.splitext(filenames[0])[1][1:]
     # Single audiofile
-    if combine or len(filenames) == 1:
-        combined_audiobook(source, filenames, output_dir, output_format, meta)
+    if options.combine or len(filenames) == 1:
+        combined_audiobook(source, filenames, output_dir, output_format, options)
     # Multiple audiofiles
     else:
-        add_metadata_to_dir(source, filenames, output_dir, meta)
+        add_metadata_to_dir(source, filenames, output_dir)
 
 
 def combined_audiobook(source: Source,
                        filenames: List[str],
                        output_dir: str,
                        output_format: Optional[str],
-                       meta: Dict[str, str]):
+                       options):
     """Combines audiobook into a single audio file and embeds metadata"""
     output_file = f"{output_dir}.{output_format}"
     if len(filenames) > 1:
         combine_files(filenames, output_dir, output_file)
-    embed_metadata_in_file(source, meta, output_file)
+    embed_metadata_in_file(source, output_file, options)
     shutil.rmtree(output_dir)
 
 
-def combine_files(filenames: List[str],
-                  output_dir: str,
-                  output_file: str):
+def combine_files(filenames: List[str], output_dir: str, output_file: str):
     """Combines audiobook files and cleanes up afterward"""
     logging.log("Combining files")
     output.combine_audiofiles(filenames, output_dir, output_file)
@@ -64,29 +59,26 @@ def combine_files(filenames: List[str],
         exit()
 
 
-def embed_metadata_in_file(source: Source,
-                           meta: Dict[str, str],
-                           output_file: str):
+def embed_metadata_in_file(source: Source, output_file: str, options):
     """Embed metadata into combined audiobook file"""
-    if meta is not None:
-        metadata.add_metadata(output_file, meta)
+    if source.metadata is not None:
+        metadata.add_metadata(output_file, source.metadata)
     cover = source.get_cover()
     if cover is not None:
         logging.log("Embedding cover")
         metadata.embed_cover(output_file, cover, source.get_cover_extension())
     chapters = source.get_chapters()
-    if chapters is not None:
+    if chapters is not None and not options.no_chapters:
         logging.log("Adding chapters")
         metadata.add_chapters(output_file, chapters)
 
 
 def add_metadata_to_dir(source: Source,
                         filenames: List[str],
-                        output_dir: str,
-                        meta: Dict[str, str]):
+                        output_dir: str):
     """Adds metadata to dir of audiobook files"""
     for i in filenames:
-        metadata.add_metadata(os.path.join(output_dir, i), meta)
+        metadata.add_metadata(os.path.join(output_dir, i), source.metadata)
     cover = source.get_cover()
     if cover is not None:
         logging.log("Downloading cover")
