@@ -1,5 +1,6 @@
 from ..utils.source import Source
 import re
+from urllib.parse import unquote
 
 BASEURL = "https://www.audiobooks.com/book/stream/"
 
@@ -26,9 +27,13 @@ class AudiobooksdotcomSource(Source):
                 data="src")
         return self.get(cover_url)
 
+    def get_user_agent(self):
+        raw = self._session.cookies.get("ci_session")
+        return unquote(raw).split("\"")[11]
+
     def get_files(self):
         headers = {
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0",
+            "User-Agent": self.get_user_agent()
         }
         page = self._session.get(
                 self.scrape_url,

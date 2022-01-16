@@ -5,6 +5,9 @@ class CookiesNotLoadedException(Exception):
 class UserNotAuthenticated(Exception):
     pass
 
+class NoFilesFound(Exception):
+    pass
+
 
 class ServiceNotImplementedException(Exception):
     def __init__(self, fn, service):

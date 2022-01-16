@@ -1,7 +1,7 @@
 import re
 from .sources.__init__ import get_source_classes
 from .utils import args, dependencies, logging, output
-from .utils.exceptions import UserNotAuthenticated
+from .utils.exceptions import UserNotAuthenticated, NoFilesFound
 from .utils.source import Source
 from .download import download
 from typing import Optional
@@ -52,6 +52,8 @@ def run():
         download(s, options)
     except UserNotAuthenticated:
         logging.error("Authentication did not work correctly.\nMake sure you have provided a valid cookie file if the source requires it")
+    except NoFilesFound:
+        logging.error("Could not find any files to download.")
 
 
 def print_output(source: Source, template: str):

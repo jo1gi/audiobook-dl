@@ -2,10 +2,10 @@ from .utils import output
 from .utils import logging
 from .utils import metadata
 from .utils.source import Source
-from .utils.exceptions import UserNotAuthenticated
+from .utils.exceptions import UserNotAuthenticated, NoFilesFound
 import os
 import shutil
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 
 def download(source: Source, options):
@@ -16,6 +16,8 @@ def download(source: Source, options):
     logging.log("Downloading metadata")
     source.before()
     files = source.get_files()
+    if len(files) == 0:
+        raise NoFilesFound
     output_dir = output.gen_output_location(
             options.output_template,
             source.metadata)
