@@ -6,7 +6,6 @@ mkShell {
     (python3.withPackages(ps: with ps; [
       mutagen
       requests
-      types-requests
       rich
       lxml
       pydub
@@ -15,6 +14,9 @@ mkShell {
       mypy
       m3u8
       pycrypto
+
+      types-requests
+      types-setuptools
     ]))
   ];
 }
