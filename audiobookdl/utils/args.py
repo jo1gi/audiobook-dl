@@ -6,7 +6,8 @@ def parse_arguments():
             description="Download audiobooks from websites")
     parser.add_argument(
         'url',
-        help="Url to download from"
+        help="Url to download from",
+        nargs='?',
     )
     parser.add_argument(
         '-c',

@@ -1,0 +1,7 @@
+[red]ERROR: The url you gave is not supported by audiobook-dl[/red]
+
+Supported services are:
+ • audiobooks.com
+ • Librivox
+ • Overdrive
+ • Scribd

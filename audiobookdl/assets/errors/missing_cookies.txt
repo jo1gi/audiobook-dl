@@ -1,0 +1,5 @@
+[red]ERROR: Authentications did not work correctly[/red]
+
+Make sure you have provided a cookie file with the [green]--cookie[/green] argument.
+You can export your cookies from your browser with an extension like:
+https://github.com/rotemdan/ExportCookies.

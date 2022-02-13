@@ -1,0 +1,8 @@
+[bold]Basic usage[/bold]
+audiobook-dl \[options] -c <cookie_file> <url>
+
+[bold]Description[/bold]
+audiobook-dl downloads audiobooks from different audiobook providers. It uses
+cookie files for authentication. For further information take a look at:
+ • audiobook-dl --help
+ • https://github.com/jo1gi/audiobook-dl

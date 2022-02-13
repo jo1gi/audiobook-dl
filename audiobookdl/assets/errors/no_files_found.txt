@@ -1,0 +1,4 @@
+[red]ERROR: No files found in audiobook[/red]
+
+This is potentially a bug in audiobook-dl. If you think it's a bug please
+create an issue on https://github.com/jo1gi/audiobook-dl.

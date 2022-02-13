@@ -1,12 +1,11 @@
 from ..utils.source import Source
 from PIL import Image
 import io
-from typing import Dict
 
 class ScribdSource(Source):
     match = [
-        r"https?://(www)?.scribd.com/listen/\d+",
-        r"https?://(www)?.scribd.com/audiobook/\d+/"
+        r"https?://(www.)?scribd.com/listen/\d+",
+        r"https?://(www.)?scribd.com/audiobook/\d+/"
     ]
     require_cookies = True
     _original = False
@@ -21,6 +20,8 @@ class ScribdSource(Source):
     def get_cover(self):
         # Downloading image from scribd
         raw_cover = self.get(self._cover)
+        if raw_cover is None:
+            return None
         # Removing padding on the top and bottom
         if self._original:
             return raw_cover
@@ -75,7 +76,7 @@ class ScribdSource(Source):
                 })
             return files
 
-    def before(self, *args):
+    def before(self):
         if self.match_num == 1:
             book_id = self.url.split("/")[4]
             self.url = f"https://www.scribd.com/listen/{book_id}"
@@ -108,8 +109,6 @@ class ScribdSource(Source):
                 }
             )
             self.misc = misc
-            # print(self.meta)
-            # exit()
 
     def _original_before(self, book_id: str):
         self._original = True

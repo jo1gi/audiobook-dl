@@ -35,7 +35,7 @@ class AudiobooksdotcomSource(Source):
         headers = {
             "User-Agent": self.get_user_agent()
         }
-        page = self._session.get(
+        page: str = self._session.get(
                 self.scrape_url,
                 headers=headers
                 ).content.decode('utf8')

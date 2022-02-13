@@ -21,7 +21,7 @@ class OverdriveSource(Source):
         for part in self.meta["nav"]["toc"]:
             if "contents" in part:
                 self.toc = []
-                for i in range(len(self.meta["spine"])):
+                for _ in range(len(self.meta["spine"])):
                     self.toc.append(self.meta["nav"]["toc"][0]["title"])
                 break
             else:

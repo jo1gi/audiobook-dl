@@ -22,4 +22,7 @@ setup(
             'audiobook-dl=audiobookdl.__main__:run'
         ]
     },
+    package_data={
+        '': ["*.txt"]
+    },
 )

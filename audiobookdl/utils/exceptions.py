@@ -1,14 +1,23 @@
-class CookiesNotLoadedException(Exception):
-    pass
+from .messages import print_error
+
+class AudiobookDLException(Exception):
+    error_description = "unknown"
+
+    def __init__(self, **kwargs):
+        self.data = kwargs
 
 
-class UserNotAuthenticated(Exception):
-    pass
+    def print(self):
+        print_error(self.error_description, **self.data)
 
-class NoFilesFound(Exception):
-    pass
+class UserNotAuthenticated(AudiobookDLException):
+    error_description = "missing_cookies"
 
+class NoFilesFound(AudiobookDLException):
+    error_description = "no_files_found"
 
-class ServiceNotImplementedException(Exception):
-    def __init__(self, fn, service):
-        super().__init__(f"Function {fn} is not implemented for {service}")
+class NoSourceFound(AudiobookDLException):
+    error_description = "no_source_found"
+
+class MissingDependency(AudiobookDLException):
+    error_description = "missing_dependency"
