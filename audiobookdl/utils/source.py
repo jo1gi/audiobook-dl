@@ -96,11 +96,15 @@ class Source:
                 f"Downloading {len(files)} files - [blue]{self.title}",
                 total = len(files)
             )
+            # Downloading files
             filenames = []
             p = partial(progress.advance, task)
             with ThreadPool(processes=20) as pool:
                 for i in pool.imap(self.download_file, [(f, len(files), output_dir, p) for f in files]):
                     filenames.append(i)
+            # Making sure progress is completed
+            remaining = progress.tasks[0].remaining
+            progress.advance(task, remaining)
             return filenames
 
     def before(self):
