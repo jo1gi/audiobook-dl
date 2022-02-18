@@ -1,4 +1,5 @@
 import shutil
+from . import logging
 from .exceptions import MissingDependency
 
 
@@ -12,6 +13,7 @@ def check_dependencies(options):
     required = {
             "combine": ["ffmpeg"]
             }
+    logging.debug("Searching for missing dependencies")
     for key, deps in required.items():
         if getattr(options, key):
             for i in deps:

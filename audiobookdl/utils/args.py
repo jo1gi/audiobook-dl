@@ -29,10 +29,18 @@ def parse_arguments():
         default="{title}"
     )
     parser.add_argument(
-        '--log-level',
-        dest="loglevel",
-        help="Log level (debug, info, warning, or error)",
-        default="info",
+        '--debug',
+        '-d',
+        dest="debug",
+        help="Debug mode",
+        action="store_true",
+    )
+    parser.add_argument(
+        '--quiet',
+        '-q',
+        dest="quiet",
+        help="Quiet mode",
+        action="store_true",
     )
     parser.add_argument(
         '--print-output',

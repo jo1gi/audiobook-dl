@@ -21,3 +21,6 @@ class NoSourceFound(AudiobookDLException):
 
 class MissingDependency(AudiobookDLException):
     error_description = "missing_dependency"
+
+class FailedCombining(AudiobookDLException):
+    error_description = "failed_combining"

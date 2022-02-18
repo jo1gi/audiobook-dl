@@ -24,7 +24,8 @@ def run():
         messages.simple_help()
         exit()
     # Applying arguments as constants
-    logging.set_loglevel(options.loglevel)
+    logging.debug_mode = options.debug
+    logging.quiet_mode = options.quiet
     output.ffmpeg_output = options.ffmpeg_output
     # Find source
     try:

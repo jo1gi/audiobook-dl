@@ -2,7 +2,7 @@ from .utils import output
 from .utils import logging
 from .utils import metadata
 from .utils.source import Source
-from .utils.exceptions import UserNotAuthenticated, NoFilesFound
+from .utils.exceptions import UserNotAuthenticated, NoFilesFound, FailedCombining
 import os
 import shutil
 from typing import List, Optional
@@ -57,8 +57,7 @@ def combine_files(filenames: List[str], output_dir: str, output_file: str):
     logging.log("Combining files")
     output.combine_audiofiles(filenames, output_dir, output_file)
     if not os.path.exists(output_file):
-        logging.error("Could not combine audio files")
-        exit()
+        raise FailedCombining
 
 
 def embed_metadata_in_file(source: Source, output_file: str, options):
