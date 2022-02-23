@@ -26,7 +26,6 @@ def run():
     # Applying arguments as constants
     logging.debug_mode = options.debug
     logging.quiet_mode = options.quiet
-    output.ffmpeg_output = options.ffmpeg_output
     # Find source
     try:
         dependencies.check_dependencies(options)

@@ -1,6 +1,6 @@
 import os
-import subprocess
 import platform
+from pydub import AudioSegment
 from typing import List, Dict
 
 
@@ -9,9 +9,6 @@ LOCATION_DEFAULTS = {
         'artist': 'NA',
         }
 
-ffmpeg_output = False
-
-
 def gen_output_filename(booktitle: str, file: Dict[str, str], template: str) -> str:
     """Generates an output filename based on different attributes of the
     file"""
@@ -19,20 +16,13 @@ def gen_output_filename(booktitle: str, file: Dict[str, str], template: str) -> 
     filename = template.format(**arguments)
     return fix_output(filename)
 
-
 def combine_audiofiles(filenames: List[str], tmp_dir: str, output_path: str):
     """Combines the given audiofiles in `path` into a new file"""
-    combine_file = os.path.join(tmp_dir, "combine.txt")
-    with open(combine_file, "a") as f:
-        for i in filenames:
-            filename = i
-            for c in ["'", " "]:
-                filename = filename.replace(c, f"\\{c}")
-            f.write(f"file {filename}\n")
-    subprocess.run(
-            ["ffmpeg", "-f", "concat", "-safe", "0", "-i",
-                combine_file, "-c", "copy", output_path],
-            capture_output=not ffmpeg_output)
+    combined: AudioSegment = AudioSegment.from_file(os.path.join(tmp_dir, filenames[0]))
+    for f in filenames[1:]:
+        path = os.path.join(tmp_dir, f)
+        combined.append(AudioSegment.from_file(path))
+    combined.export(output_path)
 
 
 def convert_output(filenames: List[str], output_dir: str, output_format: str):
@@ -44,10 +34,8 @@ def convert_output(filenames: List[str], output_dir: str, output_format: str):
         split_path = os.path.splitext(full_path)
         new_path = f"{split_path[0]}.{output_format}"
         if not output_format == split_path[1][1:]:
-            subprocess.run(
-                ["ffmpeg", "-i", full_path, new_path],
-                capture_output=not ffmpeg_output)
-            os.remove(full_path)
+            audio: AudioSegment = AudioSegment.from_file(full_path)
+            audio.export(new_path, format=output_format)
         new_paths.append(f"{os.path.splitext(name)[0]}.{output_format}")
     return new_paths
 

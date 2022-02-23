@@ -55,12 +55,6 @@ def parse_arguments():
         action='store_true',
     )
     parser.add_argument(
-        '--verbose-ffmpeg',
-        dest="ffmpeg_output",
-        help="Show ffmpeg output in terminal",
-        action="store_true",
-    )
-    parser.add_argument(
         '--no-chapters',
         dest="no_chapters",
         help="Don't include chapters in final file",
