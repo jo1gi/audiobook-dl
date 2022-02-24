@@ -13,7 +13,7 @@ mkShell {
       pillow
       mypy
       m3u8
-      pycrypto
+      pycryptodome
 
       types-requests
       types-setuptools

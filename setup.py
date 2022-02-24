@@ -15,7 +15,7 @@ setup(
         "cssselect",
         "mypy",
         "m3u8",
-        "pycrypto"
+        "pycryptodome"
     ],
     entry_points={
         'console_scripts': [
