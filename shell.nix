@@ -8,13 +8,12 @@ mkShell {
       requests
       rich
       lxml
-      pydub
       cssselect
       pillow
-      mypy
       m3u8
       pycryptodome
 
+      mypy
       types-requests
       types-setuptools
     ]))

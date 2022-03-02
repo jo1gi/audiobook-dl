@@ -1,8 +1,10 @@
 import os
 import platform
-from pydub import AudioSegment
+from . import logging
 from typing import List, Dict
+import subprocess
 
+ffmpeg_output = False
 
 LOCATION_DEFAULTS = {
         'album': 'NA',
@@ -18,11 +20,12 @@ def gen_output_filename(booktitle: str, file: Dict[str, str], template: str) -> 
 
 def combine_audiofiles(filenames: List[str], tmp_dir: str, output_path: str):
     """Combines the given audiofiles in `path` into a new file"""
-    combined: AudioSegment = AudioSegment.from_file(os.path.join(tmp_dir, filenames[0]))
-    for f in filenames[1:]:
-        path = os.path.join(tmp_dir, f)
-        combined.append(AudioSegment.from_file(path))
-    combined.export(output_path)
+    paths = [os.path.join(tmp_dir, f) for f in filenames]
+    inputs = "|".join(paths)
+    subprocess.run(
+        ["ffmpeg", "-i", f"concat:{inputs}", "-safe", "0", "-c", "copy", output_path],
+        capture_output=not ffmpeg_output,
+    )
 
 
 def convert_output(filenames: List[str], output_dir: str, output_format: str):
@@ -34,8 +37,10 @@ def convert_output(filenames: List[str], output_dir: str, output_format: str):
         split_path = os.path.splitext(full_path)
         new_path = f"{split_path[0]}.{output_format}"
         if not output_format == split_path[1][1:]:
-            audio: AudioSegment = AudioSegment.from_file(full_path)
-            audio.export(new_path, format=output_format)
+            subprocess.run(
+                ["ffmpeg", "-i", full_path, new_path],
+                capture_output=not ffmpeg_output)
+            os.remove(full_path)
         new_paths.append(f"{os.path.splitext(name)[0]}.{output_format}")
     return new_paths
 

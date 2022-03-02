@@ -11,11 +11,10 @@ setup(
         "rich",
         "mutagen",
         "pillow",
-        "pydub",
         "cssselect",
         "mypy",
         "m3u8",
-        "pycryptodome"
+        "pycryptodome",
     ],
     entry_points={
         'console_scripts': [

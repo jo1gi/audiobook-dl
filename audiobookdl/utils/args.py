@@ -66,4 +66,10 @@ def parse_arguments():
         dest="output_format",
         help="File format to convert audio files to",
     )
+    parser.add_argument(
+        '--verbose-ffmpeg',
+        dest="ffmpeg_output",
+        help="Show ffmpeg output in terminal",
+        action="store_true",
+    )
     return parser.parse_args()
