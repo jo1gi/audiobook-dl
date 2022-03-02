@@ -6,7 +6,7 @@ import requests
 import re
 import shutil
 import os
-import rich
+from rich.prompt import Confirm
 import lxml.html
 from http.cookiejar import MozillaCookieJar
 from lxml.cssselect import CSSSelector
@@ -144,9 +144,8 @@ class Source:
     def setup_download_dir(self, path):
         """Creates output folder"""
         if os.path.isdir(path):
-            rich.print(f"The folder '{path}' already exists. Do you want to override it? [Y/n] ", end="")
-            answer = input()
-            if answer.lower == 'y' or answer == '':
+            answer = Confirm.ask(f"The folder '{path}' already exists. Do you want to override it?")
+            if answer:
                 shutil.rmtree(path)
             else:
                 exit()

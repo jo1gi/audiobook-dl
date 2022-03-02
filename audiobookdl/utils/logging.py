@@ -1,7 +1,8 @@
-import rich
+from rich.console import Console
 
 debug_mode = False
 quiet_mode = False
+console = Console(stderr=True)
 
 def debug(msg: str):
     """Print debug msg"""
@@ -11,4 +12,4 @@ def debug(msg: str):
 def log(msg: str):
     """Display msg in log"""
     if not quiet_mode:
-        rich.print(msg)
+        console.print(msg)
