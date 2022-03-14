@@ -17,7 +17,6 @@ from multiprocessing.pool import ThreadPool
 from functools import partial
 from Crypto.Cipher import AES
 
-
 class Source:
     """An abstract class for downloading audiobooks from a specific
     online source."""
@@ -39,7 +38,7 @@ class Source:
     def load_cookie_file(self, cookie_file):
         """Loads cookies from a cookie file into session"""
         cookie_jar = MozillaCookieJar()
-        cookie_jar.load(cookie_file)
+        cookie_jar.load(cookie_file, ignore_expires=True)
         self._session.cookies.update(cookie_jar)
         self._cookies_loaded = True
 
@@ -127,7 +126,7 @@ class Source:
 
     def get_cover(self) -> bytes:
         """Returns the image data for the audiobook"""
-        raise NotImplemented
+        return None
 
     def get_cover_extension(self) -> str:
         """Returns the filetype of the cover from `get_cover`"""
