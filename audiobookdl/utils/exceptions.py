@@ -24,3 +24,6 @@ class MissingDependency(AudiobookDLException):
 
 class FailedCombining(AudiobookDLException):
     error_description = "failed_combining"
+
+class RequestError(AudiobookDLException):
+    error_description = "request_error"

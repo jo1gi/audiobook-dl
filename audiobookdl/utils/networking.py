@@ -1,9 +1,7 @@
 import json
-import requests
 import os
-import rich
 import m3u8
-
+from . import logging
 
 def post(self, url, **kwargs):
     resp = self._session.post(url, **kwargs)
@@ -14,6 +12,7 @@ def get(self, url, **kwargs):
     resp = self._session.get(url, **kwargs)
     if resp.status_code == 200:
         return resp.content
+    logging.debug(f"Failed to download data from: {url}\nResponse:\n{resp.content}")
     return None
 
 
