@@ -1,6 +1,8 @@
 from ..utils.source import Source
+from ..utils.exceptions import UserNotAuthenticated
 from PIL import Image
 import io
+from typing import Dict
 
 class ScribdSource(Source):
     match = [
@@ -9,6 +11,7 @@ class ScribdSource(Source):
     ]
     require_cookies = True
     _original = False
+    media: Dict = {}
 
     def get_title(self):
         if self._title[-5:] == ", The":
@@ -27,7 +30,7 @@ class ScribdSource(Source):
             return raw_cover
         im = Image.open(io.BytesIO(raw_cover))
         width, height = im.size
-        cropped = im.crop((0, (height-width)/2, width, width+(height-width)/2))
+        cropped = im.crop((0, int((height-width)/2), width, int(width+(height-width)/2)))
         cover = io.BytesIO()
         cropped.save(cover, format="jpeg")
         return cover.getvalue()
@@ -86,6 +89,8 @@ class ScribdSource(Source):
         book_id = self.find_in_page(
                 self.url,
                 r'(?<=(external_id":"))(scribd_)?\d+')
+        if book_id is None:
+            raise UserNotAuthenticated
         headers = {
             'Session-Key': self.find_in_page(
                 self.url,
@@ -98,6 +103,8 @@ class ScribdSource(Source):
                 f"https://api.findawayworld.com/v4/accounts/scribd-{user_id}/audiobooks/{book_id}",
                 headers=headers,
             )
+            if misc is None:
+                raise UserNotAuthenticated
             self.meta = misc['audiobook']
             self._title = self.meta["title"]
             self._cover = self.meta["cover_url"]
@@ -108,6 +115,8 @@ class ScribdSource(Source):
                     "license_id": misc['licenses'][0]['id']
                 }
             )
+            if self.media is None:
+                raise UserNotAuthenticated
             self.misc = misc
 
     def _original_before(self, book_id: str):

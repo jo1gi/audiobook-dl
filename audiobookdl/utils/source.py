@@ -1,5 +1,6 @@
 # Internal imports
 from . import networking, output, metadata
+from .exceptions import RequestError
 
 # External imports
 import requests
@@ -11,8 +12,7 @@ import lxml.html
 from http.cookiejar import MozillaCookieJar
 from lxml.cssselect import CSSSelector
 from rich.progress import Progress, BarColumn
-from typing import Dict, List, Optional
-# from multiprocessing import Pool
+from typing import Dict, List
 from multiprocessing.pool import ThreadPool
 from functools import partial
 from Crypto.Cipher import AES
@@ -126,7 +126,7 @@ class Source:
 
     def get_cover(self) -> bytes:
         """Returns the image data for the audiobook"""
-        return None
+        raise NotImplementedError
 
     def get_cover_extension(self) -> str:
         """Returns the filetype of the cover from `get_cover`"""
@@ -150,12 +150,12 @@ class Source:
                 exit()
         os.makedirs(path)
 
-    def _get_page(self, url: str, **kwargs) -> Optional[bytes]:
+    def _get_page(self, url: str, **kwargs) -> bytes:
         """Downloads a page and caches it"""
         if url not in self._pages:
             resp = self._session.get(url, **kwargs).content
             if resp is None:
-                return None
+                raise RequestError
             self._pages[url] = resp
         return self._pages[url]
 
