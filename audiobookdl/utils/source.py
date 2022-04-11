@@ -3,16 +3,10 @@ from . import networking, output, metadata
 
 # External imports
 import requests
-import re
-import shutil
 import os
-from rich.prompt import Confirm
-import lxml.html
 from http.cookiejar import MozillaCookieJar
-from lxml.cssselect import CSSSelector
 from rich.progress import Progress, BarColumn
-from typing import Dict, List, Optional
-# from multiprocessing import Pool
+from typing import Dict, List
 from multiprocessing.pool import ThreadPool
 from functools import partial
 from Crypto.Cipher import AES
@@ -122,7 +116,16 @@ class Source:
 
     @property
     def metadata(self) -> Dict[str, str]:
-        return {"title": self.title, **self.get_metadata()}
+        m = self.get_metadata()
+        if "authors" in m:
+            m["author"] = "; ".join(m["authors"])
+        if "narrators" in m:
+            m["narrator"] = "; ".join(m["narrators"])
+        return {
+            **m,
+            "title": self.title,
+            "genre": "Audiobook"
+        }
 
     def get_cover(self) -> bytes:
         """Returns the image data for the audiobook"""

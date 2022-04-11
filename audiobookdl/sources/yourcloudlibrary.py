@@ -1,14 +1,18 @@
+from ..utils import logging
 from ..utils.source import Source
 from ..utils import logging
 from ..utils.exceptions import UserNotAuthenticated, RequestError
 import requests.utils
 import base64
+from typing import Dict
 
 class YourCloudLibrarySource(Source):
     requires_cookies = True
     match = [
-            r"https?://ebook.yourcloudlibrary.com/library/[^/]+/AudioPlayer/.+"
+        r"https?://ebook.yourcloudlibrary.com/library/[^/]+/AudioPlayer/.+"
     ]
+    meta: Dict
+    playlist: Dict
 
     def get_title(self):
         return self.book_info["Title"]
@@ -23,7 +27,20 @@ class YourCloudLibrarySource(Source):
             })
         return files
 
-    def get_fullfillmenttoken(self):
+    def get_metadata(self):
+        metadata = {}
+        if not self.meta is None:
+            audiobook = self.meta["audiobook"]
+            metadata["authors"] = audiobook["authors"]
+            metadata["narrators"] = audiobook["narrators"]
+            if audiobook["series"] is not None:
+                metadata["series"] = audiobook["series"][0]
+        return metadata
+
+    def get_cover(self):
+        return self.get(self.meta['audiobook']['cover_url'])
+
+    def _get_fullfillmenttoken(self):
         token_base64 = self.find_in_page(
             self.url,
             r"(?<=(\"Osi\":\"x-))[^\"]+",
@@ -35,7 +52,7 @@ class YourCloudLibrarySource(Source):
         logging.debug(f"{token=}")
         return token
 
-    def get_bookinfo(self):
+    def _get_bookinfo(self):
         # Get list of borrowed books
         library = self.url.split("/")[-3]
         borrowed = self.get_json(
@@ -56,14 +73,23 @@ class YourCloudLibrarySource(Source):
 
 
     def before(self):
-        self.book_info = self.get_bookinfo()
-        token = self.get_fullfillmenttoken()
+        self.book_info = self._get_bookinfo()
+        token = self._get_fullfillmenttoken()
         audioplayer = self.post_json("https://ebook.yourcloudlibrary.com/uisvc/Middlesex/AudioPlayer",
                 data={"url": f"{self.book_info['fulfillmentTokenUrl']}&token={token}"})
         if audioplayer is None:
             raise RequestError
-        self.playlist = self.post_json(f"https://api.findawayworld.com/v4/audiobooks/{audioplayer['fulfillmentId']}/playlists",
-                data='{"license_id":"' + audioplayer["licenseId"] + '"}',
-                headers={"Session-Key": audioplayer["sessionKey"]})
+        fulfillment_id = audioplayer["fulfillmentId"]
+        account_id = audioplayer["accountId"]
+        headers = {"Session-Key": audioplayer["sessionKey"]}
+        self.meta = self.get_json(
+            f"https://api.findawayworld.com/v4/accounts/{account_id}/audiobooks/{fulfillment_id}",
+            headers=headers
+        )
+        logging.debug(f"{self.meta=}")
+        self.playlist = self.post_json(
+            f"https://api.findawayworld.com/v4/audiobooks/{fulfillment_id}/playlists",
+            data='{"license_id":"' + audioplayer["licenseId"] + '"}',
+            headers=headers)
         if self.playlist is None:
             raise UserNotAuthenticated
