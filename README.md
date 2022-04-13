@@ -28,6 +28,9 @@ audiobook-dl uses Netscape cookie files for authentication. I use
 [this](https://github.com/rotemdan/ExportCookies) extension to export my cookies
 from the browser.
 
+Cookies can be placed in current dir as `cookies.txt` or be given with the
+`--cookie` argument.
+
 ## Downloading audiobooks
 ```shell
 audiobook-dl -c <cookie file> <url>

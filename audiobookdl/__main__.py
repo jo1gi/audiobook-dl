@@ -1,4 +1,5 @@
 import re
+import os
 from .sources.__init__ import get_source_classes
 from .utils import args, dependencies, logging, output, messages
 from .utils.exceptions import AudiobookDLException, NoSourceFound
@@ -14,6 +15,13 @@ def find_compatible_source(url: str) -> Source:
             if not re.match(m, url) is None:
                 return source(url, n)
     raise NoSourceFound
+
+
+def get_cookie_path(options):
+    if options.cookie_file is not None:
+        return options.cookie_file
+    if os.path.exists("./cookies.txt"):
+        return "./cookies.txt"
 
 
 def run():
@@ -33,8 +41,10 @@ def run():
         logging.log("Finding compatible source")
         s = find_compatible_source(options.url)
         # Load cookie file
-        if options.cookie_file is not None:
-            s.load_cookie_file(options.cookie_file)
+        cookie_path = get_cookie_path(options)
+        if cookie_path is not None:
+            s.load_cookie_file(cookie_path)
+        # Running program
         if options.print_output:
             print_output(s, options.output)
         elif options.cover:
