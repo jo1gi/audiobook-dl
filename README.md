@@ -10,6 +10,7 @@ CLI tool for downloading audiobooks from online sources.
 audiobook-dl currently supports downloading from the following sources:
 - [audiobooks.com](https://audiobooks.com)
 - [Librivox](https://librivox.org)
+- [YourClodLibrary](https://www.yourcloudlibrary.com/)
 - [Overdrive (Library service)](https://www.overdrive.com/)
 - [Scribd](https://scribd.com)
 
@@ -45,6 +46,9 @@ page**
 | Url         | The url of the page where you listen to the audiobook         |
 | -c/--cookie | Path to a Netscape cookie file                                |
 | --combine   | Combine all output files into a single file (requires ffmpeg) |
+| -o/--output | Output location                                               |
+| -d/--debug  | Print debug information                                       |
+| --cover     | Only download cover                                           |
 
 ## Contributions
 Issues, bug-reports, pull requests or ideas for features and improvements are

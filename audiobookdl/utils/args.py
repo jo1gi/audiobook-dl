@@ -3,7 +3,9 @@ import argparse
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
-            description="Download audiobooks from websites")
+        prog="audiobook-dl",
+        description="Download audiobooks from websites",
+    )
     parser.add_argument(
         'url',
         help="Url to download from",
