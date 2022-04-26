@@ -10,7 +10,7 @@ CLI tool for downloading audiobooks from online sources.
 audiobook-dl currently supports downloading from the following sources:
 - [audiobooks.com](https://audiobooks.com)
 - [Librivox](https://librivox.org)
-- [YourClodLibrary](https://www.yourcloudlibrary.com/)
+- [YourCloudLibrary](https://www.yourcloudlibrary.com/)
 - [Overdrive (Library service)](https://www.overdrive.com/)
 - [Scribd](https://scribd.com)
 
