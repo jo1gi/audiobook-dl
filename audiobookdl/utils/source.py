@@ -4,9 +4,14 @@ from .exceptions import RequestError
 
 # External imports
 import requests
+import shutil
+import lxml.html
+from lxml.cssselect import CSSSelector
 import os
+import re
 from http.cookiejar import MozillaCookieJar
 from rich.progress import Progress, BarColumn
+from rich.prompt import Confirm
 from typing import Dict, List
 from multiprocessing.pool import ThreadPool
 from functools import partial
