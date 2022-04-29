@@ -30,11 +30,14 @@ class YourCloudLibrarySource(Source):
     def get_metadata(self):
         metadata = {}
         if not self.meta is None:
-            audiobook = self.meta["audiobook"]
-            metadata["authors"] = audiobook["authors"]
-            metadata["narrators"] = audiobook["narrators"]
-            if audiobook["series"] is not None:
-                metadata["series"] = audiobook["series"][0]
+            try:
+                audiobook = self.meta["audiobook"]
+                metadata["authors"] = audiobook["authors"]
+                metadata["narrators"] = audiobook["narrators"]
+                if audiobook["series"] is not None and len(audiobook["series"]) >= 1:
+                    metadata["series"] = audiobook["series"][0]
+            except:
+                return {}
         return metadata
 
     def get_cover(self):
