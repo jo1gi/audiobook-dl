@@ -23,19 +23,22 @@ def download(source: Source, options):
             source.metadata)
     # Downloading audio files
     filenames = source.download_files(files, output_dir)
-    # Converting audio files to specified format
+    # Finding output format
     if options.output_format:
-        logging.log("Converting files")
-        filenames = output.convert_output(filenames, output_dir, options.output_format)
         output_format = options.output_format
-    # Finding new output format
     else:
         output_format = os.path.splitext(filenames[0])[1][1:]
+        if output_format == "ts":
+            output_format = "mp3"
     # Single audiofile
     if options.combine or len(filenames) == 1:
         combined_audiobook(source, filenames, output_dir, output_format, options)
     # Multiple audiofiles
     else:
+        # Converting audio files to specified format
+        logging.log("Converting files")
+        filenames = output.convert_output(filenames, output_dir, options.output_format)
+        # Adding metadata to the files
         add_metadata_to_dir(source, filenames, output_dir)
 
 

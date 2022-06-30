@@ -9,6 +9,7 @@ CLI tool for downloading audiobooks from online sources.
 ## Supported Services
 audiobook-dl currently supports downloading from the following sources:
 - [audiobooks.com](https://audiobooks.com)
+- [eReolen (Danish Library)](https://ereolen.dk)
 - [Librivox](https://librivox.org)
 - [YourCloudLibrary](https://www.yourcloudlibrary.com/)
 - [Overdrive (Library service)](https://www.overdrive.com/)
