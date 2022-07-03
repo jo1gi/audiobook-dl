@@ -1,5 +1,6 @@
 from ..utils.source import Source
-from ..utils.exceptions import UserNotAuthenticated
+from ..utils.exceptions import UserNotAuthorized, RequestError, DataNotPresent
+from ..utils import logging
 from PIL import Image
 import io
 from typing import Dict
@@ -25,7 +26,7 @@ class ScribdSource(Source):
         raw_cover = self.get(self._cover)
         if raw_cover is None:
             return None
-        # Removing padding on the top and bottom
+        # Removing padding on the top and bottom if it is a normal book
         if self._original:
             return raw_cover
         im = Image.open(io.BytesIO(raw_cover))
@@ -80,17 +81,18 @@ class ScribdSource(Source):
             return files
 
     def before(self):
-        if self.match_num == 1:
-            book_id = self.url.split("/")[4]
-            self.url = f"https://www.scribd.com/listen/{book_id}"
-        user_id = self.find_in_page(
-                self.url,
-                r'(?<=(account_id":"scribd-))\d+')
-        book_id = self.find_in_page(
-                self.url,
-                r'(?<=(external_id":"))(scribd_)?\d+')
-        if book_id is None:
-            raise UserNotAuthenticated
+        try:
+            if self.match_num == 1:
+                book_id = self.url.split("/")[4]
+                self.url = f"https://www.scribd.com/listen/{book_id}"
+            user_id = self.find_in_page(
+                    self.url,
+                    r'(?<=(account_id":"scribd-))\d+')
+            book_id = self.find_in_page(
+                    self.url,
+                    r'(?<=(external_id":"))(scribd_)?\d+')
+        except DataNotPresent:
+            raise UserNotAuthorized
         headers = {
             'Session-Key': self.find_in_page(
                 self.url,
@@ -99,12 +101,15 @@ class ScribdSource(Source):
         if book_id[:7] == "scribd_":
             self._original_before(book_id)
         else:
+            self._normal_before(book_id, user_id, headers)
+
+    def _normal_before(self, book_id: str, user_id: str, headers: Dict):
+        """Download necessary data for normal audiobooks on scribd"""
+        try:
             misc = self.get_json(
                 f"https://api.findawayworld.com/v4/accounts/scribd-{user_id}/audiobooks/{book_id}",
                 headers=headers,
             )
-            if misc is None:
-                raise UserNotAuthenticated
             self.meta = misc['audiobook']
             self._title = self.meta["title"]
             self._cover = self.meta["cover_url"]
@@ -115,11 +120,13 @@ class ScribdSource(Source):
                     "license_id": misc['licenses'][0]['id']
                 }
             )
-            if self.media is None:
-                raise UserNotAuthenticated
             self.misc = misc
+        except RequestError:
+            logging.debug("Could not retrive data from book")
+            raise UserNotAuthorized
 
     def _original_before(self, book_id: str):
+        """Download necessary data for scribd originals"""
         self._original = True
         self._csrf = self.get_json(
             "https://www.scribd.com/csrf_token",

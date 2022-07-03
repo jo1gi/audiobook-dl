@@ -2,7 +2,7 @@ from .utils import output
 from .utils import logging
 from .utils import metadata
 from .utils.source import Source
-from .utils.exceptions import UserNotAuthenticated, NoFilesFound, FailedCombining
+from .utils.exceptions import MissingCookies, NoFilesFound, FailedCombining
 import os
 import shutil
 from typing import List, Optional
@@ -12,7 +12,7 @@ def download(source: Source, options):
     """Downloads audiobook from source object"""
     # Downloading audiobook info
     if source.require_cookies and not source._cookies_loaded:
-        raise UserNotAuthenticated
+        raise MissingCookies
     logging.log("Downloading metadata")
     source.before()
     files = source.get_files()

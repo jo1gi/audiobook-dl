@@ -1,37 +1,35 @@
 import json
 import os
 import m3u8
-from . import logging
+from . import logging, exceptions
 
 def post(self, url, **kwargs):
     resp = self._session.post(url, **kwargs)
     return resp.content
 
 
-def get(self, url, **kwargs):
+def get(self, url, **kwargs) -> bytes:
     resp = self._session.get(url, **kwargs)
     if resp.status_code == 200:
         return resp.content
     logging.debug(f"Failed to download data from: {url}\nResponse:\n{resp.content}")
-    return None
+    raise exceptions.RequestError
 
 
 def post_json(self, url, **kwargs):
     """Downloads data with the given url and converts it to json"""
     resp = self.post(url, **kwargs)
     if resp is None:
-        return None
+        raise exceptions.RequestError
     return json.loads(resp.decode('utf8'))
 
 
 def get_json(self, url, **kwargs):
     """Downloads data with the given url and converts it to json"""
     resp = self.get(url, **kwargs)
-    if resp is None:
-        return None
     return json.loads(resp.decode('utf8'))
 
-def get_stream_files(self, url, headers={}, **kwargs):
+def get_stream_files(self, url, headers={}):
     """Creates a list of audio files from an m3u8 file"""
     playlist = m3u8.load(url, headers=headers)
     files = []

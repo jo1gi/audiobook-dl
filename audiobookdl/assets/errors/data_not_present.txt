@@ -1,0 +1,9 @@
+[red]ERROR: Missing data from source[/red]
+
+audiobook-dl is missing data from source. This can happen when you try to
+download audiobooks you don't have access too (not logged in or your profile
+doesn't have the right permissions), the site has been updated and audiobook-dl
+hasn't implemented the new version, or it could be a bug in audiobook-dl.
+
+If you think it is a problem with audiobook-dl please create an issue at
+https://github.com/jo1gi/audiobook-dl/issues

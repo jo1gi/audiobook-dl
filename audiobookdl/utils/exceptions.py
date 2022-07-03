@@ -10,8 +10,17 @@ class AudiobookDLException(Exception):
     def print(self):
         print_error(self.error_description, **self.data)
 
-class UserNotAuthenticated(AudiobookDLException):
+class DataNotPresent(AudiobookDLException):
+    error_description = "data_not_present"
+
+class FailedCombining(AudiobookDLException):
+    error_description = "failed_combining"
+
+class MissingCookies(AudiobookDLException):
     error_description = "missing_cookies"
+
+class MissingDependency(AudiobookDLException):
+    error_description = "missing_dependency"
 
 class NoFilesFound(AudiobookDLException):
     error_description = "no_files_found"
@@ -19,11 +28,8 @@ class NoFilesFound(AudiobookDLException):
 class NoSourceFound(AudiobookDLException):
     error_description = "no_source_found"
 
-class MissingDependency(AudiobookDLException):
-    error_description = "missing_dependency"
-
-class FailedCombining(AudiobookDLException):
-    error_description = "failed_combining"
-
 class RequestError(AudiobookDLException):
     error_description = "request_error"
+
+class UserNotAuthorized(AudiobookDLException):
+    error_description = "user_not_authorized"

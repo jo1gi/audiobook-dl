@@ -1,5 +1,5 @@
 from ..utils.source import Source
-from ..utils.exceptions import UserNotAuthenticated, RequestError
+from ..utils.exceptions import UserNotAuthorized, RequestError
 from ..utils.logging import debug
 
 from typing import Dict, Optional
@@ -42,13 +42,13 @@ class EreolenSource(Source):
             raise RequestError
         debug(f"{ajax=}")
         if ajax[1]["title"] != "Lyt":
-            raise UserNotAuthenticated
+            raise UserNotAuthorized
         id_match = re.search(r"(?<=(o=))[0-9a-f\-]+", ajax[1]["data"])
         if id_match and id_match.group():
             self.book_id = id_match.group()
             debug(f"{self.book_id=}")
         else:
             debug("Could not find book id")
-            raise UserNotAuthenticated
+            raise UserNotAuthorized
         self.meta: Optional[Dict] = self.get_json(f"https://audio.api.streaming.pubhub.dk/v1/orders/{self.book_id}")
         debug(f"{self.meta=}")

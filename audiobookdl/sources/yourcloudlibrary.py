@@ -1,7 +1,7 @@
 from ..utils import logging
 from ..utils.source import Source
 from ..utils import logging
-from ..utils.exceptions import UserNotAuthenticated, RequestError
+from ..utils.exceptions import UserNotAuthorized, RequestError
 import requests.utils
 import base64
 from typing import Dict
@@ -50,7 +50,7 @@ class YourCloudLibrarySource(Source):
             cookies=requests.utils.dict_from_cookiejar(self._session.cookies),
         )
         if token_base64 is None:
-            raise UserNotAuthenticated
+            raise UserNotAuthorized
         token = base64.b64decode(token_base64).decode('utf8')
         logging.debug(f"{token=}")
         return token
@@ -63,7 +63,7 @@ class YourCloudLibrarySource(Source):
                 cookies=requests.utils.dict_from_cookiejar(self._session.cookies),
         )
         if borrowed is None:
-            raise UserNotAuthenticated
+            raise UserNotAuthorized
         # Find the matching book in list of borrowed books
         url_id = self.url.split("/")[-1]
         book_info = None
@@ -71,7 +71,7 @@ class YourCloudLibrarySource(Source):
             if i["Id"] == url_id:
                 book_info = i
         if book_info is None:
-            raise UserNotAuthenticated
+            raise UserNotAuthorized
         return book_info
 
 
@@ -95,4 +95,4 @@ class YourCloudLibrarySource(Source):
             data='{"license_id":"' + audioplayer["licenseId"] + '"}',
             headers=headers)
         if self.playlist is None:
-            raise UserNotAuthenticated
+            raise UserNotAuthorized

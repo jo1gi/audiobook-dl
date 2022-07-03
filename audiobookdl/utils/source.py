@@ -1,6 +1,6 @@
 # Internal imports
-from . import networking, output, metadata
-from .exceptions import RequestError
+from . import networking, output, metadata, logging
+from .exceptions import RequestError, DataNotPresent
 
 # External imports
 import requests
@@ -163,8 +163,6 @@ class Source:
         """Downloads a page and caches it"""
         if url not in self._pages:
             resp = self._session.get(url, **kwargs).content
-            if resp is None:
-                raise RequestError
             self._pages[url] = resp
         return self._pages[url]
 
@@ -172,7 +170,8 @@ class Source:
         """Finds an element in a page based on a css selector"""
         results = self.find_elems_in_page(url, selector, **kwargs)
         if len(results) == 0:
-            return None
+            logging.debug(f"Could not find matching element from {url} with {selector}")
+            raise DataNotPresent
         elem = results[0]
         if data is None:
             return elem.text
@@ -191,7 +190,8 @@ class Source:
         """Find some text in a page based on a regex"""
         m = re.search(regex, self._get_page(url, **kwargs).decode("utf8"))
         if m is None:
-            return None
+            logging.debug(f"Could not find match from {url} with {regex}")
+            raise DataNotPresent
         return m.group(0)
 
     def find_all_in_page(self, url, regex, **kwargs):

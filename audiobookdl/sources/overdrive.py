@@ -1,5 +1,5 @@
 from ..utils.source import Source
-from ..utils.exceptions import UserNotAuthenticated
+from ..utils.exceptions import UserNotAuthorized
 import re
 import json
 
@@ -13,7 +13,7 @@ class OverdriveSource(Source):
     def before(self):
         raw = self.find_in_page(self.url, 'window.bData = {.+;')
         if raw is None:
-            raise UserNotAuthenticated
+            raise UserNotAuthorized
         raw_trimmed = raw[15:-1]
         self.meta = json.loads(raw_trimmed)
         # Table of contents
