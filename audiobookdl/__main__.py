@@ -21,7 +21,7 @@ def find_compatible_source(url: str) -> Source:
 
 def get_cookie_path(options):
     """Find path to cookie file"""
-    if options.cookie_file is not None:
+    if options.cookie_file is not None and os.path.exists(options.cookie_path):
         return options.cookie_file
     if os.path.exists("./cookies.txt"):
         return "./cookies.txt"
@@ -53,7 +53,7 @@ def run():
         if cookie_path is not None:
             s.load_cookie_file(cookie_path)
         # Adding username and password
-        if s.require_username_and_password:
+        if s.require_username_and_password and cookie_path is None:
             s.username = get_or_ask(options.username, "Username", False)
             s.password = get_or_ask(options.password, "Password", True)
         # Running program

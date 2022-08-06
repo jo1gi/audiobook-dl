@@ -8,6 +8,7 @@ from typing import Dict
 
 class YourCloudLibrarySource(Source):
     requires_cookies = True
+    require_username_and_password = True
     match = [
         r"https?://ebook.yourcloudlibrary.com/library/[^/]+/AudioPlayer/.+"
     ]
@@ -43,6 +44,10 @@ class YourCloudLibrarySource(Source):
     def get_cover(self):
         return self.get(self.meta['audiobook']['cover_url'])
 
+    def _get_library_id(self):
+        return self.url.split("/")[-3]
+
+
     def _get_fullfillmenttoken(self):
         token_base64 = self.find_in_page(
             self.url,
@@ -57,7 +62,7 @@ class YourCloudLibrarySource(Source):
 
     def _get_bookinfo(self):
         # Get list of borrowed books
-        library = self.url.split("/")[-3]
+        library = self._get_library_id()
         borrowed = self.get_json(
                 f"https://ebook.yourcloudlibrary.com/uisvc/{library}/Patron/Borrowed",
                 cookies=requests.utils.dict_from_cookiejar(self._session.cookies),
@@ -74,11 +79,25 @@ class YourCloudLibrarySource(Source):
             raise UserNotAuthorized
         return book_info
 
+    def _authenticate(self):
+        library = self._get_library_id()
+        resp = self.post(
+            f"https://ebook.yourcloudlibrary.com/uisvc/{library}/Patron/LoginPatron",
+            data = {
+                "UserId": self.username,
+                "Password": self.password
+            }
+        )
+        logging.debug(f"Authentication response {resp}")
+
 
     def before(self):
+        if self.username and self.password:
+            self._authenticate()
         self.book_info = self._get_bookinfo()
         token = self._get_fullfillmenttoken()
-        audioplayer = self.post_json("https://ebook.yourcloudlibrary.com/uisvc/Middlesex/AudioPlayer",
+        library = self._get_library_id()
+        audioplayer = self.post_json(f"https://ebook.yourcloudlibrary.com/uisvc/{library}/AudioPlayer",
                 data={"url": f"{self.book_info['fulfillmentTokenUrl']}&token={token}"})
         if audioplayer is None:
             raise RequestError
