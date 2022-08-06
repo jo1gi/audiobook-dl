@@ -1,6 +1,7 @@
 import threading
 from . import metadata
 from Crypto.Cipher import AES
+from .logging import debug
 
 
 class DownloadThread(threading.Thread):
@@ -15,6 +16,7 @@ class DownloadThread(threading.Thread):
         self.progress = progress
         headers = {} if "headers" not in metadata else metadata["headers"]
         self.req = self.session.get(url, headers=headers, stream=True)
+        debug(f"{self.req.headers=}")
         self.length = int(self.req.headers['Content-length'])
 
     def run(self):

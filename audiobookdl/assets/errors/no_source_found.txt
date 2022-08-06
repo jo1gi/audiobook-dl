@@ -2,6 +2,9 @@
 
 Supported services are:
  • audiobooks.com
+ • Chapter
+ • eReolen
  • Librivox
  • Overdrive
  • Scribd
+ • YourCloudLibrary

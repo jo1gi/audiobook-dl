@@ -74,4 +74,14 @@ def parse_arguments():
         help="Show ffmpeg output in terminal",
         action="store_true",
     )
+    parser.add_argument(
+        '--username',
+        dest="username",
+        help="Username for source",
+    )
+    parser.add_argument(
+        '--password',
+        dest="password",
+        help="Password for source",
+    )
     return parser.parse_args()

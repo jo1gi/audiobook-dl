@@ -37,7 +37,7 @@ def download(source: Source, options):
     else:
         # Converting audio files to specified format
         logging.log("Converting files")
-        filenames = output.convert_output(filenames, output_dir, options.output_format)
+        filenames = output.convert_output(filenames, output_dir, output_format)
         # Adding metadata to the files
         add_metadata_to_dir(source, filenames, output_dir)
 

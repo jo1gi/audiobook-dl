@@ -1,6 +1,6 @@
 # Internal imports
 from . import networking, output, metadata, logging
-from .exceptions import RequestError, DataNotPresent
+from .exceptions import DataNotPresent
 
 # External imports
 import requests
@@ -12,7 +12,7 @@ import re
 from http.cookiejar import MozillaCookieJar
 from rich.progress import Progress, BarColumn
 from rich.prompt import Confirm
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 from multiprocessing.pool import ThreadPool
 from functools import partial
 from Crypto.Cipher import AES
@@ -23,6 +23,12 @@ class Source:
 
     # A list of regexes that indicates which website a sevice supports
     match: List[str] = []
+    # True if username and password is required to use the source
+    require_username_and_password = False
+    # Username for source
+    username: Optional[str] = None
+    # Password for source
+    password: Optional[str] = None
     # If cookies need to be loaded to be able to use source
     require_cookies = False
     # If cookies are loaded
@@ -42,7 +48,7 @@ class Source:
         self._session.cookies.update(cookie_jar)
         self._cookies_loaded = True
 
-    def create_filename(self, length, output_dir, file):
+    def create_filename(self, length: int, output_dir: str, file) -> Tuple[str, str]:
         if length == 1:
             name = f"{self.title}.{file['ext']}"
             path = f"{output_dir}.{file['ext']}"
@@ -101,7 +107,7 @@ class Source:
                 for i in pool.imap(self.download_file, [(f, len(files), output_dir, p) for f in files]):
                     filenames.append(i)
             # Making sure progress is completed
-            remaining = progress.tasks[0].remaining
+            remaining: float = progress.tasks[0].remaining or 0
             progress.advance(task, remaining)
             return filenames
 
@@ -133,9 +139,9 @@ class Source:
             "genre": "Audiobook"
         }
 
-    def get_cover(self) -> bytes:
+    def get_cover(self) -> Optional[bytes]:
         """Returns the image data for the audiobook"""
-        raise NotImplementedError
+        return None
 
     def get_cover_extension(self) -> str:
         """Returns the filetype of the cover from `get_cover`"""

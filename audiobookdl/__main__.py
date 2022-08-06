@@ -1,10 +1,12 @@
 import re
 import os
+from typing import Optional
 from .sources.__init__ import get_source_classes
 from .utils import args, dependencies, logging, output, messages
 from .utils.exceptions import AudiobookDLException, NoSourceFound
 from .utils.source import Source
 from .download import download
+from rich.prompt import Prompt
 
 
 def find_compatible_source(url: str) -> Source:
@@ -18,11 +20,17 @@ def find_compatible_source(url: str) -> Source:
 
 
 def get_cookie_path(options):
+    """Find path to cookie file"""
     if options.cookie_file is not None:
         return options.cookie_file
     if os.path.exists("./cookies.txt"):
         return "./cookies.txt"
 
+def get_or_ask(value: Optional[str], name: str, hidden: bool) -> str:
+    """Return `value` if it exists else asks for a value"""
+    if value:
+        return value
+    return Prompt.ask(name, password=hidden)
 
 def run():
     """Main function"""
@@ -44,6 +52,10 @@ def run():
         cookie_path = get_cookie_path(options)
         if cookie_path is not None:
             s.load_cookie_file(cookie_path)
+        # Adding username and password
+        if s.require_username_and_password:
+            s.username = get_or_ask(options.username, "Username", False)
+            s.password = get_or_ask(options.password, "Password", True)
         # Running program
         if options.print_output:
             print_output(s, options.output)
@@ -68,8 +80,9 @@ def download_cover(source: Source):
     source.before()
     ext = source.get_cover_extension()
     cover = source.get_cover()
-    with open(f"cover.{ext}", "wb") as f:
-        f.write(cover)
+    if cover:
+        with open(f"cover.{ext}", "wb") as f:
+            f.write(cover)
 
 if __name__ == "__main__":
     run()

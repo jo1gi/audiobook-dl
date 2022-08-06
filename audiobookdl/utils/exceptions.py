@@ -6,7 +6,6 @@ class AudiobookDLException(Exception):
     def __init__(self, **kwargs):
         self.data = kwargs
 
-
     def print(self):
         print_error(self.error_description, **self.data)
 

@@ -39,8 +39,8 @@ class OverdriveSource(Source):
             if creator["role"] == "narrator":
                 narrators.append(creator["name"])
         return {
-            'author': "; ".join(authors),
-            'narrator': "; ".join(narrators)
+            'author': authors,
+            'narrator': narrators
         }
 
     def get_cover(self):

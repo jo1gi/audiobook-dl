@@ -1,4 +1,5 @@
 import re
+import os
 from mutagen import File as MutagenFile
 from mutagen.easyid3 import EasyID3
 from mutagen.mp3 import MP3
@@ -6,7 +7,7 @@ from mutagen.id3 import ID3, APIC, CHAP, TIT2, CTOC, CTOCFlags
 from typing import Dict
 
 # List of file formats that use ID3 metadata
-ID3_FORMATS = ["mp3", "mp4", "m4v", "m4a", "m4b"]
+ID3_FORMATS = ["mp3", "m4v", "m4a", "m4b"]
 
 # Conversion table between metadata names and ID3 tags
 ID3_CONVERT = {
@@ -26,6 +27,7 @@ EXTENSION_TO_MIMETYPE = {
 def add_id3_metadata(filepath: str, metadata: Dict[str, str]):
     """Add ID3 metadata tags to the given audio file"""
     audio = MP3(filepath, ID3=EasyID3)
+    # Adding tags
     for key, value in metadata.items():
         if key in ID3_CONVERT:
             audio[ID3_CONVERT[key]] = value
