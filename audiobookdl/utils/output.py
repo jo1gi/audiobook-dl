@@ -1,15 +1,14 @@
 import os
 import platform
-from . import logging
 from typing import List, Dict
 import subprocess
 
 ffmpeg_output = False
 
 LOCATION_DEFAULTS = {
-        'album': 'NA',
-        'artist': 'NA',
-        }
+    'album': 'NA',
+    'artist': 'NA',
+}
 
 def gen_output_filename(booktitle: str, file: Dict[str, str], template: str) -> str:
     """Generates an output filename based on different attributes of the

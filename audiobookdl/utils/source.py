@@ -1,6 +1,7 @@
 # Internal imports
 from . import networking, output, metadata, logging
 from .exceptions import DataNotPresent
+from .audiobook import AudiobookFile
 
 # External imports
 import requests
@@ -12,7 +13,7 @@ import re
 from http.cookiejar import MozillaCookieJar
 from rich.progress import Progress, BarColumn
 from rich.prompt import Confirm
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from multiprocessing.pool import ThreadPool
 from functools import partial
 from Crypto.Cipher import AES
@@ -48,26 +49,29 @@ class Source:
         self._session.cookies.update(cookie_jar)
         self._cookies_loaded = True
 
-    def create_filename(self, length: int, output_dir: str, file) -> Tuple[str, str]:
+    def create_filename(
+            self,
+            length: int,
+            index: int,
+            output_dir: str,
+            file: AudiobookFile,
+        ) -> Tuple[str, str]:
         if length == 1:
-            name = f"{self.title}.{file['ext']}"
-            path = f"{output_dir}.{file['ext']}"
+            name = f"{self.title}.{file.ext}"
+            path = f"{output_dir}.{file.ext}"
         else:
-            name = output.gen_output_filename(
-                self.title,
-                file,
-                "{booktitle} - Part {part}.{ext}"
-            )
+            name = f"{self.title} - Part {index}.{file.ext}"
             path = os.path.join(output_dir, name)
         return name, path
 
-    def download_file(self, args):
-        file, length, output_dir, progress = args
-        name, path = self.create_filename(length, output_dir, file)
-        headers = {} if "headers" not in file else file["headers"]
-        req = self._session.get(file["url"], headers=headers, stream=True)
+    def download_file(self, args: Tuple[AudiobookFile, int, int, str, Any]):
+        # Setting up variables
+        file, length, index, output_dir, progress = args
+        name, path = self.create_filename(length, index, output_dir, file)
+        req = self._session.get(file.url, headers=file.headers, stream=True)
         file_size = int(req.headers["Content-length"])
-        total = 0
+        total: float = 0
+        # Downloading file
         with open(path, "wb") as f:
             for chunk in req.iter_content(chunk_size=1024):
                 f.write(chunk)
@@ -75,27 +79,24 @@ class Source:
                 total += new
                 progress(new)
         progress(1-total)
-        if "encryption_key" in file:
+        # Decrypting file if necessary
+        if file.encryption_key and file.iv:
             with open(path, "rb") as f:
                 cipher = AES.new(
-                    file["encryption_key"],
+                    file.encryption_key,
                     AES.MODE_CBC,
-                    file["iv"]
+                    file.iv
                 )
                 decrypted = cipher.decrypt(f.read())
             with open(path, "wb") as f:
                 f.write(decrypted)
-        metadata.add_metadata(path, file)
+        # metadata.add_metadata(path, file)
         return name
 
-    def download_files(self, files, output_dir):
+    def download_files(self, files: List[AudiobookFile], output_dir: str) -> List[str]:
+        """Downloads `files` to `output_dir` and returns list of filenames"""
         self.setup_download_dir(output_dir)
-        info = [
-            "{task.description}",
-            BarColumn(),
-            "[progress.percentage]{task.percentage:>3.0f}%"
-        ]
-        with Progress(*info) as progress:
+        with Progress("{task.description}", BarColumn(), "[progress.percentage]{task.percentage:>3.0f}%") as progress:
             task = progress.add_task(
                 f"Downloading {len(files)} files - [blue]{self.title}",
                 total = len(files)
@@ -104,7 +105,8 @@ class Source:
             filenames = []
             p = partial(progress.advance, task)
             with ThreadPool(processes=20) as pool:
-                for i in pool.imap(self.download_file, [(f, len(files), output_dir, p) for f in files]):
+                arguments = [(f, len(files), n+1, output_dir, p) for n, f in enumerate(files)]
+                for i in pool.imap(self.download_file, arguments):
                     filenames.append(i)
             # Making sure progress is completed
             remaining: float = progress.tasks[0].remaining or 0
@@ -147,7 +149,7 @@ class Source:
         """Returns the filetype of the cover from `get_cover`"""
         return "jpg"
 
-    def get_files(self) -> List[Dict[str, str]]:
+    def get_files(self) -> List[AudiobookFile]:
         raise NotImplemented
 
     def get_chapters(self):

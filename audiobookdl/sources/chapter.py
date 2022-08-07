@@ -1,7 +1,9 @@
 from ..utils.source import Source
 from ..utils.exceptions import NoSourceFound, UserNotAuthorized
 from ..utils.logging import debug
+from ..utils.audiobook import AudiobookFile
 import re
+from typing import List
 
 class ChapterSource(Source):
     require_cookies = False
@@ -36,19 +38,18 @@ class ChapterSource(Source):
             "narrators": narrators
         }
 
-    def get_files(self):
+    def get_files(self) -> List[AudiobookFile]:
         files = []
-        for num, track in enumerate(self.meta["tracks"]):
+        for track in self.meta["tracks"]:
             url_resp = self.get_json(
                 f"https://api.prod.chapter.beat.no/v2/streams/offline/{track['id']}",
                 headers=self.headers
             )
-            files.append({
-                "url": url_resp["stream"]["url"],
-                "title": track["title"],
-                "part": num+1,
-                "ext": "mp4",
-            })
+            files.append(AudiobookFile(
+                url = url_resp["stream"]["url"],
+                title = track["title"],
+                ext = "m4v"
+            ))
         return files
 
     def get_cover(self):

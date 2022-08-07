@@ -2,9 +2,10 @@ from ..utils import logging
 from ..utils.source import Source
 from ..utils import logging
 from ..utils.exceptions import UserNotAuthorized, RequestError
+from ..utils.audiobook import AudiobookFile
 import requests.utils
 import base64
-from typing import Dict
+from typing import Dict, List
 
 class YourCloudLibrarySource(Source):
     requires_cookies = True
@@ -18,14 +19,13 @@ class YourCloudLibrarySource(Source):
     def get_title(self):
         return self.book_info["Title"]
 
-    def get_files(self):
+    def get_files(self) -> List[AudiobookFile]:
         files = []
-        for n, f in enumerate(self.playlist["playlist"]):
-            files.append({
-                "url": f["url"],
-                "part": n,
-                "ext": "mp3",
-            })
+        for f in self.playlist["playlist"]:
+            files.append(AudiobookFile(
+                url = f["url"],
+                ext = "mp3"
+            ))
         return files
 
     def get_metadata(self):

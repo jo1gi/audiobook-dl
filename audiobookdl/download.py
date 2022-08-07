@@ -30,37 +30,33 @@ def download(source: Source, options):
         output_format = os.path.splitext(filenames[0])[1][1:]
         if output_format == "ts":
             output_format = "mp3"
+    # Converting audio files to specified format
+    logging.log("Converting files")
+    filenames = output.convert_output(filenames, output_dir, output_format)
     # Single audiofile
     if options.combine or len(filenames) == 1:
         combined_audiobook(source, filenames, output_dir, output_format, options)
     # Multiple audiofiles
     else:
-        # Converting audio files to specified format
-        logging.log("Converting files")
-        filenames = output.convert_output(filenames, output_dir, output_format)
-        # Adding metadata to the files
         add_metadata_to_dir(source, filenames, output_dir)
 
 
 def combined_audiobook(source: Source,
                        filenames: List[str],
                        output_dir: str,
-                       output_format: Optional[str],
+                       output_format: str,
                        options):
     """Combines audiobook into a single audio file and embeds metadata"""
+    # Combining files
     output_file = f"{output_dir}.{output_format}"
     if len(filenames) > 1:
-        combine_files(filenames, output_dir, output_file)
+        logging.log("Combining files")
+        output.combine_audiofiles(filenames, output_dir, output_file)
+        if not os.path.exists(output_file):
+            raise FailedCombining
+    # Adding metadata
     embed_metadata_in_file(source, output_file, options)
     shutil.rmtree(output_dir)
-
-
-def combine_files(filenames: List[str], output_dir: str, output_file: str):
-    """Combines audiobook files and cleanes up afterward"""
-    logging.log("Combining files")
-    output.combine_audiofiles(filenames, output_dir, output_file)
-    if not os.path.exists(output_file):
-        raise FailedCombining
 
 
 def embed_metadata_in_file(source: Source, output_file: str, options):

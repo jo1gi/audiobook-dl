@@ -1,4 +1,6 @@
 from ..utils.source import Source
+from ..utils.audiobook import AudiobookFile
+from typing import List
 
 
 class LibrivoxSource(Source):
@@ -16,15 +18,14 @@ class LibrivoxSource(Source):
             ".book-page-book-cover img",
             data="src"))
 
-    def get_files(self):
+    def get_files(self) -> List[AudiobookFile]:
         parts = self.find_elems_in_page(self.url,
                                         ".chapter-download .chapter-name")
         files = []
-        for n, part in enumerate(parts):
-            files.append({
-                "title": part.text,
-                "url": part.get("href"),
-                "part": n,
-                "ext": "mp3",
-            })
+        for part in parts:
+            files.append(AudiobookFile(
+                url = part.get("href"),
+                title = part.text,
+                ext = "mp3"
+            ))
         return files

@@ -1,7 +1,9 @@
 from ..utils.source import Source
-from ..utils.exceptions import UserNotAuthorized
+from ..utils.exceptions import DataNotPresent, UserNotAuthorized
+from ..utils.audiobook import AudiobookFile
 import re
 import json
+from typing import List
 
 
 class OverdriveSource(Source):
@@ -11,6 +13,11 @@ class OverdriveSource(Source):
     ]
 
     def before(self):
+        prefix_re = re.search(self.match[0], self.url)
+        if prefix_re and prefix_re.group(0):
+            self.prefix = prefix_re.group(0)
+        else:
+            raise DataNotPresent
         raw = self.find_in_page(self.url, 'window.bData = {.+;')
         if raw is None:
             raise UserNotAuthorized
@@ -27,7 +34,7 @@ class OverdriveSource(Source):
             else:
                 self.toc.append(part["title"])
 
-    def get_title(self):
+    def get_title(self) -> str:
         return self.meta["title"]["main"]
 
     def get_metadata(self):
@@ -43,12 +50,11 @@ class OverdriveSource(Source):
             'narrator': narrators
         }
 
-    def get_cover(self):
-        cover_url = re.search(self.match[0], self.url).group(0) + \
-                self.meta['-odread-furbish-uri']
+    def get_cover(self) -> bytes:
+        cover_url = self.prefix + self.meta['-odread-furbish-uri']
         return self.get(cover_url)
 
-    def _get_previous_length(self, index):
+    def _get_previous_length(self, index) -> int:
         """Returns the ending point of the previous part"""
         if index == 0:
             return 0
@@ -67,14 +73,12 @@ class OverdriveSource(Source):
             chapters.append((start, chapter["title"]))
         return chapters
 
-    def get_files(self):
-        prefix = re.search(self.match[0], self.url).group(0)
+    def get_files(self) -> List[AudiobookFile]:
         files = []
         for num, part in enumerate(self.meta["spine"]):
-            files.append({
-                "url": f"{prefix}/{part['path']}",
-                "title": self.toc[num],
-                "part": num+1,
-                "ext": "mp3"
-            })
+            files.append(AudiobookFile(
+                url = f"{self.prefix}/{part['path']}",
+                title = self.toc[num],
+                ext = "mp3"
+            ))
         return files

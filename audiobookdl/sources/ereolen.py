@@ -1,8 +1,9 @@
 from ..utils.source import Source
 from ..utils.exceptions import UserNotAuthorized, RequestError
 from ..utils.logging import debug
+from ..utils.audiobook import AudiobookFile
 
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 import re
 
 class EreolenSource(Source):
@@ -29,9 +30,9 @@ class EreolenSource(Source):
             return None
         return self.get(self.meta["cover"])
 
-    def get_files(self):
+    def get_files(self) -> List[AudiobookFile]:
         if not self.book_id:
-            return None
+            return []
         return self.get_stream_files(
             f"https://audio.api.streaming.pubhub.dk/v1/stream/hls/{self.book_id}/playlist.m3u8"
         )

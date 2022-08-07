@@ -1,9 +1,10 @@
 from ..utils.source import Source
 from ..utils.exceptions import UserNotAuthorized, RequestError, DataNotPresent
 from ..utils import logging
+from ..utils.audiobook import AudiobookFile
 from PIL import Image
 import io
-from typing import Dict
+from typing import Dict, List
 
 class ScribdSource(Source):
     match = [
@@ -61,23 +62,29 @@ class ScribdSource(Source):
                 start_time += chapter["duration"]
         return chapters
 
-    def get_files(self):
+    def get_files(self) -> List[AudiobookFile]:
         if self._original:
             return self.get_stream_files(
                 self._stream_url,
                 headers={"Authorization": self._jwt})
         else:
             files = []
-            for part, i in enumerate(self.media["playlist"]):
+            for i in self.media["playlist"]:
+            # for _, i in enumerate(self.media["playlist"]):
                 chapter = i["chapter_number"]
-                chapter_str = "0"*(3-len(str(part)))+str(part)
-                files.append({
-                    "url": i["url"],
-                    "title": f"Chapter {chapter}",
-                    "part": chapter_str,
-                    "ext": "mp3",
-                    "album": self.get_title(),
-                })
+                # chapter_str = "0"*(3-len(str(part)))+str(part)
+                files.append(AudiobookFile(
+                    url = i["url"],
+                    title = f"Chapter {chapter}",
+                    ext = "mp3",
+                ))
+                # files.append({
+                #     "url": i["url"],
+                #     "title": f"Chapter {chapter}",
+                #     "part": chapter_str,
+                #     "ext": "mp3",
+                #     "album": self.get_title(),
+                # })
             return files
 
     def before(self):
