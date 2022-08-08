@@ -21,7 +21,7 @@ def find_compatible_source(url: str) -> Source:
 
 def get_cookie_path(options):
     """Find path to cookie file"""
-    if options.cookie_file is not None and os.path.exists(options.cookie_path):
+    if options.cookie_file is not None and os.path.exists(options.cookie_file):
         return options.cookie_file
     if os.path.exists("./cookies.txt"):
         return "./cookies.txt"
