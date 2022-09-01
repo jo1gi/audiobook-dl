@@ -52,7 +52,7 @@ class ChapterSource(Source):
             ))
         return files
 
-    def get_cover(self):
+    def get_cover(self) -> bytes:
         return self.get(self.meta["cover"]["w800"])
 
     def before(self):

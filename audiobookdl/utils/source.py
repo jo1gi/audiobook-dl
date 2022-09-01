@@ -42,7 +42,7 @@ class Source:
         self.match_num = match_num
         self._session = requests.Session()
 
-    def load_cookie_file(self, cookie_file):
+    def load_cookie_file(self, cookie_file: str):
         """Loads cookies from a cookie file into session"""
         cookie_jar = MozillaCookieJar()
         cookie_jar.load(cookie_file, ignore_expires=True)

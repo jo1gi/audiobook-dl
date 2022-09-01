@@ -8,7 +8,7 @@ import base64
 from typing import Dict, List
 
 class YourCloudLibrarySource(Source):
-    requires_cookies = True
+    require_cookies = False
     require_username_and_password = True
     match = [
         r"https?://ebook.yourcloudlibrary.com/library/[^/]+/AudioPlayer/.+"
