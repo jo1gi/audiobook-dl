@@ -1,22 +1,15 @@
 # Internal imports
-from . import networking, output, metadata, logging
+from . import networking, logging
 from .exceptions import DataNotPresent
 from .audiobook import AudiobookFile
 
 # External imports
 import requests
-import shutil
 import lxml.html
 from lxml.cssselect import CSSSelector
-import os
 import re
 from http.cookiejar import MozillaCookieJar
-from rich.progress import Progress, BarColumn
-from rich.prompt import Confirm
-from typing import Any, Dict, List, Optional, Tuple
-from multiprocessing.pool import ThreadPool
-from functools import partial
-from Crypto.Cipher import AES
+from typing import Dict, List, Optional
 
 class Source:
     """An abstract class for downloading audiobooks from a specific
@@ -48,70 +41,6 @@ class Source:
         cookie_jar.load(cookie_file, ignore_expires=True)
         self._session.cookies.update(cookie_jar)
         self._cookies_loaded = True
-
-    def create_filename(
-            self,
-            length: int,
-            index: int,
-            output_dir: str,
-            file: AudiobookFile,
-        ) -> Tuple[str, str]:
-        if length == 1:
-            name = f"{self.title}.{file.ext}"
-            path = f"{output_dir}.{file.ext}"
-        else:
-            name = f"{self.title} - Part {index}.{file.ext}"
-            path = os.path.join(output_dir, name)
-        return name, path
-
-    def download_file(self, args: Tuple[AudiobookFile, int, int, str, Any]):
-        # Setting up variables
-        file, length, index, output_dir, progress = args
-        name, path = self.create_filename(length, index, output_dir, file)
-        req = self._session.get(file.url, headers=file.headers, stream=True)
-        file_size = int(req.headers["Content-length"])
-        total: float = 0
-        # Downloading file
-        with open(path, "wb") as f:
-            for chunk in req.iter_content(chunk_size=1024):
-                f.write(chunk)
-                new = len(chunk)/file_size
-                total += new
-                progress(new)
-        progress(1-total)
-        # Decrypting file if necessary
-        if file.encryption_key and file.iv:
-            with open(path, "rb") as f:
-                cipher = AES.new(
-                    file.encryption_key,
-                    AES.MODE_CBC,
-                    file.iv
-                )
-                decrypted = cipher.decrypt(f.read())
-            with open(path, "wb") as f:
-                f.write(decrypted)
-        # metadata.add_metadata(path, file)
-        return name
-
-    def download_files(self, files: List[AudiobookFile], output_dir: str) -> List[str]:
-        """Downloads `files` to `output_dir` and returns list of filenames"""
-        self.setup_download_dir(output_dir)
-        with Progress("{task.description}", BarColumn(), "[progress.percentage]{task.percentage:>3.0f}%") as progress:
-            task = progress.add_task(
-                f"Downloading {len(files)} files - [blue]{self.title}",
-                total = len(files)
-            )
-            # Downloading files
-            filenames = []
-            p = partial(progress.advance, task)
-            with ThreadPool(processes=20) as pool:
-                arguments = [(f, len(files), n+1, output_dir, p) for n, f in enumerate(files)]
-                for i in pool.imap(self.download_file, arguments):
-                    filenames.append(i)
-            # Making sure progress is completed
-            remaining: float = progress.tasks[0].remaining or 0
-            progress.advance(task, remaining)
-            return filenames
 
     def before(self):
         """Operations to be run before the audiobook is downloaded"""
@@ -157,15 +86,6 @@ class Source:
         the title of the chapter"""
         pass
 
-    def setup_download_dir(self, path):
-        """Creates output folder"""
-        if os.path.isdir(path):
-            answer = Confirm.ask(f"The folder '{path}' already exists. Do you want to override it?")
-            if answer:
-                shutil.rmtree(path)
-            else:
-                exit()
-        os.makedirs(path)
 
     def _get_page(self, url: str, **kwargs) -> bytes:
         """Downloads a page and caches it"""

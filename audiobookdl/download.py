@@ -1,11 +1,21 @@
 from .utils import output
 from .utils import logging
 from .utils import metadata
-from .utils.source import Source
+from .utils.audiobook import AudiobookFile
 from .utils.exceptions import MissingCookies, NoFilesFound, FailedCombining
+from .utils.source import Source
 import os
 import shutil
-from typing import List, Optional
+from functools import partial
+from typing import Any, List, Tuple, Union
+from rich.progress import Progress, BarColumn, ProgressColumn
+from rich.prompt import Confirm
+from multiprocessing.pool import ThreadPool
+from Crypto.Cipher import AES
+
+DOWNLOAD_PROGRESS: List[Union[str, ProgressColumn]] = [
+    "{task.description}", BarColumn(), "[progress.percentage]{task.percentage:>3.0f}%"
+]
 
 
 def download(source: Source, options):
@@ -22,7 +32,7 @@ def download(source: Source, options):
             options.output_template,
             source.metadata)
     # Downloading audio files
-    filenames = source.download_files(files, output_dir)
+    filenames = download_files_output(source, files, output_dir)
     # Finding output format
     if options.output_format:
         output_format = options.output_format
@@ -40,6 +50,95 @@ def download(source: Source, options):
     else:
         add_metadata_to_dir(source, filenames, output_dir)
 
+def download_files_output(
+        source: Source,
+        files: List[AudiobookFile],
+        output_dir: str
+    ) -> List[str]:
+    """Download `files` with progress bar in terminal"""
+    with Progress(*DOWNLOAD_PROGRESS) as progress:
+        task = progress.add_task(
+            f"Downloading {len(files)} files - [blue]{source.title}",
+            total = len(files)
+        )
+        # Function for updating progress bar
+        p = partial(progress.advance, task)
+        # List of new filenames
+        filenames = download_files(source, p, files, output_dir)
+        remaining: float = progress.tasks[0].remaining or 0
+        progress.advance(task, remaining)
+        return filenames
+
+def setup_download_dir(path: str):
+    """Creates output folder"""
+    if os.path.isdir(path):
+        answer = Confirm.ask(f"The folder '{path}' already exists. Do you want to override it?")
+        if answer:
+            shutil.rmtree(path)
+        else:
+            exit()
+    os.makedirs(path)
+
+def create_filename(
+        title: str,
+        length: int,
+        index: int,
+        output_dir: str,
+        file: AudiobookFile,
+    ) -> Tuple[str, str]:
+    """Create filename of audiobook file"""
+    if length == 1:
+        name = f"{title}.{file.ext}"
+        path = f"{output_dir}.{file.ext}"
+    else:
+        name = f"{title} - Part {index}.{file.ext}"
+        path = os.path.join(output_dir, name)
+    return name, path
+
+def download_file(args: Tuple[AudiobookFile, int, int, str, Any, Source]):
+    # Setting up variables
+    file, length, index, output_dir, progress, source = args
+    name, path = create_filename(source.title, length, index, output_dir, file)
+    req = source._session.get(file.url, headers=file.headers, stream=True)
+    file_size = int(req.headers["Content-length"])
+    total: float = 0
+    # Downloading file
+    with open(path, "wb") as f:
+        for chunk in req.iter_content(chunk_size=1024):
+            f.write(chunk)
+            new = len(chunk)/file_size
+            total += new
+            progress(new)
+    progress(1-total)
+    # Decrypting file if necessary
+    if file.encryption_key and file.iv:
+        decrypt_file(path, file.encryption_key, file.iv)
+    # metadata.add_metadata(path, file)
+    return name
+
+def decrypt_file(path, key, iv):
+    with open(path, "rb") as f:
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        decrypted = cipher.decrypt(f.read())
+    with open(path, "wb") as f:
+        f.write(decrypted)
+
+def download_files(
+        source: Source,
+        update,
+        files: List[AudiobookFile],
+        output_dir: str
+    ) -> List[str]:
+    """Downloads and saves audiobook files to disk"""
+    setup_download_dir(output_dir)
+    filenames = []
+    with ThreadPool(processes=20) as pool:
+        arguments = []
+        for n, f in enumerate(files):
+            arguments.append((f, len(files), n+1, output_dir, update, source))
+        for i in pool.imap(download_file, arguments):
+            filenames.append(i)
+    return filenames
 
 def combined_audiobook(source: Source,
                        filenames: List[str],
