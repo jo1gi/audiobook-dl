@@ -7,10 +7,12 @@ import base64
 from typing import Dict, List
 
 class YourCloudLibrarySource(Source):
-    require_cookies = False
-    require_username_and_password = True
     match = [
         r"https?://ebook.yourcloudlibrary.com/library/[^/]+/AudioPlayer/.+"
+    ]
+    _authentication_methods = [
+        "cookies",
+        "login"
     ]
     meta: Dict
     playlist: Dict
@@ -78,21 +80,19 @@ class YourCloudLibrarySource(Source):
             raise UserNotAuthorized
         return book_info
 
-    def _authenticate(self):
+    def _login(self, username: str, password: str):
         library = self._get_library_id()
         resp = self.post(
             f"https://ebook.yourcloudlibrary.com/uisvc/{library}/Patron/LoginPatron",
             data = {
-                "UserId": self.username,
-                "Password": self.password
+                "UserId": username,
+                "Password": password
             }
         )
         logging.debug(f"Authentication response {resp}")
 
 
     def before(self):
-        if self.username and self.password:
-            self._authenticate()
         self.book_info = self._get_bookinfo()
         token = self._get_fullfillmenttoken()
         library = self._get_library_id()

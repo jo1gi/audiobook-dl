@@ -53,9 +53,10 @@ def run():
         if cookie_path is not None:
             s.load_cookie_file(cookie_path)
         # Adding username and password
-        if s.require_username_and_password and cookie_path is None:
-            s.username = get_or_ask(options.username, "Username", False)
-            s.password = get_or_ask(options.password, "Password", True)
+        if s.supports_login and not s.is_authenticated():
+            username = get_or_ask(options.username, "Username", False)
+            password = get_or_ask(options.password, "Password", True)
+            s.login(username, password)
         # Running program
         if options.print_output:
             print_output(s, options.output)

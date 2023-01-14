@@ -9,7 +9,6 @@ class EreolenSource(Source):
     match = [
         r"https?://ereolen.dk/ting/object/.+"
     ]
-    require_cookies = True
 
     def get_title(self):
         if not self.meta:

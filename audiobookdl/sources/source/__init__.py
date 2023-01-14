@@ -17,16 +17,9 @@ class Source:
 
     # A list of regexes that indicates which website a sevice supports
     match: List[str] = []
-    # True if username and password is required to use the source
-    require_username_and_password = False
-    # Username for source
-    username: Optional[str] = None
-    # Password for source
-    password: Optional[str] = None
-    # If cookies need to be loaded to be able to use source
-    require_cookies = False
+    _authentication_methods: List[str] = [ "cookies" ]
     # If cookies are loaded
-    _cookies_loaded = False
+    _authenticated = False
     # Cache of previously loaded pages
     _pages: Dict[str, bytes] = {}
 
@@ -35,12 +28,41 @@ class Source:
         self.match_num = match_num
         self._session = requests.Session()
 
+    @property
+    def requires_authentication(self):
+        """Returns `True` if this source requires authentication to download books"""
+        return len(self._authentication_methods) > 0
+
+    @property
+    def authenticated(self):
+        """Returns `True` if the source has been authenticated"""
+        return self._authenticated
+
+    @property
+    def supports_cookies(self):
+        return "cookies" in self._authentication_methods
+
     def load_cookie_file(self, cookie_file: str):
         """Loads cookies from a cookie file into session"""
-        cookie_jar = MozillaCookieJar()
-        cookie_jar.load(cookie_file, ignore_expires=True)
-        self._session.cookies.update(cookie_jar)
-        self._cookies_loaded = True
+        if self.supports_cookies:
+            cookie_jar = MozillaCookieJar()
+            cookie_jar.load(cookie_file, ignore_expires=True)
+            self._session.cookies.update(cookie_jar)
+            self._authenticated = True
+
+    @property
+    def supports_login(self):
+        return "login" in self._authentication_methods
+
+    def _login(self, username: str, password: str):
+        pass
+
+    def login(self, username: str, password: str):
+        """Authenticate with source using username and password"""
+        if self.supports_login:
+            self._login(username, password)
+            self._authenticated = True
+
 
     def before(self):
         """Operations to be run before the audiobook is downloaded"""
@@ -49,15 +71,10 @@ class Source:
     def get_title(self) -> str:
         return ""
 
-    @property
-    def title(self) -> str:
-        return self.get_title()
-
     def get_metadata(self) -> Dict[str, str]:
         """Returns metadata of the audiobook"""
         return {}
 
-    @property
     def metadata(self) -> Dict[str, str]:
         m = self.get_metadata()
         if "authors" in m:
@@ -66,7 +83,7 @@ class Source:
             m["narrator"] = "; ".join(m["narrators"])
         return {
             **m,
-            "title": self.title,
+            "title": self.get_title(),
             "genre": "Audiobook"
         }
 

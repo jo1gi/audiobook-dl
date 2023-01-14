@@ -6,7 +6,6 @@ BASEURL = "https://www.audiobooks.com/book/stream/"
 
 
 class AudiobooksdotcomSource(Source):
-    require_cookies = True
     match = [
         r"{}\d+(/\d)?".format(BASEURL)
     ]

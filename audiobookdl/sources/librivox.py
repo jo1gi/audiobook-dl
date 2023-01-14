@@ -5,7 +5,7 @@ from typing import List
 
 
 class LibrivoxSource(Source):
-    require_cookies = False
+    _authentication_methods: List[str] = []
     match = [
         r"https?://librivox.org/.+"
     ]

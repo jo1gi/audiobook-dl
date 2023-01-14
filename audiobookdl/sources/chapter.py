@@ -6,18 +6,19 @@ import re
 from typing import List
 
 class ChapterSource(Source):
-    require_cookies = False
-    require_username_and_password = True
+    _authentication_methods = [
+        "login"
+    ]
     match = [
         r"https://chapter.dk/bog/\d+"
     ]
 
-    def _authenticate(self) -> str:
+    def _login(self, username, password):
         auth_resp = self.post_json(
             "https://api.prod.chapter.beat.no/v2/oauth2/token",
             data = {
-                "username": self.username,
-                "password": self.password,
+                "username": username,
+                "password": password,
                 "grant_type": "password",
                 "client_secret": "b1e795a047c00a0170b2d41cdc1a04237c0b499f",
                 "client_id": "e8041ed18678d963428eda7645b5367d"
@@ -25,7 +26,8 @@ class ChapterSource(Source):
         )
         if not "access_token" in auth_resp:
             raise UserNotAuthorized
-        return auth_resp["access_token"]
+        access_token: str = auth_resp["access_token"]
+        self.headers = { "Authorization": f"Bearer {access_token}" }
 
     def get_title(self) -> str:
         return self.meta["title"]
@@ -56,8 +58,6 @@ class ChapterSource(Source):
         return self.get(self.meta["cover"]["w800"])
 
     def before(self):
-        access_token: str = self._authenticate()
-        self.headers = { "Authorization": f"Bearer {access_token}" }
         id_match = re.search(r"bog/(\d+)", self.url)
         if id_match and id_match.group(1):
             iden = id_match.group(1)

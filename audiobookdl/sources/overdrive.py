@@ -8,7 +8,6 @@ from typing import List
 
 
 class OverdriveSource(Source):
-    require_cookies = True
     match = [
         r"https://.+\.listen\.overdrive\.com"
     ]

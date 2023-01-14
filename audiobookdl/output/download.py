@@ -19,7 +19,7 @@ DOWNLOAD_PROGRESS: List[Union[str, ProgressColumn]] = [
 def download(source: Source, options):
     """Downloads audiobook from source object"""
     # Downloading audiobook info
-    if source.require_cookies and not source._cookies_loaded:
+    if source.requires_authentication and not source.authenticated:
         raise MissingCookies
     logging.log("Downloading metadata")
     source.before()
@@ -28,7 +28,7 @@ def download(source: Source, options):
         raise NoFilesFound
     output_dir = output.gen_output_location(
             options.output_template,
-            source.metadata)
+            source.metadata())
     # Downloading audio files
     filenames = download_files_output(source, files, output_dir)
     # Finding output format
@@ -56,7 +56,7 @@ def download_files_output(
     """Download `files` with progress bar in terminal"""
     with Progress(*DOWNLOAD_PROGRESS) as progress:
         task = progress.add_task(
-            f"Downloading {len(files)} files - [blue]{source.title}",
+            f"Downloading {len(files)} files - [blue]{source.get_title()}",
             total = len(files)
         )
         # Function for updating progress bar
@@ -96,7 +96,7 @@ def create_filename(
 def download_file(args: Tuple[AudiobookFile, int, int, str, Any, Source]):
     # Setting up variables
     file, length, index, output_dir, progress, source = args
-    name, path = create_filename(source.title, length, index, output_dir, file)
+    name, path = create_filename(source.get_title(), length, index, output_dir, file)
     req = source._session.get(file.url, headers=file.headers, stream=True)
     file_size = int(req.headers["Content-length"])
     total: float = 0
@@ -111,7 +111,6 @@ def download_file(args: Tuple[AudiobookFile, int, int, str, Any, Source]):
     # Decrypting file if necessary
     if file.encryption_key and file.iv:
         decrypt_file(path, file.encryption_key, file.iv)
-    # metadata.add_metadata(path, file)
     return name
 
 def decrypt_file(path, key, iv):
@@ -159,7 +158,7 @@ def combined_audiobook(source: Source,
 def embed_metadata_in_file(source: Source, output_file: str, options):
     """Embed metadata into combined audiobook file"""
     if source.metadata is not None:
-        metadata.add_metadata(output_file, source.metadata)
+        metadata.add_metadata(output_file, source.metadata())
     cover = source.get_cover()
     if cover is not None:
         logging.log("Embedding cover")
@@ -175,7 +174,7 @@ def add_metadata_to_dir(source: Source,
                         output_dir: str):
     """Adds metadata to dir of audiobook files"""
     for i in filenames:
-        metadata.add_metadata(os.path.join(output_dir, i), source.metadata)
+        metadata.add_metadata(os.path.join(output_dir, i), source.metadata())
     cover = source.get_cover()
     if cover is not None:
         logging.log("Downloading cover")

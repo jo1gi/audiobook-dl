@@ -5,8 +5,9 @@ from typing import List, Optional
 import base64
 from Crypto.Cipher import AES
 
+LOGIN_URL = "https://www.chirpbooks.com/users/sign_in"
+
 class ChirpSource(Source):
-    require_cookies = True
     match = [
         r"https://www.chirpbooks.com/player/\d+"
     ]
@@ -69,6 +70,7 @@ class ChirpSource(Source):
             ))
         return files
 
+
     def get_chapters(self):
         chapters = []
         start_time = 0
@@ -77,6 +79,7 @@ class ChirpSource(Source):
             chapters.append((start_time, title))
             start_time += track["durationMs"]
         return chapters
+
 
     def calc_iv(self):
         user_id = self.user_id
