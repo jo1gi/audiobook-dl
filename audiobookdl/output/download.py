@@ -1,7 +1,6 @@
 from audiobookdl import AudiobookFile, Source, logging
 from audiobookdl.exceptions import MissingCookies, NoFilesFound, FailedCombining
-from .utils import output
-from .utils import metadata
+from . import metadata, output
 
 import os
 import shutil

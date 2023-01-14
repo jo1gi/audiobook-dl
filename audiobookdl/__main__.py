@@ -1,8 +1,8 @@
-from audiobookdl import Source, logging, args
+from audiobookdl import Source, logging, args, output
 from audiobookdl.exceptions import AudiobookDLException, NoSourceFound
-from .download import download
+from .utils import dependencies
+from .output.download import download
 from .sources import get_source_classes
-from .utils import dependencies, output
 
 import os
 import re
@@ -43,7 +43,7 @@ def run():
     # Applying arguments as global constants
     logging.debug_mode = options.debug
     logging.quiet_mode = options.quiet
-    output.ffmpeg_output = options.ffmpeg_output or options.debug
+    logging.ffmpeg_output = options.ffmpeg_output or options.debug
     try:
         dependencies.check_dependencies(options)
         logging.log("Finding compatible source")

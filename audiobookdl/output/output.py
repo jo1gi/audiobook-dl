@@ -15,7 +15,7 @@ def gen_output_filename(booktitle: str, file: Dict[str, str], template: str) -> 
     file"""
     arguments = {**file, **{"booktitle": booktitle}}
     filename = template.format(**arguments)
-    return fix_output(filename)
+    return _fix_output(filename)
 
 def combine_audiofiles(filenames: List[str], tmp_dir: str, output_path: str):
     """Combines the given audiofiles in `path` into a new file"""
@@ -49,20 +49,20 @@ def gen_output_location(template: str, metadata: Dict[str, str]) -> str:
     audiobook"""
     if metadata is None:
         metadata = {}
-    metadata["title"] = fix_output(metadata["title"])
+    metadata["title"] = _fix_output(metadata["title"])
     metadata = {**LOCATION_DEFAULTS, **metadata}
     return template.format(**metadata)
 
 
-def fix_output(title: str) -> str:
+def _fix_output(title: str) -> str:
     """Returns title without characters system can't handle"""
     title = title.replace("/", "-")
     if platform.system() == "Windows":
-        title = remove_chars(title, ':*\\?<>|"\'’')
+        title = _remove_chars(title, ':*\\?<>|"\'’')
     return title
 
 
-def remove_chars(s: str, chars: str) -> str:
+def _remove_chars(s: str, chars: str) -> str:
     """Removes `chars` from `s`"""
     for i in chars:
         s = s.replace(i, "")
