@@ -6,11 +6,16 @@ from . import logging, exceptions
 from .audiobook import AudiobookFile
 
 def post(self, url, **kwargs):
+    """Make post request with `Source` session"""
     resp = self._session.post(url, **kwargs)
-    return resp.content
+    if resp.status_code == 200:
+        return resp.content
+    logging.debug(f"Failed to download data from: {url}\nResponse:\n{resp.content}")
+    raise exceptions.RequestError
 
 
 def get(self, url, **kwargs) -> bytes:
+    """Make get request with `Source` session"""
     resp = self._session.get(url, **kwargs)
     if resp.status_code == 200:
         return resp.content
@@ -21,8 +26,6 @@ def get(self, url, **kwargs) -> bytes:
 def post_json(self, url, **kwargs):
     """Downloads data with the given url and converts it to json"""
     resp = self.post(url, **kwargs)
-    if resp is None:
-        raise exceptions.RequestError
     return json.loads(resp.decode('utf8'))
 
 
@@ -41,16 +44,8 @@ def get_stream_files(self, url, headers={}) -> List[AudiobookFile]:
             ext = os.path.splitext(seg.absolute_uri)[1][1:],
             headers = headers
         )
-        # current = {
-        #     "url": seg.absolute_uri,
-        #     "part": n,
-        #     "ext": os.path.splitext(seg.absolute_uri)[1][1:],
-        #     "headers": headers,
-        # }
         if seg.key:
             current.encryption_key = self._get_page(seg.key.absolute_uri, headers=headers)
             current.iv = int(seg.key.iv, 0).to_bytes(16, byteorder='big')
-            # current["encryption_key"] = self._get_page(seg.key.absolute_uri, headers=headers)
-            # current["iv"] = int(seg.key.iv, 0).to_bytes(16, byteorder='big')
         files.append(current)
     return files
