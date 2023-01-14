@@ -1,9 +1,9 @@
-from ..utils.source import Source
-from ..utils.exceptions import UserNotAuthorized, RequestError, DataNotPresent
-from ..utils import logging
-from ..utils.audiobook import AudiobookFile
-from PIL import Image
+from .source import Source
+from audiobookdl import AudiobookFile, logging
+from audiobookdl.exceptions import UserNotAuthorized, RequestError, DataNotPresent
+
 import io
+from PIL import Image
 from typing import Dict, List
 
 class ScribdSource(Source):

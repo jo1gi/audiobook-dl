@@ -1,5 +1,6 @@
-from ..utils.source import Source
-from ..utils.audiobook import AudiobookFile
+from .source import Source
+from audiobookdl import AudiobookFile
+
 from typing import List
 
 

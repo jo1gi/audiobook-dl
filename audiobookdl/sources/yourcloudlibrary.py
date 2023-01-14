@@ -1,8 +1,7 @@
-from ..utils import logging
-from ..utils.source import Source
-from ..utils import logging
-from ..utils.exceptions import UserNotAuthorized, RequestError
-from ..utils.audiobook import AudiobookFile
+from .source import Source
+from audiobookdl import AudiobookFile, logging
+from audiobookdl.exceptions import UserNotAuthorized, RequestError
+
 import requests.utils
 import base64
 from typing import Dict, List

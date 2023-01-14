@@ -1,6 +1,7 @@
-from ..utils.source import Source
-from ..utils.exceptions import DataNotPresent, UserNotAuthorized
-from ..utils.audiobook import AudiobookFile
+from .source import Source
+from audiobookdl import AudiobookFile
+from audiobookdl.exceptions import DataNotPresent, UserNotAuthorized
+
 import re
 import json
 from typing import List

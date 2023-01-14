@@ -1,4 +1,4 @@
-from ..utils.source import Source
+from .source import Source
 import re
 from urllib.parse import unquote
 

@@ -1,6 +1,6 @@
-from ..utils.source import Source
-from ..utils.logging import debug
-from ..utils.audiobook import AudiobookFile
+from .source import Source
+from audiobookdl import AudiobookFile, logging
+
 from typing import List, Optional
 import base64
 from Crypto.Cipher import AES
@@ -85,11 +85,11 @@ class ChirpSource(Source):
 
     def before(self):
         self.book_id = int(self.find_elem_in_page(self.url, "div.user-audiobook", "data-audiobook-id"))
-        debug(f"{self.book_id=}")
+        logging.debug(f"{self.book_id=}")
         self.user_id = int(self.find_in_page(self.url, r'"id":(\d+)', 1))
-        debug(f"{self.user_id=}")
+        logging.debug(f"{self.user_id=}")
         self.tracks = self.get_tracks(self.book_id)
         self.iv = self.calc_iv()
-        debug(f"{self.iv=}")
+        logging.debug(f"{self.iv=}")
         self.key = bytes(self.find_elem_in_page(self.url, "div.user-audiobook", "data-dk"), "UTF-8")
-        debug(f"{self.key=}")
+        logging.debug(f"{self.key=}")

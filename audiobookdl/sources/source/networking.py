@@ -1,9 +1,9 @@
+from audiobookdl import AudiobookFile, exceptions, logging
+
 import json
 import os
 import m3u8
 from typing import List
-from . import logging, exceptions
-from .audiobook import AudiobookFile
 
 def post(self, url, **kwargs):
     """Make post request with `Source` session"""

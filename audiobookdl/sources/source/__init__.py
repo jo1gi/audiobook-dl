@@ -1,7 +1,7 @@
 # Internal imports
-from . import networking, logging
-from .exceptions import DataNotPresent
-from .audiobook import AudiobookFile
+from . import networking
+from audiobookdl import logging, AudiobookFile
+from audiobookdl.exceptions import DataNotPresent
 
 # External imports
 import requests
@@ -9,7 +9,7 @@ import lxml.html
 from lxml.cssselect import CSSSelector
 import re
 from http.cookiejar import MozillaCookieJar
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 class Source:
     """An abstract class for downloading audiobooks from a specific
@@ -90,7 +90,7 @@ class Source:
     def _get_page(self, url: str, **kwargs) -> bytes:
         """Downloads a page and caches it"""
         if url not in self._pages:
-            resp = self._session.get(url, **kwargs).content
+            resp = self.get(url, **kwargs)
             self._pages[url] = resp
         return self._pages[url]
 
@@ -105,22 +105,20 @@ class Source:
             return elem.text
         return elem.get(data)
 
-    def find_elems_in_page(self, url, selector, **kwargs):
+    def find_elems_in_page(self, url, selector, **kwargs) -> List[Any]:
         sel = CSSSelector(selector)
-        page = self._get_page(url, **kwargs)
-        if page is None:
-            return []
+        page: bytes = self._get_page(url, **kwargs)
         tree = lxml.html.fromstring(page.decode("utf8"))
         results = sel(tree)
         return results
 
-    def find_in_page(self, url, regex, **kwargs):
+    def find_in_page(self, url, regex, group_index=0, **kwargs) -> str:
         """Find some text in a page based on a regex"""
         m = re.search(regex, self._get_page(url, **kwargs).decode("utf8"))
         if m is None:
             logging.debug(f"Could not find match from {url} with {regex}")
             raise DataNotPresent
-        return m.group(0)
+        return m.group(group_index)
 
     def find_all_in_page(self, url, regex, **kwargs):
         """Finds all places in a page that matches the regex"""

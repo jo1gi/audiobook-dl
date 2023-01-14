@@ -1,7 +1,7 @@
-from ..utils.source import Source
-from ..utils.exceptions import NoSourceFound, UserNotAuthorized
-from ..utils.logging import debug
-from ..utils.audiobook import AudiobookFile
+from .source import Source
+from audiobookdl import AudiobookFile, logging
+from audiobookdl.exceptions import NoSourceFound, UserNotAuthorized
+
 import re
 from typing import List
 
@@ -61,7 +61,7 @@ class ChapterSource(Source):
         id_match = re.search(r"bog/(\d+)", self.url)
         if id_match and id_match.group(1):
             iden = id_match.group(1)
-            debug(f"{iden=}")
+            logging.debug(f"{iden=}")
         else:
             raise NoSourceFound
         self.meta = self.get_json(

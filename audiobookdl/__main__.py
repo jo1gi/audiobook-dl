@@ -1,12 +1,13 @@
-import re
-import os
-from typing import Optional
-from .sources.__init__ import get_source_classes
-from .utils import args, dependencies, logging, output
-from .utils.exceptions import AudiobookDLException, NoSourceFound
-from .utils.source import Source
+from audiobookdl import Source, logging, args
+from audiobookdl.exceptions import AudiobookDLException, NoSourceFound
 from .download import download
+from .sources import get_source_classes
+from .utils import dependencies, output
+
+import os
+import re
 from rich.prompt import Prompt
+from typing import Optional
 
 
 def find_compatible_source(url: str) -> Source:
@@ -39,11 +40,10 @@ def run():
     if options.url is None:
         logging.simple_help()
         exit()
-    # Applying arguments as constants
+    # Applying arguments as global constants
     logging.debug_mode = options.debug
     logging.quiet_mode = options.quiet
     output.ffmpeg_output = options.ffmpeg_output or options.debug
-    # Find source
     try:
         dependencies.check_dependencies(options)
         logging.log("Finding compatible source")

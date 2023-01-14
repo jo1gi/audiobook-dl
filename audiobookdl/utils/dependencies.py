@@ -1,6 +1,6 @@
 import shutil
-from . import logging
-from .exceptions import MissingDependency
+from audiobookdl import logging
+from audiobookdl.exceptions import MissingDependency
 
 
 def program_in_path(program) -> bool:
