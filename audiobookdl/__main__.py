@@ -2,7 +2,7 @@ import re
 import os
 from typing import Optional
 from .sources.__init__ import get_source_classes
-from .utils import args, dependencies, logging, output, messages
+from .utils import args, dependencies, logging, output
 from .utils.exceptions import AudiobookDLException, NoSourceFound
 from .utils.source import Source
 from .download import download
@@ -37,7 +37,7 @@ def run():
     # Parsing arguments
     options = args.parse_arguments()
     if options.url is None:
-        messages.simple_help()
+        logging.simple_help()
         exit()
     # Applying arguments as constants
     logging.debug_mode = options.debug

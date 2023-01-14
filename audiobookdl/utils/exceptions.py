@@ -1,4 +1,4 @@
-from .messages import print_error
+from .logging import print_error
 
 class AudiobookDLException(Exception):
     error_description = "unknown"
