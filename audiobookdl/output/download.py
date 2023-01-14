@@ -48,12 +48,23 @@ def download(source: Source, options):
     else:
         add_metadata_to_dir(source, filenames, output_dir)
 
+def setup_download_dir(path: str):
+    """Creates output folder"""
+    if os.path.isdir(path):
+        answer = Confirm.ask(f"The folder '{path}' already exists. Do you want to override it?")
+        if answer:
+            shutil.rmtree(path)
+        else:
+            exit()
+    os.makedirs(path)
+
 def download_files_output(
         source: Source,
         files: List[AudiobookFile],
         output_dir: str
     ) -> List[str]:
     """Download `files` with progress bar in terminal"""
+    setup_download_dir(output_dir)
     with Progress(*DOWNLOAD_PROGRESS) as progress:
         task = progress.add_task(
             f"Downloading {len(files)} files - [blue]{source.get_title()}",
@@ -67,15 +78,6 @@ def download_files_output(
         progress.advance(task, remaining)
         return filenames
 
-def setup_download_dir(path: str):
-    """Creates output folder"""
-    if os.path.isdir(path):
-        answer = Confirm.ask(f"The folder '{path}' already exists. Do you want to override it?")
-        if answer:
-            shutil.rmtree(path)
-        else:
-            exit()
-    os.makedirs(path)
 
 def create_filename(
         title: str,
@@ -127,7 +129,6 @@ def download_files(
         output_dir: str
     ) -> List[str]:
     """Downloads and saves audiobook files to disk"""
-    setup_download_dir(output_dir)
     filenames = []
     with ThreadPool(processes=20) as pool:
         arguments = []
