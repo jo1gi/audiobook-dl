@@ -8,6 +8,9 @@ from Crypto.Cipher import AES
 LOGIN_URL = "https://www.chirpbooks.com/users/sign_in"
 
 class ChirpSource(Source):
+    _authentication_methods: List[str] = [
+        "cookies", "login"
+    ]
     match = [
         r"https://www.chirpbooks.com/player/\d+"
     ]
