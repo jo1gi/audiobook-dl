@@ -1,5 +1,5 @@
 [red]ERROR: User not authorized[/red]
 
 Make sure you have given the correct cookies with the [green]--cookie[/green]
-argument, and have all the right permissions to access the book you are trying
-to download.
+argument or with [green]--username[/green] and [green]--password[/green], and
+have all the right permissions to access the book you are trying to download.

@@ -15,9 +15,6 @@ class DataNotPresent(AudiobookDLException):
 class FailedCombining(AudiobookDLException):
     error_description = "failed_combining"
 
-class MissingCookies(AudiobookDLException):
-    error_description = "missing_cookies"
-
 class MissingDependency(AudiobookDLException):
     error_description = "missing_dependency"
 

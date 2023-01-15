@@ -1,5 +1,5 @@
 from audiobookdl import AudiobookFile, Source, logging
-from audiobookdl.exceptions import MissingCookies, NoFilesFound, FailedCombining
+from audiobookdl.exceptions import UserNotAuthorized, NoFilesFound, FailedCombining
 from . import metadata, output
 
 import os
@@ -20,7 +20,7 @@ def download(source: Source, options):
     """Downloads audiobook from source object"""
     # Downloading audiobook info
     if source.requires_authentication and not source.authenticated:
-        raise MissingCookies
+        raise UserNotAuthorized
     logging.log("Downloading metadata")
     source.before()
     files = source.get_files()
