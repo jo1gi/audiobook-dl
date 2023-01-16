@@ -17,6 +17,8 @@ audiobook-dl currently supports downloading from the following sources:
 - [Scribd](https://scribd.com)
 - [YourCloudLibrary](https://www.yourcloudlibrary.com/)
 
+[More info](./supported_sites.md)
+
 ## Installation
 ```shell
 git clone https://github.com/jo1gi/audiobook-dl.git
@@ -58,3 +60,8 @@ information page**
 ## Contributions
 Issues, bug-reports, pull requests or ideas for features and improvements are
 **very welcome**.
+
+## Donations
+If you like the project, please consider donating:
+- [Ko-fi](https://ko-fi.com/jo1gi)
+- [Buy me a Coffee](https://www.buymeacoffee.com/joakimholm)
