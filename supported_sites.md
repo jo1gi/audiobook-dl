@@ -5,7 +5,7 @@
 | audiobooks.com   |    ✓    |         ✗         |                             |
 | Chapter          |    ✗    |         ✓         |                             |
 | Chirp            |    ✓    |         ✗         |                             |
-| eReolen          |    ✓    |         ✗         |                             |
+| eReolen          |    ✓    |         ✓         | Requires library for login  |
 | Librivox         |    ✗    |         ✗         | Authentication not required |
 | Overdrive        |    ✓    |         ✗         |                             |
 | Scribd           |    ✓    |         ✗         |                             |
