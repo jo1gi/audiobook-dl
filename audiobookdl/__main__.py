@@ -9,7 +9,6 @@ import re
 from rich.prompt import Prompt
 from typing import Optional
 
-
 def find_compatible_source(url: str) -> Source:
     """Finds the first source that supports the given url"""
     sources = get_source_classes()
@@ -27,11 +26,18 @@ def get_cookie_path(options):
     if os.path.exists("./cookies.txt"):
         return "./cookies.txt"
 
-def get_or_ask(value: Optional[str], name: str, hidden: bool) -> str:
+def get_or_ask(name: str, hidden: bool, options) -> str:
     """Return `value` if it exists else asks for a value"""
-    if value:
-        return value
-    return Prompt.ask(name, password=hidden)
+    if hasattr(options, name) and getattr(options, name):
+        return getattr(options, name)
+    return Prompt.ask(name.capitalize(), password=hidden)
+
+def login(source: Source, options):
+    login_data = {}
+    for name in source.login_data:
+        hidden = name == "password"
+        login_data[name] = get_or_ask(name, hidden, options)
+    source.login(**login_data)
 
 def run():
     """Main function"""
@@ -54,9 +60,7 @@ def run():
             s.load_cookie_file(cookie_path)
         # Adding username and password
         if s.supports_login and not s.authenticated:
-            username = get_or_ask(options.username, "Username", False)
-            password = get_or_ask(options.password, "Password", True)
-            s.login(username, password)
+            login(s, options)
         # Running program
         if options.print_output:
             print_output(s, options.output)

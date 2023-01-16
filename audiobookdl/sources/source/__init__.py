@@ -17,7 +17,10 @@ class Source:
 
     # A list of regexes that indicates which website a sevice supports
     match: List[str] = []
+    # Methods for authenticating
     _authentication_methods: List[str] = [ "cookies" ]
+    # Data required for logging in
+    login_data: List[str] = [ "username", "password" ]
     # If cookies are loaded
     _authenticated = False
     # Cache of previously loaded pages
@@ -57,10 +60,10 @@ class Source:
     def _login(self, username: str, password: str):
         pass
 
-    def login(self, username: str, password: str):
+    def login(self, **kwargs):
         """Authenticate with source using username and password"""
         if self.supports_login:
-            self._login(username, password)
+            self._login(**kwargs)
             self._authenticated = True
 
 

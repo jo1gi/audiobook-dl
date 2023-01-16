@@ -84,4 +84,9 @@ def parse_arguments():
         dest="password",
         help="Password for source",
     )
+    parser.add_argument(
+        '--library',
+        dest="library",
+        help="Library for source",
+    )
     return parser.parse_args()
