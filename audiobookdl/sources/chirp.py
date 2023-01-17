@@ -8,9 +8,6 @@ from Crypto.Cipher import AES
 LOGIN_URL = "https://www.chirpbooks.com/users/sign_in"
 
 class ChirpSource(Source):
-    _authentication_methods: List[str] = [
-        "cookies", "login"
-    ]
     match = [
         r"https://www.chirpbooks.com/player/\d+"
     ]
@@ -37,7 +34,14 @@ class ChirpSource(Source):
         return self.find_elem_in_page(self.url, "title")
 
     def get_metadata(self):
-        return {}
+        metadata = {}
+        for credit in self.find_elems_in_page(self.url, ".credit"):
+            text = credit.text
+            if text.startswith("Written by"):
+                metadata["author"] = text[11:]
+            elif text.startswith("Narrated by"):
+                metadata["narrator"] = text[12:]
+        return metadata
 
     def get_cover(self) -> Optional[bytes]:
         cover_url = self.find_elem_in_page(self.url, "img.cover-image", data="src")
