@@ -14,6 +14,7 @@ mkShell {
       pycryptodome
       setuptools
 
+      pytest
       mypy
       types-requests
       types-setuptools
