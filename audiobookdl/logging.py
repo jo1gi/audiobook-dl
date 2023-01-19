@@ -3,6 +3,7 @@ import pkg_resources
 
 debug_mode = False
 quiet_mode = False
+ffmpeg_output = False
 console = Console(stderr=True)
 
 def debug(msg: str):

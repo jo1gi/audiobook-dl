@@ -1,23 +1,11 @@
 from audiobookdl import Source, logging, args, output
-from audiobookdl.exceptions import AudiobookDLException, NoSourceFound
+from audiobookdl.exceptions import AudiobookDLException
 from .utils import dependencies
 from .output.download import download
-from .sources import get_source_classes
+from .sources import find_compatible_source
 
 import os
-import re
 from rich.prompt import Prompt
-from typing import Optional
-
-def find_compatible_source(url: str) -> Source:
-    """Finds the first source that supports the given url"""
-    sources = get_source_classes()
-    for source in sources:
-        for n, m in enumerate(source.match):
-            if not re.match(m, url) is None:
-                return source(url, n)
-    raise NoSourceFound
-
 
 def get_cookie_path(options):
     """Find path to cookie file"""

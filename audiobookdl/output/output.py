@@ -1,9 +1,9 @@
+from audiobookdl import logging
+
 import os
 import platform
 from typing import List, Dict
 import subprocess
-
-ffmpeg_output = False
 
 LOCATION_DEFAULTS = {
     'album': 'NA',
@@ -23,7 +23,7 @@ def combine_audiofiles(filenames: List[str], tmp_dir: str, output_path: str):
     inputs = "|".join(paths)
     subprocess.run(
         ["ffmpeg", "-i", f"concat:{inputs}", "-safe", "0", "-c", "copy", output_path],
-        capture_output=not ffmpeg_output,
+        capture_output=not logging.ffmpeg_output,
     )
 
 
@@ -38,7 +38,7 @@ def convert_output(filenames: List[str], output_dir: str, output_format: str):
         if not output_format == split_path[1][1:]:
             subprocess.run(
                 ["ffmpeg", "-i", full_path, new_path],
-                capture_output=not ffmpeg_output)
+                capture_output=not logging.ffmpeg_output)
             os.remove(full_path)
         new_paths.append(f"{os.path.splitext(name)[0]}.{output_format}")
     return new_paths
