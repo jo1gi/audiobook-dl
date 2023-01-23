@@ -7,6 +7,7 @@ from .ereolen import EreolenSource
 from .librivox import LibrivoxSource
 from .overdrive import OverdriveSource
 from .scribd import ScribdSource
+from .storytel import StorytelSource
 from .yourcloudlibrary import YourCloudLibrarySource
 
 from ..exceptions import NoSourceFound
@@ -31,5 +32,6 @@ def get_source_classes():
         LibrivoxSource,
         OverdriveSource,
         ScribdSource,
+        StorytelSource,
         YourCloudLibrarySource,
     ]
