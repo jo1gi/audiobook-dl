@@ -69,10 +69,7 @@ class StorytelSource(Source):
                 if "chapters" in f and len(f["chapters"]) > 0:
                     start_time = 0
                     for c in f["chapters"]:
-                        # Use chapter title if it exists, else use "Chapter " + chapter number.
-                        # The books I've tried all had introductions (chapter 0), therefore it was more correct
-                        # to use len(chapters) instead of len(chapters) + 1, but Storytel uses + 1, so I'm copying them.
-                        chapters.append((start_time, c["title"] if c["title"] else f"Chapter {len(chapters) + 1}"))
+                        chapters.append((start_time, c["title"] if c["title"] else f"Chapter {c['number']}"))
                         start_time += c["durationInMilliseconds"]
             return chapters if len(chapters) > 0 else None
         except:
