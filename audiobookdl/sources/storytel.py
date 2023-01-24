@@ -7,7 +7,7 @@ from Crypto.Util.Padding import pad
 
 class StorytelSource(Source):
     match = [
-        r"https?://www.storytel.com/.+/books/.+",
+        r"https?://(www.)?(storytel|mofibo).com/.+/books/.+",
     ]
     _authentication_methods = [
         "login",
