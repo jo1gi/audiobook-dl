@@ -13,6 +13,9 @@ class EreolenSource(Source):
         "cookies",
         "login"
     ]
+
+    names = [ "eReolen" ]
+
     login_data = [ "username", "password", "library" ]
 
     match = [

@@ -12,6 +12,8 @@ class OverdriveSource(Source):
         r"https://.+\.listen\.overdrive\.com"
     ]
 
+    names = [ "Overdrive" ]
+
     def before(self):
         prefix_re = re.search(self.match[0], self.url)
         if prefix_re and prefix_re.group(0):

@@ -11,6 +11,7 @@ def debug(msg: str):
     if debug_mode:
         log(f"[yellow bold]DEBUG[/] {msg}")
 
+
 def log(msg: str):
     """Display msg in log"""
     if not quiet_mode:
@@ -21,10 +22,16 @@ def read_asset_file(path: str) -> str:
     return pkg_resources.resource_string("audiobookdl", path).decode("utf8")
 
 
-def print_error(name: str, **kwargs):
+def error(msg: str):
+    console.print(msg)
+
+
+def print_error_file(name: str, **kwargs):
     """Print predefined error message"""
     msg = read_asset_file(f"assets/errors/{name}.txt").format(**kwargs)
-    console.print(msg)
+    msg = msg.strip()
+    error(msg)
+
 
 
 def print_asset_file(path: str):

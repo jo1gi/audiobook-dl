@@ -11,6 +11,7 @@ from .storytel import StorytelSource
 from .yourcloudlibrary import YourCloudLibrarySource
 
 from ..exceptions import NoSourceFound
+from typing import List
 import re
 
 def find_compatible_source(url: str) -> Source:
@@ -35,3 +36,10 @@ def get_source_classes():
         StorytelSource,
         YourCloudLibrarySource,
     ]
+
+def get_source_names() -> List[str]:
+    results: List[str] = []
+    for source in get_source_classes():
+        for source_name in source.names:
+            results.append(source_name)
+    return sorted(results, key=lambda x: x.lower())

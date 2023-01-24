@@ -6,6 +6,9 @@ from typing import List
 
 class LibrivoxSource(Source):
     _authentication_methods: List[str] = []
+
+    names = [ "Librivox" ]
+
     match = [
         r"https?://librivox.org/.+"
     ]

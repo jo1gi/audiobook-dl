@@ -9,6 +9,9 @@ class ChapterSource(Source):
     _authentication_methods = [
         "login"
     ]
+
+    names = [ "chapter.dk" ]
+
     match = [
         r"https://chapter.dk/bog/\d+"
     ]

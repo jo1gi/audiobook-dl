@@ -11,6 +11,7 @@ class ScribdSource(Source):
         r"https?://(www.)?scribd.com/listen/\d+",
         r"https?://(www.)?scribd.com/audiobook/\d+/"
     ]
+    names = [ "Scribd" ]
     _original = False
     media: Dict = {}
 

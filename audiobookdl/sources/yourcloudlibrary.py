@@ -10,6 +10,7 @@ class YourCloudLibrarySource(Source):
     match = [
         r"https?://ebook.yourcloudlibrary.com/library/[^/]+/AudioPlayer/.+"
     ]
+    names = [ "YourCloudLibrary" ]
     _authentication_methods = [
         "cookies",
         "login"

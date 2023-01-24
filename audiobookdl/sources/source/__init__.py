@@ -25,6 +25,8 @@ class Source:
     _authenticated = False
     # Cache of previously loaded pages
     _pages: Dict[str, bytes] = {}
+    # List of names
+    names: List[str] = []
 
     def __init__(self, url, match_num):
         self.url = url

@@ -12,6 +12,8 @@ class ChirpSource(Source):
         r"https://www.chirpbooks.com/player/\d+"
     ]
 
+    names = [ "Chirp" ]
+
     headers = {
         "content-type": "application/json"
     }

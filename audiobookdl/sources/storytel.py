@@ -9,6 +9,7 @@ class StorytelSource(Source):
     match = [
         r"https?://(www.)?(storytel|mofibo).com/.+/books/.+",
     ]
+    names = [ "Storytel", "Mofibo" ]
     _authentication_methods = [
         "login",
     ]

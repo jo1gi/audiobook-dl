@@ -9,6 +9,7 @@ class AudiobooksdotcomSource(Source):
     match = [
         r"{}\d+(/\d)?".format(BASEURL)
     ]
+    names = [ "audiobooks.com" ]
 
     def before(self):
         self.iden = re.search(
