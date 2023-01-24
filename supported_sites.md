@@ -9,4 +9,5 @@
 | Librivox         |    ✗    |         ✗         | Authentication not required |
 | Overdrive        |    ✓    |         ✗         |                             |
 | Scribd           |    ✓    |         ✗         |                             |
+| Storytel         |    ✗    |         ✓         |                             |
 | YourCloudLibrary |    ✓    |         ✓         |                             |

@@ -7,6 +7,7 @@ TEST_DATA = {
     "https://librivox.org/library-of-the-worlds-best-literature-ancient-and-modern-volume-3-by-various/": "Librivox",
     "https://ofs-d2b6150a9dec641552f953da2637d146.listen.overdrive.com/?d=...": "Overdrive",
     "https://www.scribd.com/listen/579426746": "Scribd",
+    "https://www.storytel.com/no/nn/books/somethingsomething-9999999": "Storytel",
 }
 
 def test_url_to_source():
