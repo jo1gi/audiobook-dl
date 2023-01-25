@@ -1,3 +1,4 @@
 [red]ERROR: The url you provided is not supported by audiobook-dl[/red]
 
 Supported services are:
+{sources}

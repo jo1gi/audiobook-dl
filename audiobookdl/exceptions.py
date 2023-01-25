@@ -10,13 +10,6 @@ class AudiobookDLException(Exception):
 
     def print(self):
         print_error_file(self.error_description, **self.data)
-        extra_data = self.extra_data()
-        if extra_data:
-            error(extra_data)
-
-
-    def extra_data(self) -> Optional[str]:
-        pass
 
 class DataNotPresent(AudiobookDLException):
     error_description = "data_not_present"
@@ -33,12 +26,12 @@ class NoFilesFound(AudiobookDLException):
 class NoSourceFound(AudiobookDLException):
     error_description = "no_source_found"
 
-    def extra_data(self) -> Optional[str]:
-        return "\n".join([f" • {name}" for name in sources.get_source_names()])
+    def print(self):
+        source_name_list = "\n".join([f" • {name}" for name in sources.get_source_names()])
+        print_error_file(self.error_description, sources=source_name_list, **self.data)
 
 class RequestError(AudiobookDLException):
     error_description = "request_error"
 
 class UserNotAuthorized(AudiobookDLException):
-    error_description = "user_not_authorized"
     error_description = "user_not_authorized"
