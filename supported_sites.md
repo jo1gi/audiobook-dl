@@ -1,13 +1,13 @@
 # Supported Sites
 
-| Site             | Cookies | Username/Password | Notes                       |
-|:-----------------|:-------:|:-----------------:|:----------------------------|
-| audiobooks.com   |    ✓    |         ✗         |                             |
-| Chapter          |    ✗    |         ✓         |                             |
-| Chirp            |    ✓    |         ✗         |                             |
-| eReolen          |    ✓    |         ✓         | Requires library for login  |
-| Librivox         |    ✗    |         ✗         | Authentication not required |
-| Overdrive        |    ✓    |         ✗         |                             |
-| Scribd           |    ✓    |         ✗         |                             |
-| Storytel         |    ✗    |         ✓         |                             |
-| YourCloudLibrary |    ✓    |         ✓         |                             |
+| Site             | Cookies | Username/Password | Notes                              |
+|:-----------------|:-------:|:-----------------:|:-----------------------------------|
+| audiobooks.com   |    ✓    |         ✗         |                                    |
+| Chapter          |    ✗    |         ✓         |                                    |
+| Chirp            |    ✓    |         ✗         |                                    |
+| eReolen          |    ✓    |         ✓         | Requires library for login         |
+| Librivox         |    ✗    |         ✗         | Authentication not required        |
+| Overdrive        |    ✓    |         ✗         |                                    |
+| Scribd           |    ✓    |         ✗         |                                    |
+| Storytel         |    ✗    |         ✓         | Books have to be on your bookshelf |
+| YourCloudLibrary |    ✓    |         ✓         |                                    |

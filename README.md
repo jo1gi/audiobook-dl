@@ -47,16 +47,17 @@ information page**
 
 ## Arguments
 
-| Argument    | Value                                                         |
-|-------------|---------------------------------------------------------------|
-| url         | The url of the page where you listen to the audiobook         |
-| -c/--cookie | Path to a Netscape cookie file                                |
-| --combine   | Combine all output files into a single file (requires ffmpeg) |
-| --cover     | Only download cover                                           |
-| -d/--debug  | Print debug information                                       |
-| -o/--output | Output location                                               |
-| --username  | Username to source                                            |
-| --password  | Password to source                                            |
+| Argument    | Value                                                             |
+|-------------|-------------------------------------------------------------------|
+| url         | The url of the page where you listen to the audiobook             |
+| -c/--cookie | Path to a Netscape cookie file                                    |
+| --combine   | Combine all output files into a single file (requires ffmpeg)     |
+| --cover     | Only download cover                                               |
+| -d/--debug  | Print debug information                                           |
+| -o/--output | Output location                                                   |
+| --username  | Username to source (Required when using login)                    |
+| --password  | Password to source (Required when using login)                    |
+| --library   | Specific library on service (Sometimes required when using login) |
 
 ## Contributions
 Issues, bug-reports, pull requests or ideas for features and improvements are
