@@ -65,12 +65,6 @@ def add_chapter(audio: ID3, start: int, end: int, title: str, index: int):
 def add_chapters(filepath, chapters):
     """Adds chapters to the given audio file"""
     audio = ID3(filepath)
-    # Adding table of contents
-    audio.add(CTOC(
-        element_id=u"toc",
-        flags=CTOCFlags.TOP_LEVEL | CTOCFlags.ORDERED,
-        child_element_ids=[u"chp"+str(i+1) for i in range(len(chapters))],
-        sub_frames=[TIT2(text=[u"Table of Contents"])]))
     # Adding chapters
     for i in range(len(chapters)-1):
         add_chapter(
