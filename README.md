@@ -13,6 +13,7 @@ audiobook-dl currently supports downloading from the following sources:
 - [Chirp](https://www.chirpbooks.com/)
 - [eReolen (Danish Library)](https://ereolen.dk)
 - [Librivox](https://librivox.org)
+- [Nextory](https://nextory.com)
 - [Overdrive (Library service)](https://www.overdrive.com/)
 - [Scribd](https://scribd.com)
 - [Storytel](https://www.storytel.com/)
