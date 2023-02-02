@@ -5,6 +5,7 @@ from .chapter import ChapterSource
 from .chirp import ChirpSource
 from .ereolen import EreolenSource
 from .librivox import LibrivoxSource
+from .nextory import NextorySource
 from .overdrive import OverdriveSource
 from .scribd import ScribdSource
 from .storytel import StorytelSource
@@ -31,6 +32,7 @@ def get_source_classes():
         ChirpSource,
         EreolenSource,
         LibrivoxSource,
+        NextorySource,
         OverdriveSource,
         ScribdSource,
         StorytelSource,
