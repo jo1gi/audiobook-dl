@@ -21,6 +21,7 @@ class EreolenSource(Source):
     match = [
         r"https?://ereolen.dk/ting/object/.+"
     ]
+    book_id: str
 
     def get_title(self):
         if not self.meta:
@@ -77,6 +78,7 @@ class EreolenSource(Source):
             }
         )
 
+    def before(self):
         ajax: Optional[Dict] = self.get_json(f"{self.url}/listen/ajax")
         if not ajax:
             raise RequestError
