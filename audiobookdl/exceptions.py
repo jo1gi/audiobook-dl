@@ -35,3 +35,6 @@ class RequestError(AudiobookDLException):
 
 class UserNotAuthorized(AudiobookDLException):
     error_description = "user_not_authorized"
+
+class MissingBookAccess(AudiobookDLException):
+    error_description = "book_access"

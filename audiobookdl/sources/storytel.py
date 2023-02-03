@@ -1,6 +1,6 @@
 from .source import Source
 from audiobookdl import AudiobookFile
-from audiobookdl.exceptions import UserNotAuthorized
+from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from typing import Any
@@ -90,4 +90,4 @@ class StorytelSource(Source):
             if book["book"]["consumableId"] == wanted_id:
                 self.book_info = book
                 return
-        raise PermissionError(f"Book with id {wanted_id} was not found on your bookshelf.")
+        raise MissingBookAccess
