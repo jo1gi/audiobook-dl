@@ -9,7 +9,7 @@ def parse_arguments():
     parser.add_argument(
         'urls',
         help="Urls to download from",
-        nargs='+',
+        nargs='*',
     )
     parser.add_argument(
         '-c',

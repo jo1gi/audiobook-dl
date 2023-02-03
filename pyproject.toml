@@ -25,6 +25,7 @@ dependencies = [
     "mypy",
     "m3u8",
     "pycryptodome",
+    "importlib-resources"
 ]
 dynamic = ["version"]
 

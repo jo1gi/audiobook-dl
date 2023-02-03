@@ -1,6 +1,6 @@
 from rich.console import Console
 from rich.progress import Progress, ProgressColumn
-import pkg_resources
+import importlib.resources
 
 debug_mode = False
 quiet_mode = False
@@ -20,7 +20,9 @@ def log(msg: str):
 
 
 def read_asset_file(path: str) -> str:
-    return pkg_resources.resource_string("audiobookdl", path).decode("utf8")
+    return importlib.resources.files("audiobookdl") \
+        .joinpath(path) \
+        .read_text(encoding="utf8")
 
 
 def error(msg: str):

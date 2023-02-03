@@ -12,7 +12,7 @@ mkShell {
       pillow
       m3u8
       pycryptodome
-      setuptools
+      importlib-resources
 
       # Test
       pytest
@@ -22,6 +22,7 @@ mkShell {
 
       # Build
       build
+      setuptools
       twine
     ]))
   ];
