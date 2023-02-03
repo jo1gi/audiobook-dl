@@ -66,7 +66,7 @@ def parse_arguments():
         '-f',
         '--output-format',
         dest="output_format",
-        help="File format to convert audio files to",
+        help="Output file format",
     )
     parser.add_argument(
         '--verbose-ffmpeg',

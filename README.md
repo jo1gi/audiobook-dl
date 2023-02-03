@@ -37,13 +37,20 @@ pip install audiobook-dl
 Some features require [ffmpeg](https://ffmpeg.org/) which can be installed
 through most package managers or from [ffmpeg.org/download.html](https://ffmpeg.org/download.html).
 
-## Cookies
+## Authentication
+
+### Cookies
 audiobook-dl uses Netscape cookie files for authentication in most cases. I use
 [this](https://github.com/rotemdan/ExportCookies) extension to export my cookies
 from the browser.
 
 Cookies can be placed in current dir as `cookies.txt` or be given with the
 `--cookie` argument.
+
+### Login
+[Some sources](./supported_sites.md) support authentication through login with
+username and password (and sometimes library). Use the `--username` and
+`--password` arguments or enter them through an interactive prompt.
 
 ## Downloading audiobooks
 ```shell
@@ -54,17 +61,33 @@ information page**
 
 ## Arguments
 
-| Argument    | Value                                                             |
-|-------------|-------------------------------------------------------------------|
-| url         | The url of the page where you listen to the audiobook             |
-| -c/--cookie | Path to a Netscape cookie file                                    |
-| --combine   | Combine all output files into a single file (requires ffmpeg)     |
-| --cover     | Only download cover                                               |
-| -d/--debug  | Print debug information                                           |
-| -o/--output | Output location                                                   |
-| --username  | Username to source (Required when using login)                    |
-| --password  | Password to source (Required when using login)                    |
-| --library   | Specific library on service (Sometimes required when using login) |
+| Argument          | Value                                                             |
+|-------------------|-------------------------------------------------------------------|
+| url               | The url of the page where you listen to the audiobook             |
+| -c/--cookie       | Path to a Netscape cookie file                                    |
+| --combine         | Combine all output files into a single file (requires ffmpeg)     |
+| --cover           | Only download cover                                               |
+| -d/--debug        | Print debug information                                           |
+| -o/--output       | Output location                                                   |
+| --no-chapters     | Don't include chapters in output file                             |
+| --output-format   | Output file format                                                |
+| --verbose--ffmpeg | Show ffmpeg output in terminal                                    |
+| --username        | Username to source (Required when using login)                    |
+| --password        | Password to source (Required when using login)                    |
+| --library         | Specific library on service (Sometimes required when using login) |
+
+## Output
+By default, audiobook-dl saves all audiobooks to `{title}` relative to the
+current path. This can be changed with the `--output` argument. Path can be
+customized by audiobook with the following fields:
+- `title`
+- `author`
+- `series`
+- `narrator`
+
+Not all fields are available for all audiobooks.
+
+The file extension can be changed with the `--output-format` argument.
 
 ## Contributions
 Issues, bug-reports, pull requests or ideas for features and improvements are
