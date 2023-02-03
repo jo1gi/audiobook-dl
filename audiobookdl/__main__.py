@@ -31,7 +31,7 @@ def run():
     """Main function"""
     # Parsing arguments
     options = args.parse_arguments()
-    if options.url is None:
+    if not options.urls:
         logging.simple_help()
         exit()
     # Applying arguments as global constants
@@ -40,25 +40,29 @@ def run():
     logging.ffmpeg_output = options.ffmpeg_output or options.debug
     try:
         dependencies.check_dependencies(options)
-        logging.log("Finding compatible source")
-        s = find_compatible_source(options.url)
-        # Load cookie file
-        cookie_path = get_cookie_path(options)
-        if cookie_path is not None:
-            s.load_cookie_file(cookie_path)
-        # Adding username and password
-        if s.supports_login and not s.authenticated:
-            login(s, options)
-        # Running program
-        if options.print_output:
-            print_output(s, options.output)
-        elif options.cover:
-            download_cover(s)
-        else:
-            download(s, options)
+        for url in options.urls:
+            run_on_url(options, url)
     except AudiobookDLException as e:
         e.print()
         exit(1)
+
+def run_on_url(options, url: str):
+    logging.log("Finding compatible source")
+    s = find_compatible_source(url)
+    # Load cookie file
+    cookie_path = get_cookie_path(options)
+    if cookie_path is not None:
+        s.load_cookie_file(cookie_path)
+    # Adding username and password
+    if s.supports_login and not s.authenticated:
+        login(s, options)
+    # Running program
+    if options.print_output:
+        print_output(s, options.output)
+    elif options.cover:
+        download_cover(s)
+    else:
+        download(s, options)
 
 
 def print_output(source: Source, template: str):
