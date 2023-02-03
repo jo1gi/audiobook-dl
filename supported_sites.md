@@ -10,5 +10,5 @@
 | Nextory          |    ✗    |         ✓         | Books must be in "Your Library" <br/>Only single (first) account supported |
 | Overdrive        |    ✓    |         ✗         |                                                                            |
 | Scribd           |    ✓    |         ✗         |                                                                            |
-| Storytel         |    ✗    |         ✓         | Books have to be on your bookshelf                                         |
+| Storytel         |    ✗    |         ✓         | Books have to be in your bookshelf                                         |
 | YourCloudLibrary |    ✓    |         ✓         |                                                                            |
