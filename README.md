@@ -22,10 +22,16 @@ audiobook-dl currently supports downloading from the following sources:
 [More info](./supported_sites.md)
 
 ## Installation
+audiobook-dl can be installed from the repo itself or through pip.
+
 ```shell
 git clone https://github.com/jo1gi/audiobook-dl.git
 cd audiobook-dl
 python3 setup.py install
+```
+or
+```shell
+pip install audiobook-dl
 ```
 
 Some features require [ffmpeg](https://ffmpeg.org/) which can be installed

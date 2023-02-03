@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "audiobook-dl"
+authors = [
+    { name = "Joakim Holm", email = "mail@joakimholm.xyz" }
+]
+description = "CLI tool for downloading audiobooks from online sources"
+readme = "README.md"
+keywords = ["audiobooks", "cli", "downloader"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Sound/Audio",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+]
+dependencies = [
+    "requests",
+    "lxml",
+    "rich",
+    "mutagen",
+    "pillow",
+    "cssselect",
+    "mypy",
+    "m3u8",
+    "pycryptodome",
+]
+dynamic = ["version"]
+
+[project.urls]
+"Homepage" = "https://github.com/jo1gi/audiobook-dl"
+"Bugtracker" = "https://github.com/jo1gi/audiobook-dl/issues"
+
+[project.scripts]
+audiobook-dl = "audiobookdl.__main__.run"
+
+[tool.setuptools.dynamic]
+version = {attr = "audiobookdl.__version__"}
+
+[tool.setuptools.package-data]
+mypkg = ["*.txt"]

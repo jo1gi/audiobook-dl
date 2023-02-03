@@ -164,9 +164,7 @@ def embed_metadata_in_file(source: Source, output_file: str, options):
         metadata.add_chapters(output_file, chapters)
 
 
-def add_metadata_to_dir(source: Source,
-                        filenames: list[str],
-                        output_dir: str):
+def add_metadata_to_dir(source: Source, filenames: list[str], output_dir: str):
     """Adds metadata to dir of audiobook files"""
     for i in filenames:
         metadata.add_metadata(os.path.join(output_dir, i), source.metadata())

@@ -14,10 +14,15 @@ mkShell {
       pycryptodome
       setuptools
 
+      # Test
       pytest
       mypy
       types-requests
       types-setuptools
+
+      # Build
+      build
+      twine
     ]))
   ];
 }
