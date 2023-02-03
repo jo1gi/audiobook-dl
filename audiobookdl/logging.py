@@ -1,4 +1,5 @@
 from rich.console import Console
+from rich.progress import Progress, ProgressColumn
 import pkg_resources
 
 debug_mode = False
@@ -33,7 +34,6 @@ def print_error_file(name: str, **kwargs):
     error(msg)
 
 
-
 def print_asset_file(path: str):
     """Read asset file and print it"""
     console.print(read_asset_file(path))
@@ -42,3 +42,6 @@ def print_asset_file(path: str):
 def simple_help():
     """Print basic help information"""
     print_asset_file("assets/simple_help.txt")
+
+def progress(progress_format: list[str | ProgressColumn]) -> Progress:
+    return Progress(*progress_format, console=console)

@@ -1,17 +1,16 @@
 from audiobookdl import AudiobookFile, Source, logging
 from audiobookdl.exceptions import UserNotAuthorized, NoFilesFound, FailedCombining
-from . import metadata, output
+from . import metadata, output, encryption
 
 import os
 import shutil
 from functools import partial
-from typing import Any, List, Tuple, Union
+from typing import Any
 from rich.progress import Progress, BarColumn, ProgressColumn
 from rich.prompt import Confirm
 from multiprocessing.pool import ThreadPool
-from Crypto.Cipher import AES
 
-DOWNLOAD_PROGRESS: List[Union[str, ProgressColumn]] = [
+DOWNLOAD_PROGRESS: list[str | ProgressColumn] = [
     "{task.description}", BarColumn(), "[progress.percentage]{task.percentage:>3.0f}%"
 ]
 
@@ -60,12 +59,12 @@ def setup_download_dir(path: str):
 
 def download_files_output(
         source: Source,
-        files: List[AudiobookFile],
+        files: list[AudiobookFile],
         output_dir: str
-    ) -> List[str]:
+    ) -> list[str]:
     """Download `files` with progress bar in terminal"""
     setup_download_dir(output_dir)
-    with Progress(*DOWNLOAD_PROGRESS) as progress:
+    with logging.progress(DOWNLOAD_PROGRESS) as progress:
         task = progress.add_task(
             f"Downloading {len(files)} files - [blue]{source.get_title()}",
             total = len(files)
@@ -85,7 +84,7 @@ def create_filename(
         index: int,
         output_dir: str,
         file: AudiobookFile,
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
     """Create filename of audiobook file"""
     if length == 1:
         name = f"{title}.{file.ext}"
@@ -95,9 +94,10 @@ def create_filename(
         path = os.path.join(output_dir, name)
     return name, path
 
-def download_file(args: Tuple[AudiobookFile, int, int, str, Any, Source]):
+def download_file(args: tuple[AudiobookFile, int, int, str, Any, Source]):
     # Setting up variables
     file, length, index, output_dir, progress, source = args
+    logging.debug(f"Starting downloading file: {file.url}")
     name, path = create_filename(source.get_title(), length, index, output_dir, file)
     req = source._session.get(file.url, headers=file.headers, stream=True)
     file_size = int(req.headers["Content-length"])
@@ -111,23 +111,17 @@ def download_file(args: Tuple[AudiobookFile, int, int, str, Any, Source]):
             progress(new)
     progress(1-total)
     # Decrypting file if necessary
-    if file.encryption_key and file.iv:
-        decrypt_file(path, file.encryption_key, file.iv)
+    if file.encryption_method:
+        encryption.decrypt_file(path, file.encryption_method)
     return name
 
-def decrypt_file(path, key, iv):
-    with open(path, "rb") as f:
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        decrypted = cipher.decrypt(f.read())
-    with open(path, "wb") as f:
-        f.write(decrypted)
 
 def download_files(
         source: Source,
         update,
-        files: List[AudiobookFile],
+        files: list[AudiobookFile],
         output_dir: str
-    ) -> List[str]:
+    ) -> list[str]:
     """Downloads and saves audiobook files to disk"""
     filenames = []
     with ThreadPool(processes=20) as pool:
@@ -139,7 +133,7 @@ def download_files(
     return filenames
 
 def combined_audiobook(source: Source,
-                       filenames: List[str],
+                       filenames: list[str],
                        output_dir: str,
                        output_format: str,
                        options):
@@ -171,7 +165,7 @@ def embed_metadata_in_file(source: Source, output_file: str, options):
 
 
 def add_metadata_to_dir(source: Source,
-                        filenames: List[str],
+                        filenames: list[str],
                         output_dir: str):
     """Adds metadata to dir of audiobook files"""
     for i in filenames:
