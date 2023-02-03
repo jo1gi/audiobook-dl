@@ -76,7 +76,7 @@ class Source:
     def get_title(self) -> str:
         return ""
 
-    def get_metadata(self) -> Dict[str, str]:
+    def get_metadata(self) -> Dict[str, Any]:
         """Returns metadata of the audiobook"""
         return {}
 

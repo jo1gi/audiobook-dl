@@ -1,4 +1,5 @@
 from audiobookdl import AudiobookFile, exceptions, logging
+from audiobookdl.utils.audiobook import AESEncryption
 
 import json
 import os
@@ -45,7 +46,9 @@ def get_stream_files(self, url, headers={}) -> List[AudiobookFile]:
             headers = headers
         )
         if seg.key:
-            current.encryption_key = self._get_page(seg.key.absolute_uri, headers=headers)
-            current.iv = int(seg.key.iv, 0).to_bytes(16, byteorder='big')
+            current.encryption_method = AESEncryption(
+                key = self._get_page(seg.key.absolute_uri, headers=headers),
+                iv = int(seg.key.iv, 0).to_bytes(16, byteorder='big')
+            )
         files.append(current)
     return files

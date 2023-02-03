@@ -2,6 +2,14 @@ import requests
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
+
+@dataclass
+class AESEncryption:
+    key: bytes
+    iv: bytes
+
+AudiobookFileEncryption = AESEncryption
+
 @dataclass
 class AudiobookFile:
     # Url to audio file
@@ -12,10 +20,8 @@ class AudiobookFile:
     title: Optional[str] = None
     # Headers for request
     headers: Dict[str, str] = field(default_factory=dict)
-    # AES decryption key
-    encryption_key: Optional[bytes] = None
-    # AES initialization vector
-    iv: Optional[bytes] = None
+    # Encryption method
+    encryption_method: Optional[AudiobookFileEncryption] = None
 
 
 class AudiobookMetadata:
