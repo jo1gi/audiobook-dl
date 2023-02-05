@@ -34,7 +34,7 @@ dynamic = ["version"]
 "Bugtracker" = "https://github.com/jo1gi/audiobook-dl/issues"
 
 [project.scripts]
-audiobook-dl = "audiobookdl.__main__.run"
+audiobook-dl = "audiobookdl.__main__:run"
 
 [tool.setuptools.dynamic]
 version = {attr = "audiobookdl.__version__"}
