@@ -5,6 +5,7 @@ from .output.download import download
 from .sources import find_compatible_source
 
 import os
+import sys
 from rich.prompt import Prompt
 
 def get_cookie_path(options):
@@ -27,20 +28,34 @@ def login(source: Source, options):
         login_data[name] = get_or_ask(name, hidden, options)
     source.login(**login_data)
 
+def get_urls(options):
+    urls = []
+    # Args
+    urls.extend(options.urls)
+    # File
+    if options.input_file:
+        with open(options.input_file, "r") as f:
+            urls.extend(f.read().split())
+    # Stdin
+    for i in sys.stdin.readlines():
+        urls.append(i.rstrip())
+    return urls
+
 def run():
     """Main function"""
     # Parsing arguments
     options = args.parse_arguments()
-    if not options.urls:
-        logging.simple_help()
-        exit()
     # Applying arguments as global constants
     logging.debug_mode = options.debug
     logging.quiet_mode = options.quiet
     logging.ffmpeg_output = options.ffmpeg_output or options.debug
+    urls = get_urls(options)
+    if not urls:
+        logging.simple_help()
+        exit()
     try:
         dependencies.check_dependencies(options)
-        for url in options.urls:
+        for url in urls:
             run_on_url(options, url)
     except AudiobookDLException as e:
         e.print()

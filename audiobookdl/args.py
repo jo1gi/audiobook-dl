@@ -75,6 +75,11 @@ def parse_arguments():
         action="store_true",
     )
     parser.add_argument(
+        '--input-file',
+        dest="input_file",
+        help="File with one url to download per line",
+    )
+    parser.add_argument(
         '--username',
         dest="username",
         help="Username for source",
