@@ -9,7 +9,6 @@ CLI tool for downloading audiobooks from online sources.
 ## Supported Services
 audiobook-dl currently supports downloading from the following sources:
 - [audiobooks.com](https://audiobooks.com)
-- [Chapter](https://chapter.dk)
 - [Chirp](https://www.chirpbooks.com/)
 - [eReolen (Danish Library)](https://ereolen.dk)
 - [Librivox](https://librivox.org)
