@@ -106,7 +106,7 @@ class Source:
     def get_chapters(self) -> list[Chapter]:
         """Returns a list of tuples with the starting point of the chapter and
         the title of the chapter"""
-        pass
+        return []
 
 
     def _get_page(self, url: str, **kwargs) -> bytes:
