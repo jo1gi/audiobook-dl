@@ -90,15 +90,27 @@ class BookBeatSource(Source):
 
     def get_metadata(self) -> dict[str, Any]:
         try:
+            contributors = next(
+                iter(
+                    [
+                        e["contributors"]
+                        for e in self.book_info["metadata"]["editions"]
+                        if e["format"] == "audioBook"
+                    ]
+                ),
+                None,
+            )
+            if not contributors:
+                return {}
             metadata = {
                 "authors": [
-                    a
-                    for a in self.book_info["metadata"]["contributors"]
+                    f"{a['firstname']} {a['lastname']}"
+                    for a in contributors
                     if "author" in a["role"]
                 ],
                 "narrators": [
-                    n
-                    for n in self.book_info["metadata"]["contributors"]
+                    f"{n['firstname']} {n['lastname']}"
+                    for n in contributors
                     if "narrator" in n["role"]
                 ],
             }
@@ -112,6 +124,7 @@ class BookBeatSource(Source):
         for track in self.book_info["license"]["tracks"]:
             chapters.append((track["start"], f"Chapter {chapter_number}"))
             chapter_number += 1
+
         return chapters
 
     def get_cover(self) -> bytes | None:
