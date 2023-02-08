@@ -1,13 +1,11 @@
 import re
 import os
+from audiobookdl import logging
+
 from mutagen import File as MutagenFile
 from mutagen.easyid3 import EasyID3
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, APIC, CHAP, TIT2, CTOC, CTOCFlags, ID3NoHeaderError
-from typing import Dict
-
-# List of file formats that use ID3 metadata
-ID3_FORMATS = ["mp3", "m4v", "m4a", "m4b"]
 
 # Conversion table between metadata names and ID3 tags
 ID3_CONVERT = {
@@ -17,36 +15,34 @@ ID3_CONVERT = {
     "narrator": "performer",
 }
 
+# List of file formats that use ID3 metadata
+ID3_FORMATS = ["mp3"]
+
 EXTENSION_TO_MIMETYPE = {
     "jpeg": "image/jpeg",
     "jpg": "image/jpeg",
     "png": "image/png",
 }
 
+def is_id3_file(filepath: str) -> bool:
+    """Returns true if `filepath` points to an id3 file"""
+    ext = re.search(r"(?<=(\.))\w+$", filepath)
+    return ext is not None and ext.group(0) in ID3_FORMATS
 
-def add_id3_metadata(filepath: str, metadata: Dict[str, str]):
+def add_id3_metadata(filepath: str, metadata: dict[str, str]):
     """Add ID3 metadata tags to the given audio file"""
     audio = MP3(filepath, ID3=EasyID3)
     # Adding tags
     for key, value in metadata.items():
         if key in ID3_CONVERT:
             audio[ID3_CONVERT[key]] = value
-        if key in EasyID3.valid_keys.keys():
+        elif key in EasyID3.valid_keys.keys():
             audio[key] = value
+        else:
+            logging.debug(f"Tried to add invalid id3 tag: {key}")
     audio.save(v2_version=3)
 
-
-def add_metadata(filepath: str, metadata: Dict[str, str]):
-    """Adds metadata to the given audio file"""
-    ext = re.search(r"(?<=(\.))\w+$", filepath)
-    if ext is None:
-        return
-    if ext.group(0) in ID3_FORMATS:
-        add_id3_metadata(filepath, metadata)
-
-
-def embed_cover(filepath: str, image: bytes, extension: str):
-    """Embeds an image into the given audio file"""
+def embed_id3_cover(filepath: str, image: bytes, extension: str):
     mimetype = EXTENSION_TO_MIMETYPE[extension]
     try:
         audio = ID3(filepath)
@@ -55,8 +51,7 @@ def embed_cover(filepath: str, image: bytes, extension: str):
     audio.add(APIC(type=0, data=image, mime=mimetype))
     audio.save()
 
-
-def add_chapter(audio: ID3, start: int, end: int, title: str, index: int):
+def add_id3_chapter(audio: ID3, start: int, end: int, title: str, index: int):
     """Adds a single chapter to the given audio file"""
     audio.add(CHAP(
         element_id=u"chp"+str(index),
@@ -65,18 +60,15 @@ def add_chapter(audio: ID3, start: int, end: int, title: str, index: int):
         sub_frames=[TIT2(text=[title])]))
 
 
-def add_chapters(filepath, chapters):
+def add_id3_chapters(filepath, chapters):
     """Adds chapters to the given audio file"""
-    try:
-        audio = ID3(filepath)
-    except ID3NoHeaderError:
-        return    # Adding chapters
+    audio = ID3(filepath)
     for i in range(len(chapters)-1):
-        add_chapter(
+        add_id3_chapter(
                 audio,
                 chapters[i][0],
                 chapters[i+1][0],
                 chapters[i][1], i+1)
     length = MutagenFile(filepath).info.length*1000
-    add_chapter(audio, chapters[-1][0], length, chapters[-1][1], len(chapters))
+    add_id3_chapter(audio, chapters[-1][0], length, chapters[-1][1], len(chapters))
     audio.save()
