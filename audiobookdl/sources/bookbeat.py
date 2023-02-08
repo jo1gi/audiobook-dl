@@ -55,15 +55,10 @@ class BookBeatSource(Source):
         return self.book_info["metadata"]["title"]
 
     def get_files(self) -> list[AudiobookFile]:
-        r = self._session.get(
+        dl_info = self.get_json(
             "https://api.bookbeat.com/api/downloadinfo/" + str(self.book_info["bookid"])
         )
-        if not r.status_code == 200:
-            raise MissingBookAccess
-        dl_info = r.json()
-
-        license_url = ""
-
+        # Find license_url
         if "_embedded" in dl_info:
             if "downloads" in dl_info["_embedded"]:
                 for dl in dl_info["_embedded"]["downloads"]:
@@ -71,22 +66,20 @@ class BookBeatSource(Source):
                         license_url = dl["_links"]["license"]["href"]
                         break
 
-        if license_url:
-            r = self._session.get(license_url)
-            if not r.status_code == 200:
-                raise MissingBookAccess
-            lic = r.json()
-            self.book_info["license"] = lic
-            if "_links" in lic:
-                return [
-                    AudiobookFile(
-                        url=lic["_links"]["download"]["href"],
-                        headers=self._session.headers,
-                        ext="mp4",
-                    )
-                ]
-
+        if license_url is None:
             raise MissingBookAccess
+        lic = self.get_json(license_url)
+        self.book_info["license"] = lic
+        if "_links" in lic:
+            return [
+                AudiobookFile(
+                    url=lic["_links"]["download"]["href"],
+                    headers=self._session.headers,
+                    ext="mp4",
+                )
+            ]
+        raise MissingBookAccess
+
 
     def get_metadata(self) -> dict[str, Any]:
         try:
