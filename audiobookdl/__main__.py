@@ -36,9 +36,6 @@ def get_urls(options):
     if options.input_file:
         with open(options.input_file, "r") as f:
             urls.extend(f.read().split())
-    # Stdin
-    for i in sys.stdin.readlines():
-        urls.append(i.rstrip())
     return urls
 
 def run():
