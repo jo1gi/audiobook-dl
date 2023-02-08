@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile
+from audiobookdl import AudiobookFile, Chapter
 from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
@@ -61,21 +61,21 @@ class StorytelSource(Source):
         except:
             return {}
 
-    def get_chapters(self) -> list[tuple[int, str]] | None:
+    def get_chapters(self) -> list[Chapter]:
         url = f"https://api.storytel.net/playback-metadata/consumable/{self.book_info['book']['consumableId']}"
         try:
-            chapters: list[tuple[int, str]] = []
+            chapters: list[Chapter] = []
             storytel_metadata = self._session.get(url).json()
             if "formats" in storytel_metadata and len(storytel_metadata["formats"]) > 0:
                 f = storytel_metadata["formats"][0]
                 if "chapters" in f and len(f["chapters"]) > 0:
                     start_time = 0
                     for c in f["chapters"]:
-                        chapters.append((start_time, c["title"] if c["title"] else f"Chapter {c['number']}"))
+                        chapters.append(Chapter(start_time, c["title"] if c["title"] else f"Chapter {c['number']}"))
                         start_time += c["durationInMilliseconds"]
-            return chapters if len(chapters) > 0 else None
+            return chapters
         except:
-            return None
+            return []
 
     def get_cover(self) -> bytes | None:
         url = f"https://www.storytel.com/images/{self.book_info['abook']['isbn']}/640x640/cover.jpg"

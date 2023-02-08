@@ -1,4 +1,4 @@
-from .utils.audiobook import AudiobookFile
+from .utils.audiobook import AudiobookFile, Chapter
 from .sources.source import Source
 from . import utils
 

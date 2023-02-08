@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, logging
+from audiobookdl import AudiobookFile, Chapter, logging
 
 from typing import List, Optional
 import base64
@@ -80,12 +80,12 @@ class ChirpSource(Source):
         return files
 
 
-    def get_chapters(self):
+    def get_chapters(self) -> list[Chapter]:
         chapters = []
         start_time = 0
         for track in self.tracks:
             title = track["displayName"]
-            chapters.append((start_time, title))
+            chapters.append(Chapter(start_time, title))
             start_time += track["durationMs"]
         return chapters
 

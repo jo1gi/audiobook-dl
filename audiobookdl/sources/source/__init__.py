@@ -1,6 +1,6 @@
 # Internal imports
 from . import networking
-from audiobookdl import logging, AudiobookFile
+from audiobookdl import logging, AudiobookFile, Chapter
 from audiobookdl.exceptions import DataNotPresent
 
 # External imports
@@ -103,7 +103,7 @@ class Source:
     def get_files(self) -> List[AudiobookFile]:
         raise NotImplemented
 
-    def get_chapters(self):
+    def get_chapters(self) -> list[Chapter]:
         """Returns a list of tuples with the starting point of the chapter and
         the title of the chapter"""
         pass

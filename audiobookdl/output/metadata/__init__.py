@@ -1,4 +1,4 @@
-from audiobookdl import logging
+from audiobookdl import logging, Chapter
 from . import id3, mp4
 
 def add_metadata(filepath: str, metadata: dict[str, str]):
@@ -21,7 +21,7 @@ def embed_cover(filepath: str, image: bytes, extension: str):
         logging.debug("Could not embed cover")
 
 
-def add_chapters(filepath: str, chapters):
+def add_chapters(filepath: str, chapters: list[Chapter]):
     """Adds chapters to the given audio file"""
     if id3.is_id3_file(filepath):
         id3.add_id3_chapters(filepath, chapters)

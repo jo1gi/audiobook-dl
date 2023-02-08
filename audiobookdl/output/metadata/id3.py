@@ -1,6 +1,6 @@
 import re
 import os
-from audiobookdl import logging
+from audiobookdl import logging, Chapter
 
 from mutagen import File as MutagenFile
 from mutagen.easyid3 import EasyID3
@@ -57,18 +57,21 @@ def add_id3_chapter(audio: ID3, start: int, end: int, title: str, index: int):
         element_id=u"chp"+str(index),
         start_time=int(start),
         end_time=int(end),
-        sub_frames=[TIT2(text=[title])]))
+        sub_frames=[TIT2(text=[title])]
+    ))
 
 
-def add_id3_chapters(filepath, chapters):
+def add_id3_chapters(filepath: str, chapters: list[Chapter]):
     """Adds chapters to the given audio file"""
     audio = ID3(filepath)
     for i in range(len(chapters)-1):
         add_id3_chapter(
-                audio,
-                chapters[i][0],
-                chapters[i+1][0],
-                chapters[i][1], i+1)
+            audio,
+            start = chapters[i].start,
+            end = chapters[i+1].start,
+            title = chapters[i].title,
+            index = i+1
+        )
     length = MutagenFile(filepath).info.length*1000
-    add_id3_chapter(audio, chapters[-1][0], length, chapters[-1][1], len(chapters))
+    add_id3_chapter(audio, chapters[-1].start, length, chapters[-1].title, len(chapters))
     audio.save()

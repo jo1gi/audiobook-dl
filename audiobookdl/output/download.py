@@ -160,7 +160,7 @@ def embed_metadata_in_file(source: Source, output_file: str, options):
         logging.log("Embedding cover")
         metadata.embed_cover(output_file, cover, source.get_cover_extension())
     chapters = source.get_chapters()
-    if chapters is not None and not options.no_chapters:
+    if chapters and not options.no_chapters:
         logging.log("Adding chapters")
         metadata.add_chapters(output_file, chapters)
 

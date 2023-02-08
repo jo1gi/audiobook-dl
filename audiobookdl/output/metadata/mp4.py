@@ -34,7 +34,7 @@ def add_mp4_metadata(filepath: str, metadata: dict[str, str]):
         elif key in audio.Get.keys():
             audio[key] = value
         else:
-            audio.tags.RegisterFreeformKey(key, key.capitalize())
+            audio.tags.RegisterFreeformKey(key, key.capitalize()) # type: ignore
             audio[key] = value
     audio.save()
 

@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile
+from audiobookdl import AudiobookFile, Chapter
 from typing import Any
 import uuid
 from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess
@@ -118,13 +118,10 @@ class BookBeatSource(Source):
         except:
             return {}
 
-    def get_chapters(self) -> list[tuple[int, str]] | None:
-        chapter_number = 1
+    def get_chapters(self) -> list[Chapter]:
         chapters = []
-        for track in self.book_info["license"]["tracks"]:
-            chapters.append((track["start"], f"Chapter {chapter_number}"))
-            chapter_number += 1
-
+        for chapter_number, track in enumerate(self.book_info["license"]["tracks"]):
+            chapters.append(Chapter(track["start"], f"Chapter {chapter_number+1}"))
         return chapters
 
     def get_cover(self) -> bytes | None:

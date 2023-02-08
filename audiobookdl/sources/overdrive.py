@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile
+from audiobookdl import AudiobookFile, Chapter
 from audiobookdl.exceptions import DataNotPresent, UserNotAuthorized
 
 import re
@@ -63,16 +63,18 @@ class OverdriveSource(Source):
         return self._get_previous_length(index-1) + \
             self.meta["spine"][index-1]["audio-duration"]
 
-    def get_chapters(self):
+    def get_chapters(self) -> list[Chapter]:
         chapters = []
         for chapter in self.meta["nav"]["toc"]:
-            timepoint = 0
+            timepoint = 0.
             if '#' in chapter["path"]:
                 timepoint = float(chapter["path"].split("#")[1])
-            part = int(re.search(
-                r"(?<=(Part))\d+", chapter["path"]).group(0))-1
-            start = (self._get_previous_length(part)+timepoint)*1000
-            chapters.append((start, chapter["title"]))
+            part_result = re.search(r"(?<=(Part))\d+", chapter["path"])
+            if part_result is None:
+                continue
+            part = int(part_result.group(0))-1
+            start = int((self._get_previous_length(part)+timepoint)*1000)
+            chapters.append(Chapter(start, chapter["title"]))
         return chapters
 
     def get_files(self) -> List[AudiobookFile]:

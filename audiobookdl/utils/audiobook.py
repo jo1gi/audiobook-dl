@@ -2,6 +2,13 @@ import requests
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
+@dataclass
+class Chapter:
+    # Start time of chapter in milliseconds
+    start: int
+    # Title of chapter
+    title: str
+
 
 @dataclass
 class AESEncryption:
