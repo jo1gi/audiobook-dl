@@ -3,7 +3,7 @@ import os
 from mutagen import File as MutagenFile
 from mutagen.easyid3 import EasyID3
 from mutagen.mp3 import MP3
-from mutagen.id3 import ID3, APIC, CHAP, TIT2, CTOC, CTOCFlags
+from mutagen.id3 import ID3, APIC, CHAP, TIT2, CTOC, CTOCFlags, ID3NoHeaderError
 from typing import Dict
 
 # List of file formats that use ID3 metadata
@@ -48,7 +48,10 @@ def add_metadata(filepath: str, metadata: Dict[str, str]):
 def embed_cover(filepath: str, image: bytes, extension: str):
     """Embeds an image into the given audio file"""
     mimetype = EXTENSION_TO_MIMETYPE[extension]
-    audio = ID3(filepath)
+    try:
+        audio = ID3(filepath)
+    except ID3NoHeaderError:
+        return
     audio.add(APIC(type=0, data=image, mime=mimetype))
     audio.save()
 
@@ -64,8 +67,10 @@ def add_chapter(audio: ID3, start: int, end: int, title: str, index: int):
 
 def add_chapters(filepath, chapters):
     """Adds chapters to the given audio file"""
-    audio = ID3(filepath)
-    # Adding chapters
+    try:
+        audio = ID3(filepath)
+    except ID3NoHeaderError:
+        return    # Adding chapters
     for i in range(len(chapters)-1):
         add_chapter(
                 audio,
