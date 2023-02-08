@@ -63,7 +63,8 @@ def download_files_output(
         output_dir: str
     ) -> list[str]:
     """Download `files` with progress bar in terminal"""
-    setup_download_dir(output_dir)
+    if len(files) > 1:
+        setup_download_dir(output_dir)
     with logging.progress(DOWNLOAD_PROGRESS) as progress:
         task = progress.add_task(
             f"Downloading {len(files)} files - [blue]{source.get_title()}",
@@ -84,21 +85,20 @@ def create_filename(
         index: int,
         output_dir: str,
         file: AudiobookFile,
-    ) -> tuple[str, str]:
+    ) -> str:
     """Create filename of audiobook file"""
     if length == 1:
-        name = f"{title}.{file.ext}"
         path = f"{output_dir}.{file.ext}"
     else:
         name = f"{title} - Part {index}.{file.ext}"
         path = os.path.join(output_dir, name)
-    return name, path
+    return path
 
 def download_file(args: tuple[AudiobookFile, int, int, str, Any, Source]):
     # Setting up variables
     file, length, index, output_dir, progress, source = args
     logging.debug(f"Starting downloading file: {file.url}")
-    name, path = create_filename(source.get_title(), length, index, output_dir, file)
+    path = create_filename(source.get_title(), length, index, output_dir, file)
     req = source._session.get(file.url, headers=file.headers, stream=True)
     file_size = int(req.headers["Content-length"])
     total: float = 0
@@ -113,7 +113,7 @@ def download_file(args: tuple[AudiobookFile, int, int, str, Any, Source]):
     # Decrypting file if necessary
     if file.encryption_method:
         encryption.decrypt_file(path, file.encryption_method)
-    return name
+    return path
 
 
 def download_files(
@@ -145,14 +145,15 @@ def combined_audiobook(source: Source,
         output.combine_audiofiles(filenames, output_dir, output_file)
         if not os.path.exists(output_file):
             raise FailedCombining
+        shutil.rmtree(output_dir)
     # Adding metadata
     embed_metadata_in_file(source, output_file, options)
-    shutil.rmtree(output_dir)
 
 
 def embed_metadata_in_file(source: Source, output_file: str, options):
     """Embed metadata into combined audiobook file"""
     if source.metadata is not None:
+        logging.log("Adding metadata")
         metadata.add_metadata(output_file, source.metadata())
     cover = source.get_cover()
     if cover is not None:

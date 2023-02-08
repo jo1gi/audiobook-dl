@@ -31,16 +31,15 @@ def convert_output(filenames: List[str], output_dir: str, output_format: str):
     """Converts a list of audio files into another format and return new
     files"""
     new_paths = []
-    for name in filenames:
-        full_path = os.path.join(output_dir, name)
-        split_path = os.path.splitext(full_path)
+    for old_path in filenames:
+        split_path = os.path.splitext(old_path)
         new_path = f"{split_path[0]}.{output_format}"
         if not output_format == split_path[1][1:]:
             subprocess.run(
-                ["ffmpeg", "-i", full_path, new_path],
+                ["ffmpeg", "-i", old_path, new_path],
                 capture_output=not logging.ffmpeg_output)
-            os.remove(full_path)
-        new_paths.append(f"{os.path.splitext(name)[0]}.{output_format}")
+            os.remove(old_path)
+        new_paths.append(f"{os.path.splitext(old_path)[0]}.{output_format}")
     return new_paths
 
 
