@@ -43,14 +43,17 @@ def convert_output(filenames: List[str], output_dir: str, output_format: str):
     return new_paths
 
 
-def gen_output_location(template: str, metadata: Dict[str, str]) -> str:
+def gen_output_location(template: str, metadata: Dict[str, str], remove_chars: str) -> str:
     """Generates the location of the output based on attributes of the
     audiobook"""
     if metadata is None:
         metadata = {}
     metadata["title"] = _fix_output(metadata["title"])
     metadata = {**LOCATION_DEFAULTS, **metadata}
-    return template.format(**metadata)
+    formatted = template.format(**metadata)
+    for c in remove_chars:
+        formatted = formatted.replace(c, "")
+    return formatted
 
 
 def _fix_output(title: str) -> str:

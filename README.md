@@ -69,6 +69,7 @@ information page**
 | --cover           | Only download cover                                               |
 | -d/--debug        | Print debug information                                           |
 | -o/--output       | Output location                                                   |
+| --remove-chars    | List of characters that will be removed from output path          |
 | --no-chapters     | Don't include chapters in output file                             |
 | --output-format   | Output file format                                                |
 | --verbose--ffmpeg | Show ffmpeg output in terminal                                    |

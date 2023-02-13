@@ -70,18 +70,18 @@ def run_on_url(options, url: str):
         login(s, options)
     # Running program
     if options.print_output:
-        print_output(s, options.output)
+        print_output(s, options)
     elif options.cover:
         download_cover(s)
     else:
         download(s, options)
 
 
-def print_output(source: Source, template: str):
+def print_output(source: Source, options):
     """Prints output location"""
     source.before()
     meta = source.get_metadata()
-    location = output.gen_output_location(template, meta)
+    location = output.gen_output_location(options.template, meta, options.remove_chars)
     print(location)
 
 

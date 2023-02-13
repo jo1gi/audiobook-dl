@@ -26,8 +26,10 @@ def download(source: Source, options):
     if len(files) == 0:
         raise NoFilesFound
     output_dir = output.gen_output_location(
-            options.output_template,
-            source.metadata())
+        options.output_template,
+        source.metadata(),
+        options.remove_chars
+    )
     # Downloading audio files
     filenames = download_files_output(source, files, output_dir)
     # Finding output format

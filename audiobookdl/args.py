@@ -31,6 +31,11 @@ def parse_arguments():
         default="{title}"
     )
     parser.add_argument(
+        '--remove-chars',
+        dest="remove_chars",
+        help = "List of characters that will be removed from output path",
+    )
+    parser.add_argument(
         '--debug',
         '-d',
         dest="debug",
