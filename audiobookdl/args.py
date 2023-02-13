@@ -34,6 +34,7 @@ def parse_arguments():
         '--remove-chars',
         dest="remove_chars",
         help = "List of characters that will be removed from output path",
+        default="",
     )
     parser.add_argument(
         '--debug',
