@@ -1,6 +1,6 @@
 from .source import Source
 from audiobookdl import AudiobookFile, Chapter
-from typing import Any
+from typing import Any, Optional
 import uuid
 from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess
 import base64
@@ -117,7 +117,7 @@ class BookBeatSource(Source):
             chapters.append(Chapter(track["start"], f"Chapter {chapter_number+1}"))
         return chapters
 
-    def get_cover(self) -> bytes | None:
+    def get_cover(self) -> Optional[bytes]:
         return self.get(self.book_info["metadata"]["cover"])
 
     def before(self):

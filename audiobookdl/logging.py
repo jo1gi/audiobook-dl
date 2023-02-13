@@ -1,6 +1,7 @@
 from rich.console import Console
 from rich.progress import Progress, ProgressColumn
 import importlib.resources
+from typing import Union
 
 debug_mode = False
 quiet_mode = False
@@ -45,5 +46,5 @@ def simple_help():
     """Print basic help information"""
     print_asset_file("assets/simple_help.txt")
 
-def progress(progress_format: list[str | ProgressColumn]) -> Progress:
+def progress(progress_format: list[Union[str, ProgressColumn]]) -> Progress:
     return Progress(*progress_format, console=console)

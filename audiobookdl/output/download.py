@@ -5,12 +5,12 @@ from . import metadata, output, encryption
 import os
 import shutil
 from functools import partial
-from typing import Any
+from typing import Any, Union
 from rich.progress import Progress, BarColumn, ProgressColumn
 from rich.prompt import Confirm
 from multiprocessing.pool import ThreadPool
 
-DOWNLOAD_PROGRESS: list[str | ProgressColumn] = [
+DOWNLOAD_PROGRESS: list[Union[str, ProgressColumn]] = [
     "{task.description}", BarColumn(), "[progress.percentage]{task.percentage:>3.0f}%"
 ]
 

@@ -9,24 +9,24 @@ import lxml.html
 from lxml.cssselect import CSSSelector
 import re
 from http.cookiejar import MozillaCookieJar
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 class Source:
     """An abstract class for downloading audiobooks from a specific
     online source."""
 
     # A list of regexes that indicates which website a sevice supports
-    match: List[str] = []
+    match: list[str] = []
     # Methods for authenticating
-    _authentication_methods: List[str] = [ "cookies" ]
+    _authentication_methods: list[str] = [ "cookies" ]
     # Data required for logging in
-    login_data: List[str] = [ "username", "password" ]
+    login_data: list[str] = [ "username", "password" ]
     # If cookies are loaded
     _authenticated = False
     # Cache of previously loaded pages
-    _pages: Dict[str, bytes] = {}
-    # List of names
-    names: List[str] = []
+    _pages: dict[str, bytes] = {}
+    # list of names
+    names: list[str] = []
 
     def __init__(self, url, match_num):
         self.url = url
@@ -76,11 +76,11 @@ class Source:
     def get_title(self) -> str:
         return ""
 
-    def get_metadata(self) -> Dict[str, Any]:
+    def get_metadata(self) -> dict[str, Any]:
         """Returns metadata of the audiobook"""
         return {}
 
-    def metadata(self) -> Dict[str, str]:
+    def metadata(self) -> dict[str, str]:
         m = self.get_metadata()
         if "authors" in m:
             m["author"] = "; ".join(m["authors"])
@@ -100,7 +100,7 @@ class Source:
         """Returns the filetype of the cover from `get_cover`"""
         return "jpg"
 
-    def get_files(self) -> List[AudiobookFile]:
+    def get_files(self) -> list[AudiobookFile]:
         raise NotImplemented
 
     def get_chapters(self) -> list[Chapter]:
@@ -127,7 +127,7 @@ class Source:
             return elem.text
         return elem.get(data)
 
-    def find_elems_in_page(self, url, selector, **kwargs) -> List[Any]:
+    def find_elems_in_page(self, url, selector, **kwargs) -> list[Any]:
         sel = CSSSelector(selector)
         page: bytes = self._get_page(url, **kwargs)
         tree = lxml.html.fromstring(page.decode("utf8"))
