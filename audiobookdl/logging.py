@@ -1,7 +1,7 @@
 from rich.console import Console
 from rich.progress import Progress, ProgressColumn
-import importlib.resources
 from typing import Union
+from audiobookdl.utils import read_asset_file
 
 debug_mode = False
 quiet_mode = False
@@ -18,12 +18,6 @@ def log(msg: str):
     """Display msg in log"""
     if not quiet_mode:
         console.print(msg)
-
-
-def read_asset_file(path: str) -> str:
-    return importlib.resources.files("audiobookdl") \
-        .joinpath(path) \
-        .read_text(encoding="utf8")
 
 
 def error(msg: str):

@@ -1,5 +1,5 @@
 import functools
-from typing import List
+import importlib.resources
 
 @functools.cache
 def levenstein_distance(a: str, b: str) -> int:
@@ -15,5 +15,11 @@ def levenstein_distance(a: str, b: str) -> int:
         levenstein_distance(a[1:], b[1:]) # Character is replaced
     )
 
-def nearest_string(s: str, l: List[str]) -> str:
+def nearest_string(s: str, l: list[str]) -> str:
     return sorted(l, key = lambda x: levenstein_distance(s, x))[0]
+
+
+def read_asset_file(path: str) -> str:
+    return importlib.resources.files("audiobookdl") \
+        .joinpath(path) \
+        .read_text(encoding="utf8")

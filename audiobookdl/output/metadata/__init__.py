@@ -1,5 +1,7 @@
 from audiobookdl import logging, Chapter
-from . import id3, mp4
+from audiobookdl.utils import dependencies
+from . import id3, mp4, ffmpeg
+import os
 
 def add_metadata(filepath: str, metadata: dict[str, str]):
     """Adds metadata to the given audio file"""
@@ -25,5 +27,11 @@ def add_chapters(filepath: str, chapters: list[Chapter]):
     """Adds chapters to the given audio file"""
     if id3.is_id3_file(filepath):
         id3.add_id3_chapters(filepath, chapters)
+    elif dependencies.program_in_path("ffmpeg"):
+        ffmpeg.add_chapters_ffmpeg(filepath, chapters)
     else:
-        logging.debug("Could not add chapters")
+        if logging.debug_mode:
+            logging.debug("Could not add chapters")
+        else:
+            filetype = os.path.splitext(filepath)[1][1:]
+            logging.print_error_file("chapters_add", filetype=filetype)

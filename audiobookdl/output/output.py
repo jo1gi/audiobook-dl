@@ -17,6 +17,7 @@ def gen_output_filename(booktitle: str, file: Dict[str, str], template: str) -> 
     filename = template.format(**arguments)
     return _fix_output(filename)
 
+
 def combine_audiofiles(filenames: List[str], tmp_dir: str, output_path: str):
     """Combines the given audiofiles in `path` into a new file"""
     inputs = "|".join(filenames)
