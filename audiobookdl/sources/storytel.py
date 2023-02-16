@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter
+from audiobookdl import AudiobookFile, Chapter, logging
 from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
@@ -67,7 +67,12 @@ class StorytelSource(Source):
             chapters: list[Chapter] = []
             storytel_metadata = self._session.get(url).json()
             if "formats" in storytel_metadata and len(storytel_metadata["formats"]) > 0:
-                f = storytel_metadata["formats"][0]
+                # Find audiobook format
+                for format in storytel_metadata["formats"]:
+                    if format["type"] == "abook":
+                        f = format
+                logging.debug(f"{f=}")
+                # Add chapters
                 if "chapters" in f and len(f["chapters"]) > 0:
                     start_time = 0
                     for c in f["chapters"]:

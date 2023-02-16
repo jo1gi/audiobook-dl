@@ -154,6 +154,10 @@ def combined_audiobook(source: Source,
 
 def embed_metadata_in_file(source: Source, output_file: str, options):
     """Embed metadata into combined audiobook file"""
+    chapters = source.get_chapters()
+    if chapters and not options.no_chapters:
+        logging.log("Adding chapters")
+        metadata.add_chapters(output_file, chapters)
     if source.metadata is not None:
         logging.log("Adding metadata")
         metadata.add_metadata(output_file, source.metadata())
@@ -161,10 +165,6 @@ def embed_metadata_in_file(source: Source, output_file: str, options):
     if cover is not None:
         logging.log("Embedding cover")
         metadata.embed_cover(output_file, cover, source.get_cover_extension())
-    chapters = source.get_chapters()
-    if chapters and not options.no_chapters:
-        logging.log("Adding chapters")
-        metadata.add_chapters(output_file, chapters)
 
 
 def add_metadata_to_dir(source: Source, filenames: list[str], output_dir: str):

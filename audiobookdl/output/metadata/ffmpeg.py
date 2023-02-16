@@ -3,8 +3,8 @@ from mutagen import File as MutagenFile
 import subprocess
 import os
 
-TMP_CHAPTER_FILE = "chapters.tmp"
-TMP_MEDIA_FILE = "audiobook.tmp"
+TMP_CHAPTER_FILE = "chapters.tmp.txt"
+TMP_MEDIA_FILE = "audiobook.tmp.mp4"
 
 def create_chapter_text(title: str, start: int, end: int) -> str:
     chapter_template = utils.read_asset_file("assets/ffmpeg_chapter_template.txt")
@@ -16,7 +16,7 @@ def create_chapter_text(title: str, start: int, end: int) -> str:
 
 
 def create_tmp_chapter_file(filepath: str, chapters: list[Chapter]) -> str:
-    result = ""
+    result = ";FFMETADATA1\n"
     for i in range(len(chapters)-1):
         chapter = chapters[i]
         result += create_chapter_text(chapter.title, chapter.start, chapters[i+1].start)
@@ -25,7 +25,7 @@ def create_tmp_chapter_file(filepath: str, chapters: list[Chapter]) -> str:
     result += create_chapter_text(
         title = last_chapter.title,
         start = last_chapter.start,
-        end = length
+        end = int(length)
     )
     return result
 
