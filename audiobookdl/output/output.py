@@ -27,7 +27,7 @@ def combine_audiofiles(filenames: List[str], tmp_dir: str, output_path: str):
     )
 
 
-def convert_output(filenames: List[str], output_dir: str, output_format: str):
+def convert_output(filenames: List[str], output_format: str):
     """Converts a list of audio files into another format and return new
     files"""
     new_paths = []
@@ -51,8 +51,7 @@ def gen_output_location(template: str, metadata: Dict[str, str], remove_chars: s
     metadata["title"] = _fix_output(metadata["title"])
     metadata = {**LOCATION_DEFAULTS, **metadata}
     formatted = template.format(**metadata)
-    for c in remove_chars:
-        formatted = formatted.replace(c, "")
+    formatted = _remove_chars(formatted, remove_chars)
     return formatted
 
 

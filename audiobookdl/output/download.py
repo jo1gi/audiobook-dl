@@ -41,7 +41,7 @@ def download(source: Source, options):
             output_format = "mp3"
     # Converting audio files to specified format
     logging.log("Converting files")
-    filenames = output.convert_output(filenames, output_dir, output_format)
+    filenames = output.convert_output(filenames, output_format)
     # Single audiofile
     if options.combine or len(filenames) == 1:
         combined_audiobook(source, filenames, output_dir, output_format, options)
@@ -169,13 +169,14 @@ def embed_metadata_in_file(source: Source, output_file: str, options):
 
 def add_metadata_to_dir(source: Source, filenames: list[str], output_dir: str):
     """Adds metadata to dir of audiobook files"""
-    for i in filenames:
-        metadata.add_metadata(os.path.join(output_dir, i), source.metadata())
+    for filename in filenames:
+        metadata.add_metadata(filename, source.metadata())
     cover = source.get_cover()
     if cover is not None:
         logging.log("Downloading cover")
         cover_path = os.path.join(
             output_dir,
-            f"cover.{source.get_cover_extension()}")
+            f"cover.{source.get_cover_extension()}"
+        )
         with open(cover_path, 'wb') as f:
             f.write(cover)
