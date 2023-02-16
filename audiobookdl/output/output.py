@@ -19,8 +19,7 @@ def gen_output_filename(booktitle: str, file: Dict[str, str], template: str) -> 
 
 def combine_audiofiles(filenames: List[str], tmp_dir: str, output_path: str):
     """Combines the given audiofiles in `path` into a new file"""
-    paths = [os.path.join(tmp_dir, f) for f in filenames]
-    inputs = "|".join(paths)
+    inputs = "|".join(filenames)
     subprocess.run(
         ["ffmpeg", "-i", f"concat:{inputs}", "-safe", "0", "-c", "copy", output_path],
         capture_output=not logging.ffmpeg_output,
