@@ -1,4 +1,5 @@
 from .source import Source
+from audiobookdl import AudiobookFile
 import re
 from urllib.parse import unquote
 
@@ -42,8 +43,9 @@ class AudiobooksdotcomSource(Source):
         media_url = re.search(r"(?<=(mp3: \")).+(?=(&rs))", page)
         if media_url is None:
             return []
-        files = [{
-            "url": media_url.group(0),
-            "ext": "mp3"
-        }]
+
+        files = [AudiobookFile(
+            url=media_url.group(0),
+            ext="mp3",
+        )]
         return files
