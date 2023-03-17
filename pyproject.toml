@@ -22,7 +22,6 @@ dependencies = [
     "mutagen",
     "pillow",
     "cssselect",
-    "mypy",
     "m3u8",
     "pycryptodome",
     "importlib-resources"
