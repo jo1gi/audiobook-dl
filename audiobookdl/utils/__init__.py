@@ -1,7 +1,5 @@
-import functools
 import importlib.resources
 
-@functools.cache
 def levenstein_distance(a: str, b: str) -> int:
     if len(a) == 0:
         return len(b)
