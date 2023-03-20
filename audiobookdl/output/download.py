@@ -25,34 +25,39 @@ def download(source: Source, options):
     files = source.get_files()
     if len(files) == 0:
         raise NoFilesFound
-    output_dir = output.gen_output_location(
-        options.output_template,
-        source.metadata(),
-        options.remove_chars
-    )
-    # Downloading audio files
-    filenames = download_files_output(source, files, output_dir)
-    # Finding output format
-    if options.output_format:
-        output_format = options.output_format
-    else:
-        output_format = os.path.splitext(filenames[0])[1][1:]
-        if output_format == "ts":
-            output_format = "mp3"
-    # Converting audio files to specified format
-    logging.log("Converting files")
-    filenames = output.convert_output(filenames, output_format)
-    # Single audiofile
-    if options.combine or len(filenames) == 1:
-        combined_audiobook(source, filenames, output_dir, output_format, options)
-    # Multiple audiofiles
-    else:
-        add_metadata_to_dir(source, filenames, output_dir)
+    try:
+        output_dir = output.gen_output_location(
+            options.output_template,
+            source.metadata(),
+            options.remove_chars
+        )
+        # Downloading audio files
+        filenames = download_files_output(source, files, output_dir)
+        # Finding output format
+        if options.output_format:
+            output_format = options.output_format
+        else:
+            output_format = os.path.splitext(filenames[0])[1][1:]
+            if output_format == "ts":
+                output_format = "mp3"
+        # Converting audio files to specified format
+        logging.log("Converting files")
+        filenames = output.convert_output(filenames, output_format)
+        # Single audiofile
+        if options.combine or len(filenames) == 1:
+            combined_audiobook(source, filenames, output_dir, output_format, options)
+        # Multiple audiofiles
+        else:
+            add_metadata_to_dir(source, filenames, output_dir)
+    except KeyboardInterrupt:
+        logging.log("Stopped download")
+        logging.log("Cleaning up files")
+        shutil.rmtree(output_dir)
 
 def setup_download_dir(path: str):
     """Creates output folder"""
     if os.path.isdir(path):
-        answer = Confirm.ask(f"The folder '{path}' already exists. Do you want to override it?")
+        answer = Confirm.ask(f"The folder '[blue]{path}[/blue]' already exists. Do you want to override it?")
         if answer:
             shutil.rmtree(path)
         else:
