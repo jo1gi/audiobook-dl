@@ -1,10 +1,17 @@
 import argparse
+from audiobookdl import __version__
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
         prog="audiobook-dl",
         description="Download audiobooks from websites",
+    )
+    parser.add_argument(
+        '-v',
+        '--version',
+        action = "version",
+        version = f"audiobook-dl {__version__}"
     )
     parser.add_argument(
         'urls',
