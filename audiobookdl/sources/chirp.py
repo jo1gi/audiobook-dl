@@ -1,7 +1,7 @@
 from .source import Source
 from audiobookdl import AudiobookFile, Chapter, logging
 
-from typing import List, Optional
+from typing import Optional
 import base64
 from Crypto.Cipher import AES
 
@@ -18,7 +18,7 @@ class ChirpSource(Source):
         "content-type": "application/json"
     }
 
-    def get_tracks(self, book_id):
+    def _get_tracks(self, book_id):
         response = self.post_json(
             f"https://www.chirpbooks.com/api/graphql",
             json = {
@@ -32,8 +32,10 @@ class ChirpSource(Source):
         )
         return response["data"]["audiobook"]["tracks"]
 
+
     def get_title(self) -> str:
         return self.find_elem_in_page(self.url, "title")
+
 
     def get_metadata(self):
         metadata = {}
@@ -45,9 +47,11 @@ class ChirpSource(Source):
                 metadata["narrator"] = text[12:]
         return metadata
 
+
     def get_cover(self) -> Optional[bytes]:
         cover_url = self.find_elem_in_page(self.url, "img.cover-image", data="src")
         return self.get(cover_url)
+
 
     def get_audio_url(self, track):
         url_resp = self.post_json(
@@ -68,10 +72,10 @@ class ChirpSource(Source):
         cipher = AES.new(self.key, AES.MODE_CBC, self.iv)
         return cipher.decrypt(ciphertext).decode("utf8")[:-1]
 
-    def get_files(self) -> List[AudiobookFile]:
+
+    def get_files(self) -> list[AudiobookFile]:
         files = []
         for track in self.tracks:
-            pass
             files.append(AudiobookFile(
                 url = self.get_audio_url(track),
                 ext = "mp3",
@@ -90,18 +94,20 @@ class ChirpSource(Source):
         return chapters
 
 
-    def calc_iv(self):
-        user_id = self.user_id
-        padded_user_id = f"{'x'*(12-len(str(user_id)))}{user_id}"
+    def _calc_iv(self):
+        """Creates IV based on `user_id` to decrypt audio url"""
+        padding = 'x'*(12-len(str(self.user_id)))
+        padded_user_id = f"{padding}{self.user_id}"
         return base64.b64encode(bytes(padded_user_id, "UTF-8"))
+
 
     def before(self):
         self.book_id = int(self.find_elem_in_page(self.url, "div.user-audiobook", "data-audiobook-id"))
         logging.debug(f"{self.book_id=}")
         self.user_id = int(self.find_in_page(self.url, r'"id":(\d+)', 1))
         logging.debug(f"{self.user_id=}")
-        self.tracks = self.get_tracks(self.book_id)
-        self.iv = self.calc_iv()
+        self.tracks = self._get_tracks(self.book_id)
+        self.iv = self._calc_iv()
         logging.debug(f"{self.iv=}")
         self.key = bytes(self.find_elem_in_page(self.url, "div.user-audiobook", "data-dk"), "UTF-8")
         logging.debug(f"{self.key=}")

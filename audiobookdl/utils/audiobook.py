@@ -1,6 +1,6 @@
 import requests
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Optional
 
 @dataclass
 class Chapter:
@@ -26,15 +26,15 @@ class AudiobookFile:
     # Title of file
     title: Optional[str] = None
     # Headers for request
-    headers: Dict[str, str] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
     # Encryption method
     encryption_method: Optional[AudiobookFileEncryption] = None
 
 
 class AudiobookMetadata:
     title: str
-    _authors: List[str]
-    _narrators: List[str]
+    _authors: list[str]
+    _narrators: list[str]
 
     @property
     def authors(self) -> str:
@@ -47,7 +47,7 @@ class AudiobookMetadata:
 class Audiobook:
     _session: requests.Session
     metadata: AudiobookMetadata
-    files: List[AudiobookFile]
+    files: list[AudiobookFile]
     cover: Optional[bytes]
     cover_extension: str
 

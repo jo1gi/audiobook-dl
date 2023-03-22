@@ -4,7 +4,6 @@ from audiobookdl.exceptions import UserNotAuthorized, RequestError
 
 import requests.utils
 import base64
-from typing import Dict, List
 
 class YourCloudLibrarySource(Source):
     match = [
@@ -15,13 +14,13 @@ class YourCloudLibrarySource(Source):
         "cookies",
         "login"
     ]
-    meta: Dict
-    playlist: Dict
+    meta: dict
+    playlist: dict
 
     def get_title(self):
         return self.book_info["Title"]
 
-    def get_files(self) -> List[AudiobookFile]:
+    def get_files(self) -> list[AudiobookFile]:
         files = []
         for f in self.playlist["playlist"]:
             files.append(AudiobookFile(

@@ -4,7 +4,7 @@ from audiobookdl.exceptions import DataNotPresent, UserNotAuthorized
 
 import re
 import json
-from typing import List
+from urllib3.util import parse_url
 
 
 class OverdriveSource(Source):
@@ -12,14 +12,14 @@ class OverdriveSource(Source):
         r"https://.+\.listen\.overdrive\.com"
     ]
 
-    names = [ "Overdrive" ]
+    names = [ "Overdrive", "Libby" ]
 
     def before(self):
-        prefix_re = re.search(self.match[0], self.url)
-        if prefix_re and prefix_re.group(0):
-            self.prefix = prefix_re.group(0)
-        else:
-            raise DataNotPresent
+        # Parse url
+        parsed_url = parse_url(self.url)
+        hostname = parsed_url.hostname
+        self.prefix = f"https://{hostname}"
+        # Extract json from javascript
         raw = self.find_in_page(self.url, 'window.bData = {.+;')
         if raw is None:
             raise UserNotAuthorized
@@ -77,7 +77,7 @@ class OverdriveSource(Source):
             chapters.append(Chapter(start, chapter["title"]))
         return chapters
 
-    def get_files(self) -> List[AudiobookFile]:
+    def get_files(self) -> list[AudiobookFile]:
         files = []
         for num, part in enumerate(self.meta["spine"]):
             files.append(AudiobookFile(

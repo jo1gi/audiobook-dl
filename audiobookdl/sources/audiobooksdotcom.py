@@ -1,7 +1,8 @@
 from .source import Source
-from audiobookdl import AudiobookFile
+from audiobookdl import AudiobookFile, logging
 import re
 from urllib.parse import unquote
+from urllib3.util import parse_url
 
 BASEURL = "https://www.audiobooks.com/book/stream/"
 
@@ -13,39 +14,34 @@ class AudiobooksdotcomSource(Source):
     names = [ "audiobooks.com" ]
 
     def before(self):
-        self.iden = re.search(
-                r"(?<=({}))\d+".format(BASEURL),
-                self.url).group(0)
-        self.scrape_url = f"{BASEURL}{self.iden}/1"
+        path = parse_url(self.url).path
+        book_id = path.split("/")[3] # Third part of path is book id
+        logging.debug(f"{book_id=}")
+        self.scrape_url = f"{BASEURL}{book_id}/1"
 
-    def get_title(self):
+    def get_title(self) -> str:
         return self.find_elem_in_page(self.scrape_url, "h2#bookTitle")
 
-    def get_cover(self):
-        cover_url = "http:" + self.find_elem_in_page(
+    def get_cover(self) -> bytes:
+        cover_url = "http:" + \
+            self.find_elem_in_page(
                 self.scrape_url,
                 "img.bookimage",
-                data="src")
+                data="src"
+            )
         return self.get(cover_url)
 
-    def get_user_agent(self):
-        raw = self._session.cookies.get("ci_session")
+    def _get_user_agent(self) -> str:
+        """Returns user agent from cookies"""
+        raw = self._session.cookies.get("ci_session", domain="www.audiobooks.com")
         return unquote(raw).split("\"")[11]
 
-    def get_files(self):
-        headers = {
-            "User-Agent": self.get_user_agent()
-        }
-        page: str = self._session.get(
-                self.scrape_url,
-                headers=headers
-                ).content.decode('utf8')
-        media_url = re.search(r"(?<=(mp3: \")).+(?=(&rs))", page)
-        if media_url is None:
-            return []
-
-        files = [AudiobookFile(
-            url=media_url.group(0),
-            ext="mp3",
-        )]
-        return files
+    def get_files(self) -> list[AudiobookFile]:
+        # User agent has to match the one in the cookies
+        headers = { "User-Agent": self._get_user_agent() }
+        media_url = self.find_in_page(
+            self.scrape_url,
+            r"(?<=(mp3: \")).+(?=(&rs))",
+            headers=headers
+        )
+        return [ AudiobookFile(url=media_url, ext="mp3") ]

@@ -1,6 +1,11 @@
 import importlib.resources
 
 def levenstein_distance(a: str, b: str) -> int:
+    """
+    Calculates the levenstein distance between `a` and `b`
+
+    https://en.wikipedia.org/wiki/Levenshtein_distance
+    """
     if len(a) == 0:
         return len(b)
     if len(b) == 0:
@@ -13,8 +18,12 @@ def levenstein_distance(a: str, b: str) -> int:
         levenstein_distance(a[1:], b[1:]) # Character is replaced
     )
 
-def nearest_string(s: str, l: list[str]) -> str:
-    return sorted(l, key = lambda x: levenstein_distance(s, x))[0]
+def nearest_string(input: str, list: list[str]) -> str:
+    """
+    Returns the closest element in `list` to `input` based on the levenstein
+    distance
+    """
+    return sorted(list, key = lambda x: levenstein_distance(input, x))[0]
 
 
 def read_asset_file(path: str) -> str:

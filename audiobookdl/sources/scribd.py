@@ -4,7 +4,6 @@ from audiobookdl.exceptions import UserNotAuthorized, RequestError, DataNotPrese
 
 import io
 from PIL import Image
-from typing import Dict, List
 
 class ScribdSource(Source):
     match = [
@@ -13,7 +12,7 @@ class ScribdSource(Source):
     ]
     names = [ "Scribd" ]
     _original = False
-    media: Dict = {}
+    media: dict = {}
 
     def get_title(self):
         if self._title[-5:] == ", The":
@@ -62,57 +61,46 @@ class ScribdSource(Source):
                 start_time += chapter["duration"]
         return chapters
 
-    def get_files(self) -> List[AudiobookFile]:
+    def get_files(self) -> list[AudiobookFile]:
         if self._original:
             return self.get_stream_files(
                 self._stream_url,
-                headers={"Authorization": self._jwt})
+                headers={"Authorization": self._jwt}
+            )
         else:
             files = []
             for i in self.media["playlist"]:
-            # for _, i in enumerate(self.media["playlist"]):
                 chapter = i["chapter_number"]
-                # chapter_str = "0"*(3-len(str(part)))+str(part)
                 files.append(AudiobookFile(
                     url = i["url"],
                     title = f"Chapter {chapter}",
                     ext = "mp3",
                 ))
-                # files.append({
-                #     "url": i["url"],
-                #     "title": f"Chapter {chapter}",
-                #     "part": chapter_str,
-                #     "ext": "mp3",
-                #     "album": self.get_title(),
-                # })
             return files
 
     def before(self):
         try:
+            # Change url to listen page if info page was used
             if self.match_num == 1:
                 book_id = self.url.split("/")[4]
                 self.url = f"https://www.scribd.com/listen/{book_id}"
-            user_id = self.find_in_page(
-                    self.url,
-                    r'(?<=(account_id":"scribd-))\d+')
             book_id = self.find_in_page(
-                    self.url,
-                    r'(?<=(external_id":"))(scribd_)?\d+')
+                self.url,
+                r'(?<=(external_id":"))(scribd_)?\d+'
+            )
         except DataNotPresent:
             raise UserNotAuthorized
-        headers = {
-            'Session-Key': self.find_in_page(
-                self.url,
-                '(?<=(session_key":"))[^"]+')
-        }
+        # The audiobook is a Scribd original if the id starts with "scribd_"
         if book_id[:7] == "scribd_":
             self._original_before(book_id)
         else:
-            self._normal_before(book_id, user_id, headers)
+            self._normal_before(book_id)
 
-    def _normal_before(self, book_id: str, user_id: str, headers: Dict):
+    def _normal_before(self, book_id: str):
         """Download necessary data for normal audiobooks on scribd"""
         try:
+            headers = {'Session-Key': self.find_in_page(self.url, '(?<=(session_key":"))[^"]+')}
+            user_id = self.find_in_page(self.url, r'(?<=(account_id":"scribd-))\d+')
             misc = self.get_json(
                 f"https://api.findawayworld.com/v4/accounts/scribd-{user_id}/audiobooks/{book_id}",
                 headers=headers,
@@ -129,7 +117,6 @@ class ScribdSource(Source):
             )
             self.misc = misc
         except RequestError:
-            logging.debug("Could not retrive data from book")
             raise UserNotAuthorized
 
     def _original_before(self, book_id: str):
@@ -137,14 +124,18 @@ class ScribdSource(Source):
         self._original = True
         self._csrf = self.get_json(
             "https://www.scribd.com/csrf_token",
-            headers={"href": self.url})
+            headers={"href": self.url}
+        )
         self._jwt = self.find_in_page(
             self.url,
-            r'(?<=("jwt_token":"))[^"]+')
+            r'(?<=("jwt_token":"))[^"]+'
+        )
         self._stream_url = f"https://audio.production.scribd.com/audiobooks/{book_id[7:]}/192kbps.m3u8"
         self._title = self.find_all_in_page(
             self.url,
-            r'(?:("title":"))([^"]+)')[1][1]
+            r'(?:("title":"))([^"]+)'
+        )[1][1]
         self._cover = self.find_in_page(
             self.url,
-            r'(?<=("cover_url":"))[^"]+')
+            r'(?<=("cover_url":"))[^"]+'
+        )

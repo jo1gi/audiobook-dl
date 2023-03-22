@@ -35,21 +35,16 @@ class BookBeatSource(Source):
         }
         self._session.headers = headers
 
-        j = {"username": username, "password": password}
+        login_json = {"username": username, "password": password}
 
-        r = self._session.post("https://api.bookbeat.com/api/login", json=j)
-        if not r.status_code == 200:
-            raise UserNotAuthorized
-
-        tokens = r.json()
+        tokens = self.post_json(
+            "https://api.bookbeat.com/api/login",
+            json=login_json
+        )
         self._session.headers.update({"authorization": "Bearer " + tokens["token"]})
-
-        r = self._session.get(
+        self.saved_books = self.get_json(
             "https://api.bookbeat.com/api/my/books/saved?offset=0&limit=100"
         )
-        if not r.status_code == 200:
-            raise MissingBookAccess
-        self.saved_books = r.json()
 
     def get_title(self) -> str:
         return self.book_info["metadata"]["title"]

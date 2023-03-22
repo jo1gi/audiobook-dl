@@ -2,7 +2,7 @@ from .source import Source
 from audiobookdl import  AudiobookFile, logging, utils
 from audiobookdl.exceptions import UserNotAuthorized, RequestError
 
-from typing import Dict, Optional, List
+from typing import Optional
 import re
 import json
 
@@ -28,28 +28,29 @@ class EreolenSource(Source):
             return None
         return self.meta["title"]
 
+
     def get_metadata(self):
-        if not self.meta:
-            return {}
         metadata = {
             "author": self.meta["artist"]
         }
         return metadata
 
+
     def get_cover(self):
-        if not self.meta:
-            return None
         return self.get(self.meta["cover"])
 
-    def get_files(self) -> List[AudiobookFile]:
-        if not self.book_id:
-            return []
+    def get_files(self) -> list[AudiobookFile]:
         return self.get_stream_files(
             f"https://audio.api.streaming.pubhub.dk/v1/stream/hls/{self.book_id}/playlist.m3u8"
         )
 
     def _get_libraries(self):
-        libraries_raw = self.find_in_page(LOGIN_PAGE_URL, "libraries = ({.+})<", 1)
+        """Returns list of available libraries for login"""
+        libraries_raw = self.find_in_page(
+            LOGIN_PAGE_URL,
+            "libraries = ({.+})<",
+            group_index=1
+        )
         libraries = {}
         for library in json.loads(libraries_raw)["folk"]:
             library_name = library["name"]
@@ -59,10 +60,10 @@ class EreolenSource(Source):
 
     def _login(self, username: str, password: str, library: str): # type: ignore
         login_path = self.find_elem_in_page(LOGIN_PAGE_URL, "#borchk-login-form", "action")
-        logging.debug(f"{login_path=}")
         library_attr_name = self.find_elem_in_page(LOGIN_PAGE_URL, "#borchk-login-form label", "for")
-        logging.debug(f"{library_attr_name=}")
         libraries = self._get_libraries()
+        logging.debug(f"{login_path=}")
+        logging.debug(f"{library_attr_name=}")
         logging.debug(f"{libraries=}")
         if library not in libraries.keys():
             library = utils.nearest_string(library, list(libraries.keys()))
@@ -79,7 +80,7 @@ class EreolenSource(Source):
         )
 
     def before(self):
-        ajax: Optional[Dict] = self.get_json(f"{self.url}/listen/ajax")
+        ajax: Optional[dict] = self.get_json(f"{self.url}/listen/ajax")
         if not ajax:
             raise RequestError
         logging.debug(f"{ajax=}")
@@ -92,5 +93,7 @@ class EreolenSource(Source):
         else:
             logging.debug("Could not find book id")
             raise UserNotAuthorized
-        self.meta: Optional[Dict] = self.get_json(f"https://audio.api.streaming.pubhub.dk/v1/orders/{self.book_id}")
+        self.meta: Optional[dict] = self.get_json(f"https://audio.api.streaming.pubhub.dk/v1/orders/{self.book_id}")
+        if self.meta is None:
+            raise UserNotAuthorized
         logging.debug(f"{self.meta=}")

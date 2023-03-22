@@ -1,11 +1,9 @@
 from .source import Source
 from audiobookdl import AudiobookFile
 
-from typing import List
-
 
 class LibrivoxSource(Source):
-    _authentication_methods: List[str] = []
+    _authentication_methods: list[str] = []
 
     names = [ "Librivox" ]
 
@@ -22,7 +20,7 @@ class LibrivoxSource(Source):
             ".book-page-book-cover img",
             data="src"))
 
-    def get_files(self) -> List[AudiobookFile]:
+    def get_files(self) -> list[AudiobookFile]:
         parts = self.find_elems_in_page(self.url,
                                         ".chapter-download .chapter-name")
         files = []

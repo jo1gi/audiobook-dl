@@ -136,7 +136,8 @@ class Source:
 
     def find_in_page(self, url, regex, group_index=0, **kwargs) -> str:
         """Find some text in a page based on a regex"""
-        m = re.search(regex, self._get_page(url, **kwargs).decode("utf8"))
+        page = self._get_page(url, **kwargs).decode("utf8")
+        m = re.search(regex, page)
         if m is None:
             logging.debug(f"Could not find match from {url} with {regex}")
             raise DataNotPresent
