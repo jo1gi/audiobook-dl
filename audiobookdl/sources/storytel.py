@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, logging
+from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata
 from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
@@ -41,8 +41,6 @@ class StorytelSource(Source):
         self._session.headers.update({"authorization": f"Bearer {resp.json()['accountInfo']['jwt']}"})
         self.user_data = resp.json()
 
-    def get_title(self) -> str:
-        return self.book_info["book"]["name"]
 
     def get_files(self) -> list[AudiobookFile]:
         aid = self.book_info["book"]["AId"]
@@ -50,16 +48,20 @@ class StorytelSource(Source):
               f"&token={self.user_data['accountInfo']['singleSignToken']}"
         return [AudiobookFile(url=url, headers=self._session.headers, ext="mp3")]
 
-    def get_metadata(self) -> dict[str,Any]:
+    def get_metadata(self) -> AudiobookMetadata:
+        title = self.book_info["book"]["name"]
+        metadata = AudiobookMetadata(title)
         try:
-            metadata = {"authors": [a["name"] for a in self.book_info["book"]["authors"]],
-                        "narrators": [a["name"] for a in self.book_info["abook"]["narrators"]]}
+            for author in self.book_info["book"]["authors"]:
+                metadata.add_author(author["name"])
+            for narrator in self.book_info["abook"]["narrators"]:
+                metadata.add_narrator(narrator["name"])
             if "series" in self.book_info["book"]:
                 if len(self.book_info["book"]["series"]) > 0:
-                    metadata["series"] = self.book_info["book"]["series"][0]["name"]
+                    metadata.series = self.book_info["book"]["series"][0]["name"]
             return metadata
         except:
-            return {}
+            return metadata
 
     def get_chapters(self) -> list[Chapter]:
         url = f"https://api.storytel.net/playback-metadata/consumable/{self.book_info['book']['consumableId']}"

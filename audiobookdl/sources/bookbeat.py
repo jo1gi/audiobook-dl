@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter
+from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata
 from typing import Any, Optional
 import uuid
 from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess
@@ -46,8 +46,6 @@ class BookBeatSource(Source):
             "https://api.bookbeat.com/api/my/books/saved?offset=0&limit=100"
         )
 
-    def get_title(self) -> str:
-        return self.book_info["metadata"]["title"]
 
     def get_files(self) -> list[AudiobookFile]:
         dl_info = self.get_json(
@@ -76,7 +74,9 @@ class BookBeatSource(Source):
         raise MissingBookAccess
 
 
-    def get_metadata(self) -> dict[str, Any]:
+    def get_metadata(self) -> AudiobookMetadata:
+        title = self.book_info["metadata"]["title"]
+        metadata = AudiobookMetadata(title)
         try:
             contributors = next(
                 iter(
@@ -89,22 +89,16 @@ class BookBeatSource(Source):
                 None,
             )
             if not contributors:
-                return {}
-            metadata = {
-                "authors": [
-                    f"{a['firstname']} {a['lastname']}"
-                    for a in contributors
-                    if "author" in a["role"]
-                ],
-                "narrators": [
-                    f"{n['firstname']} {n['lastname']}"
-                    for n in contributors
-                    if "narrator" in n["role"]
-                ],
-            }
+                return metadata
+            for contributor in contributors:
+                name = f"{contributor['firstname']} {contributor['lastname']}"
+                if "author" in contributor["role"]:
+                    metadata.add_author(name)
+                if "narrator" in contributor["role"]:
+                    metadata.add_narrator(name)
             return metadata
         except:
-            return {}
+            return metadata
 
     def get_chapters(self) -> list[Chapter]:
         chapters = []

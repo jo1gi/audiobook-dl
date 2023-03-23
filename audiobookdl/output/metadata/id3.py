@@ -1,6 +1,6 @@
 import re
 import os
-from audiobookdl import logging, Chapter
+from audiobookdl import logging, Chapter, AudiobookMetadata
 
 from mutagen import File as MutagenFile
 from mutagen.easyid3 import EasyID3
@@ -29,11 +29,11 @@ def is_id3_file(filepath: str) -> bool:
     ext = re.search(r"(?<=(\.))\w+$", filepath)
     return ext is not None and ext.group(0) in ID3_FORMATS
 
-def add_id3_metadata(filepath: str, metadata: dict[str, str]):
+def add_id3_metadata(filepath: str, metadata: AudiobookMetadata):
     """Add ID3 metadata tags to the given audio file"""
     audio = MP3(filepath, ID3=EasyID3)
     # Adding tags
-    for key, value in metadata.items():
+    for key, value in metadata.all_properties(allow_duplicate_keys=False):
         if key in ID3_CONVERT:
             audio[ID3_CONVERT[key]] = value
         elif key in EasyID3.valid_keys.keys():

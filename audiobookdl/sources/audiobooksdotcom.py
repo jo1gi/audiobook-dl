@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, logging
+from audiobookdl import AudiobookFile, logging, AudiobookMetadata
 import re
 from urllib.parse import unquote
 from urllib3.util import parse_url
@@ -19,8 +19,10 @@ class AudiobooksdotcomSource(Source):
         logging.debug(f"{book_id=}")
         self.scrape_url = f"{BASEURL}{book_id}/1"
 
-    def get_title(self) -> str:
-        return self.find_elem_in_page(self.scrape_url, "h2#bookTitle")
+
+    def get_metadata(self) -> AudiobookMetadata:
+        title = self.find_elem_in_page(self.scrape_url, "h2#bookTitle")
+        return AudiobookMetadata(title)
 
     def get_cover(self) -> bytes:
         cover_url = "http:" + \

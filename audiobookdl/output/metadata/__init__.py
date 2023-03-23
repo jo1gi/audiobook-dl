@@ -1,9 +1,9 @@
-from audiobookdl import logging, Chapter
+from audiobookdl import logging, Chapter, AudiobookMetadata
 from audiobookdl.utils import dependencies
 from . import id3, mp4, ffmpeg
 import os
 
-def add_metadata(filepath: str, metadata: dict[str, str]):
+def add_metadata(filepath: str, metadata: AudiobookMetadata):
     """Adds metadata to the given audio file"""
     if id3.is_id3_file(filepath):
         id3.add_id3_metadata(filepath, metadata)

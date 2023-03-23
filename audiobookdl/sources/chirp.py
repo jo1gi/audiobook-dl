@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, logging
+from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata
 
 from typing import Optional
 import base64
@@ -33,18 +33,15 @@ class ChirpSource(Source):
         return response["data"]["audiobook"]["tracks"]
 
 
-    def get_title(self) -> str:
-        return self.find_elem_in_page(self.url, "title")
-
-
-    def get_metadata(self):
-        metadata = {}
+    def get_metadata(self) -> AudiobookMetadata:
+        title = self.find_elem_in_page(self.url, "title")
+        metadata = AudiobookMetadata(title)
         for credit in self.find_elems_in_page(self.url, ".credit"):
             text = credit.text
             if text.startswith("Written by"):
-                metadata["author"] = text[11:]
+                metadata.add_author(text[11:])
             elif text.startswith("Narrated by"):
-                metadata["narrator"] = text[12:]
+                metadata.add_narrator(text[12:])
         return metadata
 
 

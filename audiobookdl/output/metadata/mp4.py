@@ -1,6 +1,6 @@
 import re
 
-from audiobookdl import logging
+from audiobookdl import logging, AudiobookMetadata
 from mutagen.easymp4 import EasyMP4
 from mutagen.mp4 import MP4, MP4Cover, Chapter as MP4Chapter, MP4Chapters
 
@@ -24,10 +24,10 @@ def is_mp4_file(filepath: str) -> bool:
     return ext is not None and ext.group(0) in MP4_EXTENSIONS
 
 
-def add_mp4_metadata(filepath: str, metadata: dict[str, str]):
+def add_mp4_metadata(filepath: str, metadata: AudiobookMetadata):
     """Add mp4 metadata tags to the given audio file"""
     audio = EasyMP4(filepath)
-    for key, value in metadata.items():
+    for key, value in metadata.all_properties(allow_duplicate_keys=True):
         # System defined metadata tags
         if key in MP4_CONVERT:
             audio[MP4_CONVERT[key]] = value

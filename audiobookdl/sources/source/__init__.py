@@ -1,6 +1,6 @@
 # Internal imports
 from . import networking
-from audiobookdl import logging, AudiobookFile, Chapter
+from audiobookdl import logging, AudiobookFile, Chapter, AudiobookMetadata
 from audiobookdl.exceptions import DataNotPresent
 
 # External imports
@@ -27,6 +27,7 @@ class Source:
     _pages: dict[str, bytes] = {}
     # list of names
     names: list[str] = []
+    _cached_title: Optional[str] = None
 
     def __init__(self, url, match_num):
         self.url = url
@@ -73,24 +74,15 @@ class Source:
         """Operations to be run before the audiobook is downloaded"""
         pass
 
-    def get_title(self) -> str:
-        return ""
 
-    def get_metadata(self) -> dict[str, Any]:
+    def get_title(self):
+        if self._cached_title is None:
+            self._cached_title = self.get_metadata().title
+        return self._cached_title
+
+    def get_metadata(self) -> AudiobookMetadata:
         """Returns metadata of the audiobook"""
-        return {}
-
-    def metadata(self) -> dict[str, str]:
-        m = self.get_metadata()
-        if "authors" in m:
-            m["author"] = "; ".join(m["authors"])
-        if "narrators" in m:
-            m["narrator"] = "; ".join(m["narrators"])
-        return {
-            **m,
-            "title": self.get_title(),
-            "genre": "Audiobook"
-        }
+        raise NotImplemented
 
     def get_cover(self) -> Optional[bytes]:
         """Returns the image data for the audiobook"""

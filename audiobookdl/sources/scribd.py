@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, logging
+from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata
 from audiobookdl.exceptions import UserNotAuthorized, RequestError, DataNotPresent
 
 import io
@@ -14,7 +14,7 @@ class ScribdSource(Source):
     _original = False
     media: dict = {}
 
-    def get_title(self):
+    def _get_title(self):
         if self._title[-5:] == ", The":
             split = self._title.split(', ')
             if len(split) == 2:
@@ -36,13 +36,13 @@ class ScribdSource(Source):
         cropped.save(cover, format="jpeg")
         return cover.getvalue()
 
-    def get_metadata(self):
-        metadata = {}
+    def get_metadata(self) -> AudiobookMetadata:
+        title = self._get_title()
+        metadata = AudiobookMetadata(title)
         if not self._original:
-            if len(self.meta["authors"]):
-                metadata["author"] = "; ".join(self.meta["authors"])
-            if len(self.meta["series"]):
-                metadata["series"] = self.meta["series"][0]
+            metadata.add_authors(self.meta["authors"])
+            if self.meta["series"]:
+                metadata.series = self.meta["series"][0]
         return metadata
 
     def _get_chapter_title(self, chapter):

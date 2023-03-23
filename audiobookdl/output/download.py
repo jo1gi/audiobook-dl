@@ -28,7 +28,7 @@ def download(source: Source, options):
     try:
         output_dir = output.gen_output_location(
             options.output_template,
-            source.metadata(),
+            source.get_metadata(),
             options.remove_chars
         )
         # Downloading audio files
@@ -163,9 +163,10 @@ def embed_metadata_in_file(source: Source, output_file: str, options):
     if chapters and not options.no_chapters:
         logging.log("Adding chapters")
         metadata.add_chapters(output_file, chapters)
-    if source.metadata is not None:
+    audiobook_metadata = source.get_metadata()
+    if audiobook_metadata is not None:
         logging.log("Adding metadata")
-        metadata.add_metadata(output_file, source.metadata())
+        metadata.add_metadata(output_file, audiobook_metadata)
     cover = source.get_cover()
     if cover is not None:
         logging.log("Embedding cover")
@@ -174,8 +175,9 @@ def embed_metadata_in_file(source: Source, output_file: str, options):
 
 def add_metadata_to_dir(source: Source, filenames: list[str], output_dir: str):
     """Adds metadata to dir of audiobook files"""
+    audiobook_metadata = source.get_metadata()
     for filename in filenames:
-        metadata.add_metadata(filename, source.metadata())
+        metadata.add_metadata(filename, audiobook_metadata)
     cover = source.get_cover()
     if cover is not None:
         logging.log("Downloading cover")

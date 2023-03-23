@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, logging
+from audiobookdl import AudiobookFile, logging, AudiobookMetadata
 from audiobookdl.exceptions import UserNotAuthorized, RequestError
 
 import requests.utils
@@ -17,8 +17,6 @@ class YourCloudLibrarySource(Source):
     meta: dict
     playlist: dict
 
-    def get_title(self):
-        return self.book_info["Title"]
 
     def get_files(self) -> list[AudiobookFile]:
         files = []
@@ -29,17 +27,18 @@ class YourCloudLibrarySource(Source):
             ))
         return files
 
-    def get_metadata(self):
-        metadata = {}
+    def get_metadata(self) -> AudiobookMetadata:
+        title = self.book_info["Title"]
+        metadata = AudiobookMetadata(title)
         if not self.meta is None:
             try:
                 audiobook = self.meta["audiobook"]
-                metadata["authors"] = audiobook["authors"]
-                metadata["narrators"] = audiobook["narrators"]
+                metadata.add_authors(audiobook["authors"])
+                metadata.add_narrators(audiobook["narrators"])
                 if audiobook["series"] is not None and len(audiobook["series"]) >= 1:
-                    metadata["series"] = audiobook["series"][0]
+                    metadata.series = audiobook["series"][0]
             except:
-                return {}
+                return metadata
         return metadata
 
     def get_cover(self):

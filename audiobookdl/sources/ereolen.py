@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import  AudiobookFile, logging, utils
+from audiobookdl import  AudiobookFile, logging, utils, AudiobookMetadata
 from audiobookdl.exceptions import UserNotAuthorized, RequestError
 
 from typing import Optional
@@ -23,16 +23,11 @@ class EreolenSource(Source):
     ]
     book_id: str
 
-    def get_title(self):
-        if not self.meta:
-            return None
-        return self.meta["title"]
 
-
-    def get_metadata(self):
-        metadata = {
-            "author": self.meta["artist"]
-        }
+    def get_metadata(self) -> AudiobookMetadata:
+        title = self.meta["title"]
+        metadata = AudiobookMetadata(title)
+        metadata.add_author(self.meta["artist"])
         return metadata
 
 
@@ -93,7 +88,8 @@ class EreolenSource(Source):
         else:
             logging.debug("Could not find book id")
             raise UserNotAuthorized
-        self.meta: Optional[dict] = self.get_json(f"https://audio.api.streaming.pubhub.dk/v1/orders/{self.book_id}")
-        if self.meta is None:
+        meta: Optional[dict] = self.get_json(f"https://audio.api.streaming.pubhub.dk/v1/orders/{self.book_id}")
+        if meta is None:
             raise UserNotAuthorized
+        self.meta = meta
         logging.debug(f"{self.meta=}")
