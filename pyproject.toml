@@ -40,3 +40,7 @@ version = {attr = "audiobookdl.__version__"}
 
 [tool.setuptools.package-data]
 mypkg = ["*.txt"]
+
+[tool.mypy]
+ignore_missing_imports = true
+allow_untyped_globals = true
