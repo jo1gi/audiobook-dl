@@ -93,7 +93,7 @@ class YourCloudLibrarySource(Source):
         logging.debug(f"Authentication response {resp.decode('utf8')}")
 
 
-    def before(self):
+    def prepare(self):
         self.book_info = self._get_bookinfo()
         token = self._get_fullfillmenttoken()
         library = self._get_library_id()

@@ -15,19 +15,18 @@ class Source:
     """An abstract class for downloading audiobooks from a specific
     online source."""
 
-    # A list of regexes that indicates which website a sevice supports
-    match: list[str] = []
-    # Methods for authenticating
-    _authentication_methods: list[str] = [ "cookies" ]
     # Data required for logging in
     login_data: list[str] = [ "username", "password" ]
-    # If cookies are loaded
-    _authenticated = False
-    # Cache of previously loaded pages
-    _pages: dict[str, bytes] = {}
+    # A list of regexes that indicates which website a sevice supports
+    match: list[str] = []
     # list of names
     names: list[str] = []
-    _cached_title: Optional[str] = None
+    # Methods for authenticating
+    _authentication_methods: list[str] = [ "cookies" ]
+    # If cookies are loaded
+    __authenticated = False
+    # Cache of previously loaded pages
+    __pages: dict[str, bytes] = {}
 
     def __init__(self, url, match_num):
         self.url = url
@@ -42,7 +41,7 @@ class Source:
     @property
     def authenticated(self):
         """Returns `True` if the source has been authenticated"""
-        return self._authenticated
+        return self.__authenticated
 
     @property
     def supports_cookies(self):
@@ -54,7 +53,7 @@ class Source:
             cookie_jar = MozillaCookieJar()
             cookie_jar.load(cookie_file, ignore_expires=True)
             self._session.cookies.update(cookie_jar)
-            self._authenticated = True
+            self.__authenticated = True
 
     @property
     def supports_login(self):
@@ -69,16 +68,9 @@ class Source:
             self._login(**kwargs)
             self._authenticated = True
 
-
-    def before(self) -> None:
+    def prepare(self) -> None:
         """Operations to be run before the audiobook is downloaded"""
         pass
-
-
-    def get_title(self) -> str:
-        if self._cached_title is None:
-            self._cached_title = self.get_metadata().title
-        return self._cached_title
 
     def get_metadata(self) -> AudiobookMetadata:
         """Returns metadata of the audiobook"""
@@ -89,23 +81,31 @@ class Source:
         return None
 
     def get_files(self) -> list[AudiobookFile]:
+        """Return a list of audio files for the audiobook"""
         raise NotImplemented
 
     def get_chapters(self) -> list[Chapter]:
-        """Returns a list of tuples with the starting point of the chapter and
-        the title of the chapter"""
+        """
+        Returns a list of tuples with the starting point of the chapter and
+        the title of the chapter
+        """
         return []
 
 
     def _get_page(self, url: str, **kwargs) -> bytes:
-        """Downloads a page and caches it"""
-        if url not in self._pages:
+        """Download a page and caches it"""
+        if url not in self.__pages:
             resp = self.get(url, **kwargs)
-            self._pages[url] = resp
-        return self._pages[url]
+            self.__pages[url] = resp
+        return self.__pages[url]
 
-    def find_elem_in_page(self, url, selector, data=None, **kwargs):
-        """Finds an element in a page based on a css selector"""
+    def find_elem_in_page(self, url: str, selector: str, data=None, **kwargs):
+        """
+        Find the first html element in page from `url` that matches `selector`.
+        Will return the attribute specified in `data`. Will return element text
+        if `data` is `None`.
+        Will cache the page.
+        """
         results = self.find_elems_in_page(url, selector, **kwargs)
         if len(results) == 0:
             logging.debug(f"Could not find matching element from {url} with {selector}")
@@ -115,15 +115,22 @@ class Source:
             return elem.text
         return elem.get(data)
 
-    def find_elems_in_page(self, url, selector, **kwargs) -> list[Any]:
+    def find_elems_in_page(self, url: str, selector: str, **kwargs) -> list[Any]:
+        """
+        Find all html elements in the page from `url` thats matches `selector`.
+        Will cache the page.
+        """
         sel = CSSSelector(selector)
         page: bytes = self._get_page(url, **kwargs)
         tree = lxml.html.fromstring(page.decode("utf8"))
         results = sel(tree)
         return results
 
-    def find_in_page(self, url, regex, group_index=0, **kwargs) -> str:
-        """Find some text in a page based on a regex"""
+    def find_in_page(self, url: str, regex: str, group_index: int = 0, **kwargs) -> str:
+        """
+        Find some text in a page based on a regex.
+        Will cache the page.
+        """
         page = self._get_page(url, **kwargs).decode("utf8")
         m = re.search(regex, page)
         if m is None:
@@ -131,8 +138,11 @@ class Source:
             raise DataNotPresent
         return m.group(group_index)
 
-    def find_all_in_page(self, url, regex, **kwargs):
-        """Finds all places in a page that matches the regex"""
+    def find_all_in_page(self, url: str, regex: str, **kwargs) -> list[Any]:
+        """
+        Find all places in a page that matches the regex.
+        Will cache the page.
+        """
         return re.findall(regex, self._get_page(url, **kwargs).decode("utf8"))
 
     # Networking

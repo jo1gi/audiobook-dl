@@ -81,14 +81,14 @@ def run_on_url(options, url: str):
 
 def print_output(source: Source, options):
     """Prints output location"""
-    source.before()
+    source.prepare()
     meta = source.get_metadata()
     location = output.gen_output_location(options.template, meta, options.remove_chars)
     print(location)
 
 
 def download_cover(source: Source):
-    source.before()
+    source.prepare()
     cover = source.get_cover()
     if cover:
         with open(f"cover.{cover.extension}", "wb") as f:

@@ -89,7 +89,7 @@ class StorytelSource(Source):
         cover_data = self.get(cover_url)
         return Cover(cover_data, "jpg")
 
-    def before(self):
+    def prepare(self):
         wanted_id = self.url.split("-")[-1]
         bookshelf_url = f"https://www.storytel.com/api/getBookShelf.action" \
                         f"?token={self.user_data['accountInfo']['singleSignToken']}"

@@ -32,7 +32,7 @@ def create_audiobook(source: Source) -> Audiobook:
     """Creates a new `Audiobook` object from a `Source`"""
     if source.requires_authentication and not source.authenticated:
         raise UserNotAuthorized
-    source.before()
+    source.prepare()
     files = source.get_files()
     if len(files) == 0:
         raise NoFilesFound

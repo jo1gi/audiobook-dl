@@ -13,7 +13,7 @@ class AudiobooksdotcomSource(Source):
     ]
     names = [ "audiobooks.com" ]
 
-    def before(self):
+    def prepare(self):
         path = parse_url(self.url).path
         book_id = path.split("/")[3] # Third part of path is book id
         logging.debug(f"{book_id=}")

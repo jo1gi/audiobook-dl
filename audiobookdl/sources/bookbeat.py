@@ -111,7 +111,7 @@ class BookBeatSource(Source):
         cover_data = self.get(cover_url)
         return Cover(cover_data, "jpg")
 
-    def before(self):
+    def prepare(self):
         book_id_re = r"(\d+)$"
         wanted_id_match = re.search(book_id_re, self.url)
         if not wanted_id_match:

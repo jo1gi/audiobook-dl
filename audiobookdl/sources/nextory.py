@@ -128,7 +128,7 @@ class NextorySource(Source):
         cover_data = self.get(cover_url)
         return Cover(cover_data, "jpg")
 
-    def before(self):
+    def prepare(self):
         wanted_id = self.url.split("-")[-1].replace("/", "")
         for book in self.user_data["active"]["data"]["books"]:
             if str(book["id"]) == wanted_id:

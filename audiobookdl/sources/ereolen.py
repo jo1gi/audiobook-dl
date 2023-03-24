@@ -75,7 +75,7 @@ class EreolenSource(Source):
             }
         )
 
-    def before(self):
+    def prepare(self):
         ajax: Optional[dict] = self.get_json(f"{self.url}/listen/ajax")
         if not ajax:
             raise RequestError

@@ -79,7 +79,7 @@ class ScribdSource(Source):
                 ))
             return files
 
-    def before(self):
+    def prepare(self):
         try:
             # Change url to listen page if info page was used
             if self.match_num == 1:
@@ -93,11 +93,11 @@ class ScribdSource(Source):
             raise UserNotAuthorized
         # The audiobook is a Scribd original if the id starts with "scribd_"
         if book_id[:7] == "scribd_":
-            self._original_before(book_id)
+            self._original_prepare(book_id)
         else:
-            self._normal_before(book_id)
+            self._normal_prepare(book_id)
 
-    def _normal_before(self, book_id: str):
+    def _normal_prepare(self, book_id: str):
         """Download necessary data for normal audiobooks on scribd"""
         try:
             headers = {'Session-Key': self.find_in_page(self.url, '(?<=(session_key":"))[^"]+')}
@@ -120,7 +120,7 @@ class ScribdSource(Source):
         except RequestError:
             raise UserNotAuthorized
 
-    def _original_before(self, book_id: str):
+    def _original_prepare(self, book_id: str):
         """Download necessary data for scribd originals"""
         self._original = True
         self._csrf = self.get_json(

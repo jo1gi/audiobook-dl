@@ -99,7 +99,7 @@ class ChirpSource(Source):
         return base64.b64encode(bytes(padded_user_id, "UTF-8"))
 
 
-    def before(self):
+    def prepare(self):
         self.book_id = int(self.find_elem_in_page(self.url, "div.user-audiobook", "data-audiobook-id"))
         logging.debug(f"{self.book_id=}")
         self.user_id = int(self.find_in_page(self.url, r'"id":(\d+)', 1))

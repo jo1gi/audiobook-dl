@@ -14,7 +14,7 @@ class OverdriveSource(Source):
 
     names = [ "Overdrive", "Libby" ]
 
-    def before(self):
+    def prepare(self):
         # Parse url
         parsed_url = parse_url(self.url)
         hostname = parsed_url.hostname
