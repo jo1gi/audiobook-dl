@@ -36,7 +36,7 @@ def print_asset_file(path: str):
     console.print(read_asset_file(path))
 
 
-def simple_help():
+def simple_help() -> None:
     """Print basic help information"""
     print_asset_file("assets/simple_help.txt")
 

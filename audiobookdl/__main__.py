@@ -7,13 +7,15 @@ from .sources import find_compatible_source
 import os
 import sys
 from rich.prompt import Prompt
+from typing import Optional
 
-def get_cookie_path(options):
+def get_cookie_path(options) -> Optional[str]:
     """Find path to cookie file"""
     if options.cookie_file is not None and os.path.exists(options.cookie_file):
         return options.cookie_file
     if os.path.exists("./cookies.txt"):
         return "./cookies.txt"
+    return None
 
 def get_or_ask(name: str, hidden: bool, options) -> str:
     """Return `value` if it exists else asks for a value"""
@@ -28,7 +30,7 @@ def login(source: Source, options):
         login_data[name] = get_or_ask(name, hidden, options)
     source.login(**login_data)
 
-def get_urls(options):
+def get_urls(options) -> list[str]:
     urls = []
     # Args
     urls.extend(options.urls)
@@ -38,7 +40,7 @@ def get_urls(options):
             urls.extend(f.read().split())
     return urls
 
-def run():
+def run() -> None:
     """Main function"""
     # Parsing arguments
     options = args.parse_arguments()

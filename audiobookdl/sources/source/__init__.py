@@ -63,19 +63,19 @@ class Source:
     def _login(self, username: str, password: str):
         pass
 
-    def login(self, **kwargs):
+    def login(self, **kwargs) -> None:
         """Authenticate with source using username and password"""
         if self.supports_login:
             self._login(**kwargs)
             self._authenticated = True
 
 
-    def before(self):
+    def before(self) -> None:
         """Operations to be run before the audiobook is downloaded"""
         pass
 
 
-    def get_title(self):
+    def get_title(self) -> str:
         if self._cached_title is None:
             self._cached_title = self.get_metadata().title
         return self._cached_title

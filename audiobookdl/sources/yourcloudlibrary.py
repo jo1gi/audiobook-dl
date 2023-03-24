@@ -46,11 +46,11 @@ class YourCloudLibrarySource(Source):
         cover_data = self.get(cover_url)
         return Cover(cover_data, "jpg")
 
-    def _get_library_id(self):
+    def _get_library_id(self) -> str:
         return self.url.split("/")[-3]
 
 
-    def _get_fullfillmenttoken(self):
+    def _get_fullfillmenttoken(self) -> str:
         token_base64 = self.find_in_page(
             self.url,
             r"(?<=(\"Osi\":\"x-))[^\"]+",
@@ -62,7 +62,7 @@ class YourCloudLibrarySource(Source):
         logging.debug(f"{token=}")
         return token
 
-    def _get_bookinfo(self):
+    def _get_bookinfo(self) -> dict:
         # Get list of borrowed books
         library = self._get_library_id()
         borrowed = self.get_json(
@@ -90,7 +90,7 @@ class YourCloudLibrarySource(Source):
                 "Password": password
             }
         )
-        logging.debug(f"Authentication response {resp}")
+        logging.debug(f"Authentication response {resp.decode('utf8')}")
 
 
     def before(self):

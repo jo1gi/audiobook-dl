@@ -1,8 +1,9 @@
 import argparse
 from audiobookdl import __version__
+from typing import Any
 
 
-def parse_arguments():
+def parse_arguments() -> Any:
     parser = argparse.ArgumentParser(
         prog="audiobook-dl",
         description="Download audiobooks from websites",
