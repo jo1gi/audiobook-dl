@@ -1,6 +1,7 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata
+from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover
 from audiobookdl.exceptions import UserNotAuthorized, RequestError, DataNotPresent
+from typing import Optional
 
 import io
 from PIL import Image
@@ -21,20 +22,20 @@ class ScribdSource(Source):
                 return f"{split[1]} {split[0]}"
         return self._title
 
-    def get_cover(self):
+    def get_cover(self) -> Optional[Cover]:
         # Downloading image from scribd
         raw_cover = self.get(self._cover)
         if raw_cover is None:
             return None
-        # Removing padding on the top and bottom if it is a normal book
         if self._original:
-            return raw_cover
+            return Cover(raw_cover, "jpg")
+        # Removing padding on the top and bottom if it is a normal book
         im = Image.open(io.BytesIO(raw_cover))
         width, height = im.size
         cropped = im.crop((0, int((height-width)/2), width, int(width+(height-width)/2)))
         cover = io.BytesIO()
         cropped.save(cover, format="jpeg")
-        return cover.getvalue()
+        return Cover(cover.getvalue(), "jpg")
 
     def get_metadata(self) -> AudiobookMetadata:
         title = self._get_title()

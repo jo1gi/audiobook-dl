@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata
+from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata, Cover
 from audiobookdl.exceptions import DataNotPresent, UserNotAuthorized
 
 import re
@@ -47,9 +47,10 @@ class OverdriveSource(Source):
                 metadata.add_narrator(creator["name"])
         return metadata
 
-    def get_cover(self) -> bytes:
+    def get_cover(self) -> Cover:
         cover_url = self.prefix + self.meta['-odread-furbish-uri']
-        return self.get(cover_url)
+        cover_data = self.get(cover_url)
+        return Cover(cover_data, "jpg")
 
     def _get_previous_length(self, index) -> int:
         """Returns the ending point of the previous part"""

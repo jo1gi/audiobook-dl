@@ -1,4 +1,4 @@
-from audiobookdl import logging, Chapter, AudiobookMetadata
+from audiobookdl import logging, Chapter, AudiobookMetadata, Cover
 from audiobookdl.utils import dependencies
 from . import id3, mp4, ffmpeg
 import os
@@ -13,12 +13,12 @@ def add_metadata(filepath: str, metadata: AudiobookMetadata):
         logging.debug("Could not add any metadata")
 
 
-def embed_cover(filepath: str, image: bytes, extension: str):
+def embed_cover(filepath: str, cover: Cover):
     """Embeds an image into the given audio file"""
     if id3.is_id3_file(filepath):
-        id3.embed_id3_cover(filepath, image, extension)
+        id3.embed_id3_cover(filepath, cover)
     elif mp4.is_mp4_file(filepath):
-        mp4.embed_mp4_cover(filepath, image, extension)
+        mp4.embed_mp4_cover(filepath, cover)
     else:
         logging.debug("Could not embed cover")
 

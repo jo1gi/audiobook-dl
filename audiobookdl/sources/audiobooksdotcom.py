@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, logging, AudiobookMetadata
+from audiobookdl import AudiobookFile, logging, AudiobookMetadata, Cover
 import re
 from urllib.parse import unquote
 from urllib3.util import parse_url
@@ -24,14 +24,14 @@ class AudiobooksdotcomSource(Source):
         title = self.find_elem_in_page(self.scrape_url, "h2#bookTitle")
         return AudiobookMetadata(title)
 
-    def get_cover(self) -> bytes:
+    def get_cover(self) -> Cover:
         cover_url = "http:" + \
             self.find_elem_in_page(
                 self.scrape_url,
                 "img.bookimage",
                 data="src"
             )
-        return self.get(cover_url)
+        return Cover(self.get(cover_url), "jpg")
 
     def _get_user_agent(self) -> str:
         """Returns user agent from cookies"""

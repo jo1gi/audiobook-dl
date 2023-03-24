@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata
+from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover
 from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
@@ -84,9 +84,10 @@ class StorytelSource(Source):
         except:
             return []
 
-    def get_cover(self) -> Optional[bytes]:
-        url = f"https://www.storytel.com/images/{self.book_info['abook']['isbn']}/640x640/cover.jpg"
-        return self.get(url)
+    def get_cover(self) -> Cover:
+        cover_url = f"https://www.storytel.com/images/{self.book_info['abook']['isbn']}/640x640/cover.jpg"
+        cover_data = self.get(cover_url)
+        return Cover(cover_data, "jpg")
 
     def before(self):
         wanted_id = self.url.split("-")[-1]

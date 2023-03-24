@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import  AudiobookFile, logging, utils, AudiobookMetadata
+from audiobookdl import  AudiobookFile, logging, utils, AudiobookMetadata, Cover
 from audiobookdl.exceptions import UserNotAuthorized, RequestError
 
 from typing import Optional
@@ -31,8 +31,9 @@ class EreolenSource(Source):
         return metadata
 
 
-    def get_cover(self):
-        return self.get(self.meta["cover"])
+    def get_cover(self) -> Cover:
+        cover_data = self.get(self.meta["cover"])
+        return Cover(cover_data, "jpg")
 
     def get_files(self) -> list[AudiobookFile]:
         return self.get_stream_files(

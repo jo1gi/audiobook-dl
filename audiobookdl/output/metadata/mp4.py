@@ -1,6 +1,6 @@
 import re
 
-from audiobookdl import logging, AudiobookMetadata
+from audiobookdl import logging, AudiobookMetadata, Cover
 from mutagen.easymp4 import EasyMP4
 from mutagen.mp4 import MP4, MP4Cover, Chapter as MP4Chapter, MP4Chapters
 
@@ -39,11 +39,11 @@ def add_mp4_metadata(filepath: str, metadata: AudiobookMetadata):
     audio.save()
 
 
-def embed_mp4_cover(filepath: str, image: bytes, extension: str):
-    if not extension in MP4_COVER_FORMATS:
+def embed_mp4_cover(filepath: str, cover: Cover):
+    if not cover.extension in MP4_COVER_FORMATS:
         return
     audio = MP4(filepath)
     audio["covr"] = [
-        MP4Cover(image, imageformat=MP4_COVER_FORMATS[extension])
+        MP4Cover(cover.image, imageformat=MP4_COVER_FORMATS[cover.extension])
     ]
     audio.save()

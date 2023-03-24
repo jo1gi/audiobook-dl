@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata
+from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover
 
 from typing import Optional
 import base64
@@ -45,9 +45,10 @@ class ChirpSource(Source):
         return metadata
 
 
-    def get_cover(self) -> Optional[bytes]:
+    def get_cover(self) -> Cover:
         cover_url = self.find_elem_in_page(self.url, "img.cover-image", data="src")
-        return self.get(cover_url)
+        cover_data = self.get(cover_url)
+        return Cover(cover_data, "jpg")
 
 
     def get_audio_url(self, track):

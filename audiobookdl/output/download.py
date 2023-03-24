@@ -170,7 +170,7 @@ def embed_metadata_in_file(source: Source, output_file: str, options):
     cover = source.get_cover()
     if cover is not None:
         logging.log("Embedding cover")
-        metadata.embed_cover(output_file, cover, source.get_cover_extension())
+        metadata.embed_cover(output_file, cover)
 
 
 def add_metadata_to_dir(source: Source, filenames: list[str], output_dir: str):
@@ -183,7 +183,7 @@ def add_metadata_to_dir(source: Source, filenames: list[str], output_dir: str):
         logging.log("Downloading cover")
         cover_path = os.path.join(
             output_dir,
-            f"cover.{source.get_cover_extension()}"
+            f"cover.{cover.extension}"
         )
         with open(cover_path, 'wb') as f:
-            f.write(cover)
+            f.write(cover.image)

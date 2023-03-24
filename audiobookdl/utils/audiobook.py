@@ -2,11 +2,12 @@ import requests
 from dataclasses import dataclass, field
 from typing import Optional
 
-class Audiobook:
-    metadata: AudiobookMetadata
-    chapters: list[Chapter]
-    files: list[AudiobookFile]
-    cover: Optional[Cover]
+def add_if_value_exists(l: list[tuple[str, str]]):
+    def add(key: str, value: Optional[str]):
+        if value:
+            l.append((key, value))
+    return add
+
 
 @dataclass
 class Chapter:
@@ -18,7 +19,7 @@ class Chapter:
 
 @dataclass
 class Cover:
-    cover: bytes
+    image: bytes
     extension: str
 
 
@@ -100,8 +101,9 @@ class AudiobookMetadata:
 
 
 
-def add_if_value_exists(l: list[tuple[str, str]]):
-    def add(key: str, value: Optional[str]):
-        if value:
-            l.append((key, value))
-    return add
+
+class Audiobook:
+    metadata: AudiobookMetadata
+    chapters: list[Chapter]
+    files: list[AudiobookFile]
+    cover: Optional[Cover]

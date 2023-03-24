@@ -87,11 +87,10 @@ def print_output(source: Source, options):
 
 def download_cover(source: Source):
     source.before()
-    ext = source.get_cover_extension()
     cover = source.get_cover()
     if cover:
-        with open(f"cover.{ext}", "wb") as f:
-            f.write(cover)
+        with open(f"cover.{cover.extension}", "wb") as f:
+            f.write(cover.image)
 
 if __name__ == "__main__":
     run()

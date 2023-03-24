@@ -1,6 +1,6 @@
 # Internal imports
 from . import networking
-from audiobookdl import logging, AudiobookFile, Chapter, AudiobookMetadata
+from audiobookdl import logging, AudiobookFile, Chapter, AudiobookMetadata, Cover
 from audiobookdl.exceptions import DataNotPresent
 
 # External imports
@@ -84,13 +84,9 @@ class Source:
         """Returns metadata of the audiobook"""
         raise NotImplemented
 
-    def get_cover(self) -> Optional[bytes]:
+    def get_cover(self) -> Optional[Cover]:
         """Returns the image data for the audiobook"""
         return None
-
-    def get_cover_extension(self) -> str:
-        """Returns the filetype of the cover from `get_cover`"""
-        return "jpg"
 
     def get_files(self) -> list[AudiobookFile]:
         raise NotImplemented

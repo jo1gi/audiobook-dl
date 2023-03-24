@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, logging, AudiobookMetadata
+from audiobookdl import AudiobookFile, logging, AudiobookMetadata, Cover
 from audiobookdl.exceptions import UserNotAuthorized, RequestError
 
 import requests.utils
@@ -41,8 +41,10 @@ class YourCloudLibrarySource(Source):
                 return metadata
         return metadata
 
-    def get_cover(self):
-        return self.get(self.meta['audiobook']['cover_url'])
+    def get_cover(self) -> Cover:
+        cover_url = self.meta['audiobook']['cover_url']
+        cover_data = self.get(cover_url)
+        return Cover(cover_data, "jpg")
 
     def _get_library_id(self):
         return self.url.split("/")[-3]

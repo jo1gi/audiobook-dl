@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata
+from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata, Cover
 from typing import Any, Optional
 import hashlib
 import uuid
@@ -123,8 +123,10 @@ class NextorySource(Source):
         # Nextory has no chapters...?
         return []
 
-    def get_cover(self) -> Optional[bytes]:
-        return self.get(self.book_info["imgurl"].replace("{$width}", "640"))
+    def get_cover(self) -> Cover:
+        cover_url = self.book_info["imgurl"].replace("{$width}", "640")
+        cover_data = self.get(cover_url)
+        return Cover(cover_data, "jpg")
 
     def before(self):
         wanted_id = self.url.split("-")[-1].replace("/", "")
