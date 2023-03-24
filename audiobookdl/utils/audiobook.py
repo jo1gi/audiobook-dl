@@ -9,7 +9,7 @@ def add_if_value_exists(l: list[tuple[str, str]]):
     return add
 
 
-@dataclass
+@dataclass(slots=True)
 class Chapter:
     # Start time of chapter in milliseconds
     start: int
@@ -17,20 +17,20 @@ class Chapter:
     title: str
 
 
-@dataclass
+@dataclass(slots=True)
 class Cover:
     image: bytes
     extension: str
 
 
-@dataclass
+@dataclass(slots=True)
 class AESEncryption:
     key: bytes
     iv: bytes
 
 AudiobookFileEncryption = AESEncryption
 
-@dataclass
+@dataclass(slots=True)
 class AudiobookFile:
     # Url to audio file
     url: str
@@ -46,6 +46,7 @@ class AudiobookFile:
 
 
 class AudiobookMetadata:
+    __slots__ = "title", "series", "_authors", "_narrators"
     title: str
     series: Optional[str] = None
     _authors: list[str] = []
@@ -100,7 +101,7 @@ class AudiobookMetadata:
         return "; ".join(self._narrators)
 
 
-@dataclass
+@dataclass(slots=True)
 class Audiobook:
     session: requests.Session
     metadata: AudiobookMetadata
