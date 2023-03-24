@@ -1,6 +1,8 @@
 from audiobookdl import logging, AudiobookMetadata
+from audiobookdl.exceptions import FailedCombining
 
 import os
+import shutil
 import platform
 import subprocess
 
@@ -24,6 +26,9 @@ def combine_audiofiles(filenames: list[str], tmp_dir: str, output_path: str):
         ["ffmpeg", "-i", f"concat:{inputs}", "-safe", "0", "-c", "copy", output_path],
         capture_output=not logging.ffmpeg_output,
     )
+    if not os.path.exists(output_path):
+        raise FailedCombining
+    shutil.rmtree(tmp_dir)
 
 
 def convert_output(filenames: list[str], output_format: str):

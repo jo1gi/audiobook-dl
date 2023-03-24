@@ -1,6 +1,6 @@
 import requests
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Union
 
 def add_if_value_exists(l: list[tuple[str, str]]):
     def add(key: str, value: Optional[str]):
@@ -100,10 +100,14 @@ class AudiobookMetadata:
         return "; ".join(self._narrators)
 
 
-
-
+@dataclass
 class Audiobook:
+    session: requests.Session
     metadata: AudiobookMetadata
     chapters: list[Chapter]
     files: list[AudiobookFile]
     cover: Optional[Cover]
+
+    @property
+    def title(self) -> str:
+        return self.metadata.title
