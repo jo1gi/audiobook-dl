@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, logging
+from audiobookdl import AudiobookFile, logging, AudiobookMetadata, Cover
 from audiobookdl.exceptions import UserNotAuthorized, RequestError
 
 import requests.utils
@@ -17,8 +17,6 @@ class YourCloudLibrarySource(Source):
     meta: dict
     playlist: dict
 
-    def get_title(self):
-        return self.book_info["Title"]
 
     def get_files(self) -> list[AudiobookFile]:
         files = []
@@ -29,27 +27,30 @@ class YourCloudLibrarySource(Source):
             ))
         return files
 
-    def get_metadata(self):
-        metadata = {}
+    def get_metadata(self) -> AudiobookMetadata:
+        title = self.book_info["Title"]
+        metadata = AudiobookMetadata(title)
         if not self.meta is None:
             try:
                 audiobook = self.meta["audiobook"]
-                metadata["authors"] = audiobook["authors"]
-                metadata["narrators"] = audiobook["narrators"]
+                metadata.add_authors(audiobook["authors"])
+                metadata.add_narrators(audiobook["narrators"])
                 if audiobook["series"] is not None and len(audiobook["series"]) >= 1:
-                    metadata["series"] = audiobook["series"][0]
+                    metadata.series = audiobook["series"][0]
             except:
-                return {}
+                return metadata
         return metadata
 
-    def get_cover(self):
-        return self.get(self.meta['audiobook']['cover_url'])
+    def get_cover(self) -> Cover:
+        cover_url = self.meta['audiobook']['cover_url']
+        cover_data = self.get(cover_url)
+        return Cover(cover_data, "jpg")
 
-    def _get_library_id(self):
+    def _get_library_id(self) -> str:
         return self.url.split("/")[-3]
 
 
-    def _get_fullfillmenttoken(self):
+    def _get_fullfillmenttoken(self) -> str:
         token_base64 = self.find_in_page(
             self.url,
             r"(?<=(\"Osi\":\"x-))[^\"]+",
@@ -61,7 +62,7 @@ class YourCloudLibrarySource(Source):
         logging.debug(f"{token=}")
         return token
 
-    def _get_bookinfo(self):
+    def _get_bookinfo(self) -> dict:
         # Get list of borrowed books
         library = self._get_library_id()
         borrowed = self.get_json(
@@ -89,10 +90,10 @@ class YourCloudLibrarySource(Source):
                 "Password": password
             }
         )
-        logging.debug(f"Authentication response {resp}")
+        logging.debug(f"Authentication response {resp.decode('utf8')}")
 
 
-    def before(self):
+    def prepare(self):
         self.book_info = self._get_bookinfo()
         token = self._get_fullfillmenttoken()
         library = self._get_library_id()

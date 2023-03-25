@@ -1,6 +1,6 @@
 import re
 import os
-from audiobookdl import logging, Chapter
+from audiobookdl import logging, Chapter, AudiobookMetadata, Cover
 
 from mutagen import File as MutagenFile
 from mutagen.easyid3 import EasyID3
@@ -29,11 +29,11 @@ def is_id3_file(filepath: str) -> bool:
     ext = re.search(r"(?<=(\.))\w+$", filepath)
     return ext is not None and ext.group(0) in ID3_FORMATS
 
-def add_id3_metadata(filepath: str, metadata: dict[str, str]):
+def add_id3_metadata(filepath: str, metadata: AudiobookMetadata):
     """Add ID3 metadata tags to the given audio file"""
     audio = MP3(filepath, ID3=EasyID3)
     # Adding tags
-    for key, value in metadata.items():
+    for key, value in metadata.all_properties(allow_duplicate_keys=False):
         if key in ID3_CONVERT:
             audio[ID3_CONVERT[key]] = value
         elif key in EasyID3.valid_keys.keys():
@@ -42,13 +42,13 @@ def add_id3_metadata(filepath: str, metadata: dict[str, str]):
             logging.debug(f"Tried to add invalid id3 tag: {key}")
     audio.save(v2_version=3)
 
-def embed_id3_cover(filepath: str, image: bytes, extension: str):
-    mimetype = EXTENSION_TO_MIMETYPE[extension]
+def embed_id3_cover(filepath: str, cover: Cover):
+    mimetype = EXTENSION_TO_MIMETYPE[cover.extension]
     try:
         audio = ID3(filepath)
     except ID3NoHeaderError:
         return
-    audio.add(APIC(type=0, data=image, mime=mimetype))
+    audio.add(APIC(type=0, data=cover.image, mime=mimetype))
     audio.save()
 
 def add_id3_chapter(audio: ID3, start: int, end: int, title: str, index: int):

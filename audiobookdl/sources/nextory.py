@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter
+from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata, Cover
 from typing import Any, Optional
 import hashlib
 import uuid
@@ -103,30 +103,32 @@ class NextorySource(Source):
         }
         self._session.headers.update({'apiver': "7.5"})
 
-    def get_title(self) -> str:
-        return self.book_info["title"]
 
     def get_files(self) -> list[AudiobookFile]:
         return [AudiobookFile(url=self.book_info["file"]["url"], headers=self._session.headers, ext="mp3")]
 
-    def get_metadata(self) -> dict[str,Any]:
+    def get_metadata(self) -> AudiobookMetadata:
+        title = self.book_info["title"]
+        metadata = AudiobookMetadata(title)
         try:
             book_info = self._session.get("https://api.nextory.se/api/app/product/7.5/bookinfo",
                                          params={"id": self.book_info["id"]}).json()
-            metadata = {"authors": [a for a in self.book_info["authors"]],
-                        "narrators": [n for n in book_info["data"]["books"]["narrators"]]}
+            metadata.add_authors(self.book_info["authors"])
+            metadata.add_narrators(book_info["data"]["books"]["narrators"])
             return metadata
         except:
-            return {}
+            return metadata
 
     def get_chapters(self) -> list[Chapter]:
         # Nextory has no chapters...?
         return []
 
-    def get_cover(self) -> Optional[bytes]:
-        return self.get(self.book_info["imgurl"].replace("{$width}", "640"))
+    def get_cover(self) -> Cover:
+        cover_url = self.book_info["imgurl"].replace("{$width}", "640")
+        cover_data = self.get(cover_url)
+        return Cover(cover_data, "jpg")
 
-    def before(self):
+    def prepare(self):
         wanted_id = self.url.split("-")[-1].replace("/", "")
         for book in self.user_data["active"]["data"]["books"]:
             if str(book["id"]) == wanted_id:

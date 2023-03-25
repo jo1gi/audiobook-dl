@@ -1,6 +1,7 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, logging
+from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover
 from audiobookdl.exceptions import UserNotAuthorized, RequestError, DataNotPresent
+from typing import Optional
 
 import io
 from PIL import Image
@@ -14,35 +15,35 @@ class ScribdSource(Source):
     _original = False
     media: dict = {}
 
-    def get_title(self):
+    def _get_title(self):
         if self._title[-5:] == ", The":
             split = self._title.split(', ')
             if len(split) == 2:
                 return f"{split[1]} {split[0]}"
         return self._title
 
-    def get_cover(self):
+    def get_cover(self) -> Optional[Cover]:
         # Downloading image from scribd
         raw_cover = self.get(self._cover)
         if raw_cover is None:
             return None
-        # Removing padding on the top and bottom if it is a normal book
         if self._original:
-            return raw_cover
+            return Cover(raw_cover, "jpg")
+        # Removing padding on the top and bottom if it is a normal book
         im = Image.open(io.BytesIO(raw_cover))
         width, height = im.size
         cropped = im.crop((0, int((height-width)/2), width, int(width+(height-width)/2)))
         cover = io.BytesIO()
         cropped.save(cover, format="jpeg")
-        return cover.getvalue()
+        return Cover(cover.getvalue(), "jpg")
 
-    def get_metadata(self):
-        metadata = {}
+    def get_metadata(self) -> AudiobookMetadata:
+        title = self._get_title()
+        metadata = AudiobookMetadata(title)
         if not self._original:
-            if len(self.meta["authors"]):
-                metadata["author"] = "; ".join(self.meta["authors"])
-            if len(self.meta["series"]):
-                metadata["series"] = self.meta["series"][0]
+            metadata.add_authors(self.meta["authors"])
+            if self.meta["series"]:
+                metadata.series = self.meta["series"][0]
         return metadata
 
     def _get_chapter_title(self, chapter):
@@ -78,7 +79,7 @@ class ScribdSource(Source):
                 ))
             return files
 
-    def before(self):
+    def prepare(self):
         try:
             # Change url to listen page if info page was used
             if self.match_num == 1:
@@ -92,11 +93,11 @@ class ScribdSource(Source):
             raise UserNotAuthorized
         # The audiobook is a Scribd original if the id starts with "scribd_"
         if book_id[:7] == "scribd_":
-            self._original_before(book_id)
+            self._original_prepare(book_id)
         else:
-            self._normal_before(book_id)
+            self._normal_prepare(book_id)
 
-    def _normal_before(self, book_id: str):
+    def _normal_prepare(self, book_id: str):
         """Download necessary data for normal audiobooks on scribd"""
         try:
             headers = {'Session-Key': self.find_in_page(self.url, '(?<=(session_key":"))[^"]+')}
@@ -119,7 +120,7 @@ class ScribdSource(Source):
         except RequestError:
             raise UserNotAuthorized
 
-    def _original_before(self, book_id: str):
+    def _original_prepare(self, book_id: str):
         """Download necessary data for scribd originals"""
         self._original = True
         self._csrf = self.get_json(

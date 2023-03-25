@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile
+from audiobookdl import AudiobookFile, AudiobookMetadata, Cover
 
 
 class LibrivoxSource(Source):
@@ -11,14 +11,19 @@ class LibrivoxSource(Source):
         r"https?://librivox.org/.+"
     ]
 
-    def get_title(self):
-        return self.find_elem_in_page(self.url, ".content-wrap h1")
 
-    def get_cover(self):
-        return self.get(self.find_elem_in_page(
+    def get_metadata(self) -> AudiobookMetadata:
+        title = self.find_elem_in_page(self.url, ".content-wrap h1")
+        return AudiobookMetadata(title)
+
+    def get_cover(self) -> Cover:
+        cover_url = self.find_elem_in_page(
             self.url,
             ".book-page-book-cover img",
-            data="src"))
+            data="src"
+        )
+        cover_data = self.get(cover_url)
+        return Cover(cover_data, "jpg")
 
     def get_files(self) -> list[AudiobookFile]:
         parts = self.find_elems_in_page(self.url,

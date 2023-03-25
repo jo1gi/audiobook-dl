@@ -1,3 +1,6 @@
+from rich.text import Text
+from rich.style import Style
+from rich.markup import render, escape
 from rich.console import Console
 from rich.progress import Progress, ProgressColumn
 from typing import Union
@@ -7,11 +10,16 @@ debug_mode = False
 quiet_mode = False
 ffmpeg_output = False
 console = Console(stderr=True)
+DEBUG_PREFIX = render("[yellow bold]DEBUG[/]")
 
-def debug(msg: str):
+def debug(msg: str, remove_styling=False):
     """Print debug msg"""
     if debug_mode:
-        log(f"[yellow bold]DEBUG[/] {msg}")
+        if remove_styling:
+            rendered_msg = render(msg, style=Style(bold=False, color="white"))
+            console.print(DEBUG_PREFIX, rendered_msg)
+        else:
+            console.print(DEBUG_PREFIX, msg)
 
 
 def log(msg: str):
@@ -36,7 +44,7 @@ def print_asset_file(path: str):
     console.print(read_asset_file(path))
 
 
-def simple_help():
+def simple_help() -> None:
     """Print basic help information"""
     print_asset_file("assets/simple_help.txt")
 

@@ -5,7 +5,7 @@ import json
 import os
 import m3u8
 
-def post(self, url, **kwargs):
+def post(self, url: str, **kwargs) -> bytes:
     """Make post request with `Source` session"""
     resp = self._session.post(url, **kwargs)
     if resp.status_code == 200:
@@ -14,7 +14,7 @@ def post(self, url, **kwargs):
     raise exceptions.RequestError
 
 
-def get(self, url, **kwargs) -> bytes:
+def get(self, url: str, **kwargs) -> bytes:
     """Make get request with `Source` session"""
     resp = self._session.get(url, **kwargs)
     if resp.status_code == 200:
@@ -23,18 +23,18 @@ def get(self, url, **kwargs) -> bytes:
     raise exceptions.RequestError
 
 
-def post_json(self, url, **kwargs):
+def post_json(self, url: str, **kwargs) -> dict:
     """Downloads data with the given url and converts it to json"""
     resp = self.post(url, **kwargs)
     return json.loads(resp.decode('utf8'))
 
 
-def get_json(self, url, **kwargs):
+def get_json(self, url: str, **kwargs) -> dict:
     """Downloads data with the given url and converts it to json"""
     resp = self.get(url, **kwargs)
     return json.loads(resp.decode('utf8'))
 
-def get_stream_files(self, url, headers={}) -> list[AudiobookFile]:
+def get_stream_files(self, url: str, headers={}) -> list[AudiobookFile]:
     """Creates a list of audio files from an m3u8 file"""
     playlist = m3u8.load(url, headers=headers)
     files = []

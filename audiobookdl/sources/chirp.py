@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, logging
+from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover
 
 from typing import Optional
 import base64
@@ -33,24 +33,22 @@ class ChirpSource(Source):
         return response["data"]["audiobook"]["tracks"]
 
 
-    def get_title(self) -> str:
-        return self.find_elem_in_page(self.url, "title")
-
-
-    def get_metadata(self):
-        metadata = {}
+    def get_metadata(self) -> AudiobookMetadata:
+        title = self.find_elem_in_page(self.url, "title")
+        metadata = AudiobookMetadata(title)
         for credit in self.find_elems_in_page(self.url, ".credit"):
             text = credit.text
             if text.startswith("Written by"):
-                metadata["author"] = text[11:]
+                metadata.add_author(text[11:])
             elif text.startswith("Narrated by"):
-                metadata["narrator"] = text[12:]
+                metadata.add_narrator(text[12:])
         return metadata
 
 
-    def get_cover(self) -> Optional[bytes]:
+    def get_cover(self) -> Cover:
         cover_url = self.find_elem_in_page(self.url, "img.cover-image", data="src")
-        return self.get(cover_url)
+        cover_data = self.get(cover_url)
+        return Cover(cover_data, "jpg")
 
 
     def get_audio_url(self, track):
@@ -101,7 +99,7 @@ class ChirpSource(Source):
         return base64.b64encode(bytes(padded_user_id, "UTF-8"))
 
 
-    def before(self):
+    def prepare(self):
         self.book_id = int(self.find_elem_in_page(self.url, "div.user-audiobook", "data-audiobook-id"))
         logging.debug(f"{self.book_id=}")
         self.user_id = int(self.find_in_page(self.url, r'"id":(\d+)', 1))

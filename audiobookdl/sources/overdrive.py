@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter
+from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata, Cover
 from audiobookdl.exceptions import DataNotPresent, UserNotAuthorized
 
 import re
@@ -14,7 +14,7 @@ class OverdriveSource(Source):
 
     names = [ "Overdrive", "Libby" ]
 
-    def before(self):
+    def prepare(self):
         # Parse url
         parsed_url = parse_url(self.url)
         hostname = parsed_url.hostname
@@ -36,25 +36,21 @@ class OverdriveSource(Source):
             else:
                 self.toc.append(part["title"])
 
-    def get_title(self) -> str:
-        return self.meta["title"]["main"]
 
-    def get_metadata(self):
-        authors = []
-        narrators = []
+    def get_metadata(self) -> AudiobookMetadata:
+        title = self.meta["title"]["main"]
+        metadata = AudiobookMetadata(title)
         for creator in self.meta["creator"]:
             if creator["role"] == "author":
-                authors.append(creator["name"])
+                metadata.add_author(creator["name"])
             if creator["role"] == "narrator":
-                narrators.append(creator["name"])
-        return {
-            'author': authors,
-            'narrator': narrators
-        }
+                metadata.add_narrator(creator["name"])
+        return metadata
 
-    def get_cover(self) -> bytes:
+    def get_cover(self) -> Cover:
         cover_url = self.prefix + self.meta['-odread-furbish-uri']
-        return self.get(cover_url)
+        cover_data = self.get(cover_url)
+        return Cover(cover_data, "jpg")
 
     def _get_previous_length(self, index) -> int:
         """Returns the ending point of the previous part"""

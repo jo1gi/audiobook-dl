@@ -43,4 +43,13 @@ mypkg = ["*.txt"]
 
 [tool.mypy]
 ignore_missing_imports = true
-allow_untyped_globals = true
+allow_untyped_globals = false
+disallow_untyped_calls = true
+
+[[tool.mypy.overrides]]
+module = [
+    "audiobookdl.sources.*",
+    "audiobookdl.output.metadata.id3",
+    "audiobookdl.output.metadata.mp4"
+]
+disallow_untyped_calls = false

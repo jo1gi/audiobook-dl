@@ -1,14 +1,15 @@
-from audiobookdl import AudiobookFile, Source, logging
-from audiobookdl.exceptions import UserNotAuthorized, NoFilesFound, FailedCombining
+from audiobookdl import AudiobookFile, Source, logging, Audiobook
+from audiobookdl.exceptions import UserNotAuthorized, NoFilesFound
 from . import metadata, output, encryption
 
 import os
 import shutil
 from functools import partial
-from typing import Any, Union
+from typing import Any, Union, Optional
 from rich.progress import Progress, BarColumn, ProgressColumn
 from rich.prompt import Confirm
 from multiprocessing.pool import ThreadPool
+
 
 DOWNLOAD_PROGRESS: list[Union[str, ProgressColumn]] = [
     "{task.description}", BarColumn(), "[progress.percentage]{task.percentage:>3.0f}%"
@@ -17,42 +18,158 @@ DOWNLOAD_PROGRESS: list[Union[str, ProgressColumn]] = [
 
 def download(source: Source, options):
     """Downloads audiobook from source object"""
-    # Downloading audiobook info
-    if source.requires_authentication and not source.authenticated:
-        raise UserNotAuthorized
-    logging.log("Downloading metadata")
-    source.before()
-    files = source.get_files()
-    if len(files) == 0:
-        raise NoFilesFound
     try:
-        output_dir = output.gen_output_location(
-            options.output_template,
-            source.metadata(),
-            options.remove_chars
-        )
-        # Downloading audio files
-        filenames = download_files_output(source, files, output_dir)
-        # Finding output format
-        if options.output_format:
-            output_format = options.output_format
-        else:
-            output_format = os.path.splitext(filenames[0])[1][1:]
-            if output_format == "ts":
-                output_format = "mp3"
-        # Converting audio files to specified format
-        logging.log("Converting files")
-        filenames = output.convert_output(filenames, output_format)
-        # Single audiofile
-        if options.combine or len(filenames) == 1:
-            combined_audiobook(source, filenames, output_dir, output_format, options)
-        # Multiple audiofiles
-        else:
-            add_metadata_to_dir(source, filenames, output_dir)
+        audiobook = create_audiobook(source)
+        output_dir = output.gen_output_location(options.output_template, audiobook.metadata, options.remove_chars)
+        download_audiobook(audiobook, output_dir, options)
     except KeyboardInterrupt:
         logging.log("Stopped download")
         logging.log("Cleaning up files")
         shutil.rmtree(output_dir)
+
+
+def create_audiobook(source: Source) -> Audiobook:
+    """Creates a new `Audiobook` object from a `Source`"""
+    if source.requires_authentication and not source.authenticated:
+        raise UserNotAuthorized
+    source.prepare()
+    files = source.get_files()
+    if len(files) == 0:
+        raise NoFilesFound
+    return Audiobook(
+        session = source._session,
+        metadata = source.get_metadata(),
+        chapters = source.get_chapters(),
+        files = files,
+        cover = source.get_cover()
+    )
+
+
+def download_audiobook(audiobook: Audiobook, output_dir: str, options):
+    """Download, convert, combine, and add metadata to files from `Audiobook` object"""
+    # Downloading files
+    filepaths = download_files_with_cli_output(audiobook, output_dir)
+    # Converting files
+    current_format, output_format = get_output_audio_format(options.output_format, filepaths)
+    if current_format != output_format:
+        logging.log("Converting files")
+        filepaths = output.convert_output(filepaths, output_format)
+    # Combine files
+    if options.combine:
+        logging.log("Combining files")
+        output_path = f"{output_dir}.{output_format}"
+        filepaths = [output_path]
+        output.combine_audiofiles(filepaths, output_dir, output_path)
+    # Add metadata
+    if len(filepaths) == 1:
+        add_metadata_to_file(audiobook, filepaths[0], options)
+    else:
+        add_metadata_to_dir(audiobook, filepaths, output_dir, options)
+
+
+def add_metadata_to_file(audiobook: Audiobook, filepath: str, options):
+    """Embed metadata into a single file"""
+    if audiobook.chapters and not options.no_chapters:
+        logging.log("Adding chapters")
+        metadata.add_chapters(filepath, audiobook.chapters)
+    logging.log("Adding metadata")
+    metadata.add_metadata(filepath, audiobook.metadata)
+    if audiobook.cover:
+        logging.log("Embedding cover")
+        metadata.embed_cover(filepath, audiobook.cover)
+
+
+def add_metadata_to_dir(audiobook: Audiobook, filepaths: list[str], output_dir: str, options):
+    """Add metadata to a directory with audio files"""
+    for filepath in filepaths:
+        metadata.add_metadata(filepath, audiobook.metadata)
+    if audiobook.cover:
+        logging.log("Adding cover")
+        cover_path = os.path.join(output_dir, f"cover.{audiobook.cover.extension}")
+        with open(cover_path, "wb") as f:
+            f.write(audiobook.cover.image)
+
+
+def download_files_with_cli_output(audiobook: Audiobook, output_dir: str) -> list[str]:
+    """
+    Download `audiobook` with cli output
+    Returns a list of paths of the downloaded files
+    """
+    if len(audiobook.files) > 1:
+        setup_download_dir(output_dir)
+    with logging.progress(DOWNLOAD_PROGRESS) as progress:
+        task = progress.add_task(
+            f"Downloading {len(audiobook.files)} files [blue]{audiobook.title}",
+            total = len(audiobook.files)
+        )
+        update_progress = partial(progress.advance, task)
+        filepaths = download_files(audiobook, output_dir, update_progress)
+        # Make sure progress bar is at 100%
+        remaining_progress: float = progress.tasks[0].remaining or 0
+        update_progress(remaining_progress)
+        # Return filenames of downloaded files
+        return filepaths
+
+
+def create_filepath(audiobook: Audiobook, output_dir: str, index: int) -> str:
+    """Create output file path for file number `index` in `audibook`"""
+    extension = audiobook.files[index].ext
+    if len(audiobook.files) == 1:
+        path = f"{output_dir}.{extension}"
+    else:
+        name = f"{audiobook.title} - Part {index}.{extension}"
+        path = os.path.join(output_dir, name)
+    return path
+
+
+def download_file(args: tuple[Audiobook, str, int, Any]) -> str:
+    # Prepare download
+    audiobook, output_dir, index, update_progress = args
+    file = audiobook.files[index]
+    filepath = create_filepath(audiobook, output_dir, index)
+    logging.debug(f"Starting downloading file: {file.url}")
+    request = audiobook.session.get(file.url, headers=file.headers, stream=True)
+    total_filesize = int(request.headers["Content-length"])
+    # Download file
+    with open(filepath, "wb") as f:
+        for chunk in request.iter_content(chunk_size=1024):
+            f.write(chunk)
+            download_progress = len(chunk)/total_filesize
+            update_progress(download_progress)
+    # Decrypt file if necessary
+    if file.encryption_method:
+        encryption.decrypt_file(filepath, file.encryption_method)
+    # Return filepath
+    return filepath
+
+
+def download_files(audiobook: Audiobook, output_dir: str, update_progress) -> list[str]:
+    """Download files from audiobook and return paths of the downloaded files"""
+    filepaths = []
+    with ThreadPool(processes=20) as pool:
+        arguments = []
+        for index in range(len(audiobook.files)):
+            arguments.append((audiobook, output_dir, index, update_progress))
+        for filepath in pool.imap(download_file, arguments):
+            filepaths.append(filepath)
+    return filepaths
+
+
+def get_output_audio_format(option: Optional[str], files: list[str]) -> tuple[str, str]:
+    """
+    Get output format for files
+
+    `option` is used if specied; else it's based on the file extensions
+    """
+    current_format = os.path.splitext(files[0])[1][1:]
+    if option:
+        output_format = option
+    elif current_format == "ts":
+        output_format = "mp3"
+    else:
+        output_format = current_format
+    return current_format, output_format
+
 
 def setup_download_dir(path: str):
     """Creates output folder"""
@@ -63,125 +180,3 @@ def setup_download_dir(path: str):
         else:
             exit()
     os.makedirs(path)
-
-def download_files_output(
-        source: Source,
-        files: list[AudiobookFile],
-        output_dir: str
-    ) -> list[str]:
-    """Download `files` with progress bar in terminal"""
-    if len(files) > 1:
-        setup_download_dir(output_dir)
-    with logging.progress(DOWNLOAD_PROGRESS) as progress:
-        task = progress.add_task(
-            f"Downloading {len(files)} files - [blue]{source.get_title()}",
-            total = len(files)
-        )
-        # Function for updating progress bar
-        p = partial(progress.advance, task)
-        # List of new filenames
-        filenames = download_files(source, p, files, output_dir)
-        remaining: float = progress.tasks[0].remaining or 0
-        progress.advance(task, remaining)
-        return filenames
-
-
-def create_filename(
-        title: str,
-        length: int,
-        index: int,
-        output_dir: str,
-        file: AudiobookFile,
-    ) -> str:
-    """Create filename of audiobook file"""
-    if length == 1:
-        path = f"{output_dir}.{file.ext}"
-    else:
-        name = f"{title} - Part {index}.{file.ext}"
-        path = os.path.join(output_dir, name)
-    return path
-
-def download_file(args: tuple[AudiobookFile, int, int, str, Any, Source]):
-    # Setting up variables
-    file, length, index, output_dir, progress, source = args
-    logging.debug(f"Starting downloading file: {file.url}")
-    path = create_filename(source.get_title(), length, index, output_dir, file)
-    req = source._session.get(file.url, headers=file.headers, stream=True)
-    file_size = int(req.headers["Content-length"])
-    total: float = 0
-    # Downloading file
-    with open(path, "wb") as f:
-        for chunk in req.iter_content(chunk_size=1024):
-            f.write(chunk)
-            new = len(chunk)/file_size
-            total += new
-            progress(new)
-    progress(1-total)
-    # Decrypting file if necessary
-    if file.encryption_method:
-        encryption.decrypt_file(path, file.encryption_method)
-    return path
-
-
-def download_files(
-        source: Source,
-        update,
-        files: list[AudiobookFile],
-        output_dir: str
-    ) -> list[str]:
-    """Downloads and saves audiobook files to disk"""
-    filenames = []
-    with ThreadPool(processes=20) as pool:
-        arguments = []
-        for n, f in enumerate(files):
-            arguments.append((f, len(files), n+1, output_dir, update, source))
-        for i in pool.imap(download_file, arguments):
-            filenames.append(i)
-    return filenames
-
-def combined_audiobook(source: Source,
-                       filenames: list[str],
-                       output_dir: str,
-                       output_format: str,
-                       options):
-    """Combines audiobook into a single audio file and embeds metadata"""
-    # Combining files
-    output_file = f"{output_dir}.{output_format}"
-    if len(filenames) > 1:
-        logging.log("Combining files")
-        output.combine_audiofiles(filenames, output_dir, output_file)
-        if not os.path.exists(output_file):
-            raise FailedCombining
-        shutil.rmtree(output_dir)
-    # Adding metadata
-    embed_metadata_in_file(source, output_file, options)
-
-
-def embed_metadata_in_file(source: Source, output_file: str, options):
-    """Embed metadata into combined audiobook file"""
-    chapters = source.get_chapters()
-    if chapters and not options.no_chapters:
-        logging.log("Adding chapters")
-        metadata.add_chapters(output_file, chapters)
-    if source.metadata is not None:
-        logging.log("Adding metadata")
-        metadata.add_metadata(output_file, source.metadata())
-    cover = source.get_cover()
-    if cover is not None:
-        logging.log("Embedding cover")
-        metadata.embed_cover(output_file, cover, source.get_cover_extension())
-
-
-def add_metadata_to_dir(source: Source, filenames: list[str], output_dir: str):
-    """Adds metadata to dir of audiobook files"""
-    for filename in filenames:
-        metadata.add_metadata(filename, source.metadata())
-    cover = source.get_cover()
-    if cover is not None:
-        logging.log("Downloading cover")
-        cover_path = os.path.join(
-            output_dir,
-            f"cover.{source.get_cover_extension()}"
-        )
-        with open(cover_path, 'wb') as f:
-            f.write(cover)

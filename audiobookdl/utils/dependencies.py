@@ -8,11 +8,11 @@ def program_in_path(program) -> bool:
     return shutil.which(program) is not None
 
 
-def check_dependencies(options):
+def check_dependencies(options) -> None:
     """Checks if the required dependencies can be found"""
     required = {
-            "combine": ["ffmpeg"]
-            }
+        "combine": ["ffmpeg"]
+    }
     logging.debug("Searching for missing dependencies")
     for key, deps in required.items():
         if getattr(options, key):

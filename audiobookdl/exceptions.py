@@ -5,10 +5,10 @@ from typing import Optional
 class AudiobookDLException(Exception):
     error_description = "unknown"
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         self.data = kwargs
 
-    def print(self):
+    def print(self) -> None:
         print_error_file(self.error_description, **self.data)
 
 class DataNotPresent(AudiobookDLException):
