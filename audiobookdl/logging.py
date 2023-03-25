@@ -10,16 +10,16 @@ debug_mode = False
 quiet_mode = False
 ffmpeg_output = False
 console = Console(stderr=True)
+DEBUG_PREFIX = render("[yellow bold]DEBUG[/]")
 
 def debug(msg: str, remove_styling=False):
     """Print debug msg"""
     if debug_mode:
-        prefix = render("[yellow bold]DEBUG[/]")
         if remove_styling:
             rendered_msg = render(msg, style=Style(bold=False, color="white"))
+            console.print(DEBUG_PREFIX, rendered_msg)
         else:
-            rendered_msg = render(msg)
-        console.print(prefix, rendered_msg)
+            console.print(DEBUG_PREFIX, msg)
 
 
 def log(msg: str):
