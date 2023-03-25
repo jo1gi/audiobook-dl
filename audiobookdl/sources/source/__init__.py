@@ -66,7 +66,7 @@ class Source:
         """Authenticate with source using username and password"""
         if self.supports_login:
             self._login(**kwargs)
-            self._authenticated = True
+            self.__authenticated = True
 
     def prepare(self) -> None:
         """Operations to be run before the audiobook is downloaded"""
