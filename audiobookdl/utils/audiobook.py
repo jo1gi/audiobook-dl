@@ -46,7 +46,6 @@ class AudiobookFile:
 
 
 class AudiobookMetadata:
-    __slots__ = "title", "series", "_authors", "_narrators"
     title: str
     series: Optional[str] = None
     _authors: list[str] = []
