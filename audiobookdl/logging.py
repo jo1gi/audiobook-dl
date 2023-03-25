@@ -1,3 +1,6 @@
+from rich.text import Text
+from rich.style import Style
+from rich.markup import render, escape
 from rich.console import Console
 from rich.progress import Progress, ProgressColumn
 from typing import Union
@@ -8,10 +11,15 @@ quiet_mode = False
 ffmpeg_output = False
 console = Console(stderr=True)
 
-def debug(msg: str):
+def debug(msg: str, remove_styling=False):
     """Print debug msg"""
     if debug_mode:
-        log(f"[yellow bold]DEBUG[/] {msg}")
+        prefix = render("[yellow bold]DEBUG[/]")
+        if remove_styling:
+            rendered_msg = render(msg, style=Style(bold=False, color="white"))
+        else:
+            rendered_msg = render(msg)
+        console.print(prefix, rendered_msg)
 
 
 def log(msg: str):

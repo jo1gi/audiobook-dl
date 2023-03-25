@@ -1,4 +1,4 @@
-from audiobookdl import Source, logging, args, output
+from audiobookdl import Source, logging, args, output, __version__
 from audiobookdl.exceptions import AudiobookDLException
 from .utils import dependencies
 from .output.download import download
@@ -48,6 +48,8 @@ def run() -> None:
     logging.debug_mode = options.debug
     logging.quiet_mode = options.quiet
     logging.ffmpeg_output = options.ffmpeg_output or options.debug
+    logging.debug(f"audiobook-dl {__version__}", remove_styling=True)
+    logging.debug(f"python {sys.version}", remove_styling=True)
     urls = get_urls(options)
     if not urls:
         logging.simple_help()
