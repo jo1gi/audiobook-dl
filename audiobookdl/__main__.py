@@ -8,6 +8,7 @@ import os
 import sys
 from rich.prompt import Prompt
 from typing import Optional
+import traceback
 
 def get_cookie_path(options) -> Optional[str]:
     """Find path to cookie file"""
@@ -60,6 +61,7 @@ def run() -> None:
             run_on_url(options, url)
     except AudiobookDLException as e:
         e.print()
+        traceback.print_exc()
         exit(1)
 
 def run_on_url(options, url: str):
