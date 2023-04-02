@@ -27,13 +27,13 @@ class SaxoSource(Source):
                 "Content-Type": "application/x-www-form-urlencoded"
             }
         )
-        logging.debug(f"{resp=}")
         self.bearer_token = resp["access_token"]
         self.user_id = resp["id"]
         logging.debug(f"{self.bearer_token=}")
         logging.debug(f"{self.user_id=}")
 
     def _get_isbn(self) -> str:
+        """Extract isbn of book from url"""
         isbn_match = re.search(f"\d+$", self.url)
         if isbn_match and isbn_match.group():
             return isbn_match.group()
@@ -41,6 +41,7 @@ class SaxoSource(Source):
             raise NoSourceFound
 
     def _search_for_book(self, isbn: str) -> str:
+        """Search for internal book id by isbn number"""
         logging.debug(f"Searching for book with isbn: {isbn}")
         resp = self.get_json(
             f"https://api-read.saxo.com/api/v2/search/user/{self.user_id}/premium/books/{isbn}?booktypefilter=Audiobook",
@@ -50,10 +51,12 @@ class SaxoSource(Source):
                 "App-Version": self._APP_VERSION,
             }
         )
+        # Selects the first search result. There should only be one
         book_id = resp["items"][0]["bookId"]
         return book_id
 
     def _get_book_metadata(self, book_id: str) -> dict:
+        """Downloads metadata about book"""
         return self.post_json(
             f"https://api-read.saxo.com/api/v1/book/data/user/{self.user_id}/",
             headers = {
@@ -79,6 +82,7 @@ class SaxoSource(Source):
             result.append(AudiobookFile(
                 url = link,
                 ext = "mp3",
+                # Encryption keys extracted from app
                 encryption_method = AESEncryption(
                     b"CD3E9D141D8EFC0886912E7A8F3652C4",
                     b"78CB354D377772F1",
@@ -87,12 +91,12 @@ class SaxoSource(Source):
         return result
 
     def get_metadata(self) -> AudiobookMetadata:
-        metadata = self.book_meta["bookMetadata"]
+        metadata: dict = self.book_meta["bookMetadata"]
         title = metadata["title"]
         result = AudiobookMetadata(title)
         result.add_authors(metadata["authors"])
         result.add_narrators(metadata["readBy"])
-        result.series = metadata["seriesName"]
+        result.series = metadata.get("seriesName")
         return result
 
     def get_cover(self) -> Cover:
