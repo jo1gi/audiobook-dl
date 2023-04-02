@@ -58,8 +58,8 @@ def download_audiobook(audiobook: Audiobook, output_dir: str, options):
     if options.combine:
         logging.log("Combining files")
         output_path = f"{output_dir}.{output_format}"
-        filepaths = [output_path]
         output.combine_audiofiles(filepaths, output_dir, output_path)
+        filepaths = [output_path]
     # Add metadata
     if len(filepaths) == 1:
         add_metadata_to_file(audiobook, filepaths[0], options)
