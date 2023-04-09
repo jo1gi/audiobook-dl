@@ -66,7 +66,7 @@ class ScribdSource(Source):
         if self._original:
             return self.get_stream_files(
                 self._stream_url,
-                headers={"Authorization": self._jwt}
+                headers={"Authorization": self._jwt},
             )
         else:
             files = []
@@ -87,7 +87,8 @@ class ScribdSource(Source):
                 self.url = f"https://www.scribd.com/listen/{book_id}"
             book_id = self.find_in_page(
                 self.url,
-                r'(?<=(external_id":"))(scribd_)?\d+'
+                r'(?<=(external_id":"))(scribd_)?\d+',
+                force_cookies = True
             )
         except DataNotPresent:
             raise UserNotAuthorized

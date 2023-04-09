@@ -4,6 +4,8 @@ from audiobookdl.utils.audiobook import AESEncryption
 import json
 import os
 import m3u8
+import requests
+
 
 def post(self, url: str, **kwargs) -> bytes:
     """Make post request with `Source` session"""
@@ -14,9 +16,16 @@ def post(self, url: str, **kwargs) -> bytes:
     raise exceptions.RequestError
 
 
-def get(self, url: str, **kwargs) -> bytes:
+def get(self, url: str, force_cookies: bool = False, **kwargs) -> bytes:
     """Make get request with `Source` session"""
-    resp = self._session.get(url, **kwargs)
+    if force_cookies:
+        resp = self._session.get(
+            url,
+            cookies=_get_all_cookies(self._session),
+            **kwargs
+        )
+    else:
+        resp = self._session.get(url, **kwargs)
     if resp.status_code == 200:
         return resp.content
     logging.debug(f"Failed to download data from: {url}\nResponse:\n{resp.content}")
@@ -33,6 +42,7 @@ def get_json(self, url: str, **kwargs) -> dict:
     """Downloads data with the given url and converts it to json"""
     resp = self.get(url, **kwargs)
     return json.loads(resp.decode('utf8'))
+
 
 def get_stream_files(self, url: str, headers={}) -> list[AudiobookFile]:
     """Creates a list of audio files from an m3u8 file"""
@@ -51,3 +61,15 @@ def get_stream_files(self, url: str, headers={}) -> list[AudiobookFile]:
             )
         files.append(current)
     return files
+
+
+def _get_all_cookies(session: requests.Session) -> dict[str, str]:
+    """
+    Retrieves all cookies from session
+
+    :returns: Dictionary of cookies
+    """
+    cookies = {}
+    for cookie in session.cookies:
+        cookies[cookie.name] = str(cookie.value)
+    return cookies
