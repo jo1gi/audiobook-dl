@@ -34,6 +34,11 @@ class Source:
         self._session = requests.Session()
 
     @property
+    def name(self) -> str:
+        """Primary name of source"""
+        return self.names[0].lower()
+
+    @property
     def requires_authentication(self):
         """Returns `True` if this source requires authentication to download books"""
         return len(self._authentication_methods) > 0
