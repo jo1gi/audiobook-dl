@@ -3,6 +3,7 @@ from audiobookdl.exceptions import AudiobookDLException
 from .utils import dependencies
 from .output.download import download
 from .sources import find_compatible_source
+from .config import load_config, Config
 
 import os
 import sys
@@ -18,17 +19,19 @@ def get_cookie_path(options) -> Optional[str]:
         return "./cookies.txt"
     return None
 
-def get_or_ask(name: str, hidden: bool, options) -> str:
+def get_or_ask(attr: str, hidden: bool, source_name: str, options, config: Config) -> str:
     """Return `value` if it exists else asks for a value"""
-    if hasattr(options, name) and getattr(options, name):
-        return getattr(options, name)
-    return Prompt.ask(name.capitalize(), password=hidden)
+    config_value = getattr(config.sources.get(source_name), attr, None)
+    value: Optional[str] = getattr(options, attr, None) or config_value
+    if value is None:
+        return Prompt.ask(attr.capitalize(), password=hidden)
+    return value
 
-def login(source: Source, options):
+def login(source: Source, options, config: Config):
     login_data = {}
     for name in source.login_data:
         hidden = name == "password"
-        login_data[name] = get_or_ask(name, hidden, options)
+        login_data[name] = get_or_ask(name, hidden, source.name, options, config)
     source.login(**login_data)
 
 def get_urls(options) -> list[str]:
@@ -45,6 +48,8 @@ def run() -> None:
     """Main function"""
     # Parsing arguments
     options = args.parse_arguments()
+    config = load_config()
+    options.output_template = options.output_template or config.output_template
     # Applying arguments as global constants
     logging.debug_mode = options.debug
     logging.quiet_mode = options.quiet
@@ -58,13 +63,13 @@ def run() -> None:
     try:
         dependencies.check_dependencies(options)
         for url in urls:
-            run_on_url(options, url)
+            run_on_url(url, options, config)
     except AudiobookDLException as e:
         e.print()
         traceback.print_exc()
         exit(1)
 
-def run_on_url(options, url: str):
+def run_on_url(url: str, options, config: Config):
     logging.log("Finding compatible source")
     s = find_compatible_source(url)
     # Load cookie file
@@ -73,7 +78,7 @@ def run_on_url(options, url: str):
         s.load_cookie_file(cookie_path)
     # Adding username and password
     if s.supports_login and not s.authenticated:
-        login(s, options)
+        login(s, options, config)
     # Running program
     if options.print_output:
         print_output(s, options)

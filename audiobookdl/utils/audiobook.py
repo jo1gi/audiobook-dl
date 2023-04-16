@@ -45,28 +45,26 @@ class AudiobookFile:
 
 
 
+@dataclass(slots=True)
 class AudiobookMetadata:
     title: str
     series: Optional[str] = None
-    _authors: list[str] = []
-    _narrators: list[str] = []
-
-    def __init__(self, title: str):
-        self.title = title
+    authors: list[str] = field(default_factory=list)
+    narrators: list[str] = field(default_factory=list)
 
     def add_author(self, author: str):
         """Add author to metadata"""
-        self._authors.append(author)
+        self.authors.append(author)
 
     def add_narrator(self, narrator: str):
         """Add narrator to metadata"""
-        self._narrators.append(narrator)
+        self.narrators.append(narrator)
 
     def add_authors(self, authors: list[str]):
-        self._authors.extend(authors)
+        self.authors.extend(authors)
 
     def add_narrators(self, narrators: list[str]):
-        self._narrators.extend(narrators)
+        self.narrators.extend(narrators)
 
     def all_properties(self, allow_duplicate_keys = False) -> list[tuple[str, str]]:
         result: list[tuple[str, str]] = []
@@ -74,13 +72,13 @@ class AudiobookMetadata:
         add("title", self.title)
         add("series", self.series)
         if allow_duplicate_keys:
-            for author in self._authors:
+            for author in self.author:
                 result.append(("author", author))
-            for narrator in self._narrators:
+            for narrator in self.narrator:
                 result.append(("narrator", narrator))
         else:
-            result.append(("author", self.authors))
-            result.append(("narrator", self.narrators))
+            result.append(("author", self.author))
+            result.append(("narrator", self.narrator))
         return result
 
     def all_properties_dict(self) -> dict[str, str]:
@@ -90,14 +88,14 @@ class AudiobookMetadata:
         return result
 
     @property
-    def authors(self) -> str:
+    def author(self) -> str:
         """All authors concatenated into a single string"""
-        return "; ".join(self._authors)
+        return "; ".join(self.authors)
 
     @property
-    def narrators(self) -> str:
+    def narrator(self) -> str:
         """All narrators concatenated into a single string"""
-        return "; ".join(self._narrators)
+        return "; ".join(self.narrators)
 
 
 @dataclass(slots=True)
