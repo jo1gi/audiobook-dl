@@ -108,4 +108,10 @@ def parse_arguments() -> Any:
         dest="library",
         help="Library for source",
     )
+    parser.add_argument(
+        '--write-json-metadata',
+        dest = "write_json_metadata",
+        help = "Write metadata in a seperate json file",
+        action="store_true",
+    )
     return parser.parse_args()

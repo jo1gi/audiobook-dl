@@ -38,8 +38,6 @@ def add_id3_metadata(filepath: str, metadata: AudiobookMetadata):
             audio[ID3_CONVERT[key]] = value
         elif key in EasyID3.valid_keys.keys():
             audio[key] = value
-        else:
-            logging.debug(f"Tried to add invalid id3 tag: {key}")
     audio.save(v2_version=3)
 
 def embed_id3_cover(filepath: str, cover: Cover):

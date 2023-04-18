@@ -74,6 +74,9 @@ def add_metadata_to_file(audiobook: Audiobook, filepath: str, options):
         metadata.add_chapters(filepath, audiobook.chapters)
     logging.log("Adding metadata")
     metadata.add_metadata(filepath, audiobook.metadata)
+    if options.write_json_metadata:
+        with open(f"{filepath}.json", "w") as f:
+            f.write(audiobook.metadata.as_json())
     if audiobook.cover:
         logging.log("Embedding cover")
         metadata.embed_cover(filepath, audiobook.cover)
@@ -83,6 +86,10 @@ def add_metadata_to_dir(audiobook: Audiobook, filepaths: list[str], output_dir: 
     """Add metadata to a directory with audio files"""
     for filepath in filepaths:
         metadata.add_metadata(filepath, audiobook.metadata)
+    if options.write_json_metadata:
+        metadata_file_path = os.path.join(output_dir, "metadata.json")
+        with open(metadata_file_path, "w") as f:
+            f.write(audiobook.metadata.as_json())
     if audiobook.cover:
         logging.log("Adding cover")
         cover_path = os.path.join(output_dir, f"cover.{audiobook.cover.extension}")

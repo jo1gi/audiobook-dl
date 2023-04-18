@@ -1,12 +1,8 @@
 import requests
 from dataclasses import dataclass, field
 from typing import Optional, Union
+import json
 
-def add_if_value_exists(l: list[tuple[str, str]]):
-    def add(key: str, value: Optional[str]):
-        if value:
-            l.append((key, value))
-    return add
 
 
 @dataclass(slots=True)
@@ -51,6 +47,9 @@ class AudiobookMetadata:
     series: Optional[str] = None
     authors: list[str] = field(default_factory=list)
     narrators: list[str] = field(default_factory=list)
+    language: Optional[str] = None
+    description: Optional[str] = None
+    isbn: Optional[str] = None
 
     def add_author(self, author: str):
         """Add author to metadata"""
@@ -68,9 +67,12 @@ class AudiobookMetadata:
 
     def all_properties(self, allow_duplicate_keys = False) -> list[tuple[str, str]]:
         result: list[tuple[str, str]] = []
-        add = add_if_value_exists(result)
-        add("title", self.title)
-        add("series", self.series)
+        add = add_if_value_exists(self, result)
+        add("title")
+        add("series")
+        add("language")
+        add("description")
+        add("isbn")
         if allow_duplicate_keys:
             for author in self.author:
                 result.append(("author", author))
@@ -96,6 +98,43 @@ class AudiobookMetadata:
     def narrator(self) -> str:
         """All narrators concatenated into a single string"""
         return "; ".join(self.narrators)
+
+
+    def as_dict(self) -> dict:
+        """
+        Export metadata as dictionary
+
+        :returns: Metadata as dictionary
+        """
+        result: dict = {
+            "title": self.title,
+            "authors": self.authors,
+            "narrators": self.narrators,
+        }
+        if self.language:
+            result["language"] = self.language
+        if self.description:
+            result["description"] = self.description
+        if self.isbn:
+            result["isbn"] = self.isbn
+        return result
+
+
+    def as_json(self) -> str:
+        """
+        Export metadata as json
+
+        :returns: Metadata as json
+        """
+        return json.dumps(self.as_dict())
+
+
+def add_if_value_exists(metadata: AudiobookMetadata, l: list[tuple[str, str]]):
+    def add(key: str):
+        value = getattr(metadata, key, None)
+        if value:
+            l.append((key, value))
+    return add
 
 
 @dataclass(slots=True)
