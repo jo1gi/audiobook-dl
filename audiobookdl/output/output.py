@@ -23,7 +23,7 @@ def combine_audiofiles(filenames: list[str], tmp_dir: str, output_path: str):
     """Combines the given audiofiles in `path` into a new file"""
     inputs = "|".join(filenames)
     subprocess.run(
-        ["ffmpeg", "-i", f"concat:{inputs}", "-safe", "0", "-c", "copy", output_path],
+        ["ffmpeg", "-i", f"concat:{inputs}", "-safe", "0", "-codec", "copy", output_path],
         capture_output=not logging.ffmpeg_output,
     )
     if not os.path.exists(output_path):
@@ -31,20 +31,40 @@ def combine_audiofiles(filenames: list[str], tmp_dir: str, output_path: str):
     shutil.rmtree(tmp_dir)
 
 
+def can_copy_codec(input_format: str, output_format: str) -> bool:
+    """
+    Checks whether the codec can be copies to the new output
+
+    :param input_format: Input file filetype
+    :param output_format: Output file filetype
+    :returns: True if the codec can be copied
+    """
+    # TODO Add better verification
+    return output_format == "mkv" \
+        or output_format == "mka" \
+        or (input_format == "ts" and output_format == "mp3")
+
+
 def convert_output(filenames: list[str], output_format: str):
     """Converts a list of audio files into another format and return new
     files"""
     new_paths = []
     for old_path in filenames:
-        split_path = os.path.splitext(old_path)
-        new_path = f"{split_path[0]}.{output_format}"
-        if not output_format == split_path[1][1:]:
-            subprocess.run(
-                ["ffmpeg", "-i", old_path, new_path],
-                capture_output=not logging.ffmpeg_output
-            )
+        path_without_ext, old_ext = os.path.splitext(old_path)
+        new_path = f"{path_without_ext}.{output_format}"
+        if not output_format == old_ext:
+            if can_copy_codec(old_ext, output_format):
+                subprocess.run(
+                    ["ffmpeg", "-i", old_path, "-codec", "copy", new_path],
+                    capture_output=not logging.ffmpeg_output
+                )
+            else:
+                subprocess.run(
+                    ["ffmpeg", "-i", old_path, new_path],
+                    capture_output=not logging.ffmpeg_output
+                )
             os.remove(old_path)
-        new_paths.append(f"{os.path.splitext(old_path)[0]}.{output_format}")
+        new_paths.append(new_path)
     return new_paths
 
 

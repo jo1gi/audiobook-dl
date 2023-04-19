@@ -171,8 +171,6 @@ def get_output_audio_format(option: Optional[str], files: list[str]) -> tuple[st
     current_format = os.path.splitext(files[0])[1][1:]
     if option:
         output_format = option
-    elif current_format == "ts":
-        output_format = "mp3"
     else:
         output_format = current_format
     return current_format, output_format

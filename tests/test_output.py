@@ -28,7 +28,3 @@ def test_gen_output_audio_format_with_option():
 
 def test_gen_output_audio_format_without_option():
     assert get_output_audio_format(None, ["file1.mp3","file2.mp3","file3.mp3"]) == ("mp3", "mp3")
-
-
-def test_gen_output_audio_format_with_invalid_output_format():
-    assert get_output_audio_format(None, ["file1.ts","file2.ts","file3.ts"]) == ("ts", "mp3")
