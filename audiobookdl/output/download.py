@@ -55,7 +55,7 @@ def download_audiobook(audiobook: Audiobook, output_dir: str, options):
         logging.log("Converting files")
         filepaths = output.convert_output(filepaths, output_format)
     # Combine files
-    if options.combine:
+    if options.combine and len(filepaths) > 1:
         logging.log("Combining files")
         output_path = f"{output_dir}.{output_format}"
         output.combine_audiofiles(filepaths, output_dir, output_path)
