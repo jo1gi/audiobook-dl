@@ -24,7 +24,7 @@ def get_device_id() -> str:
 
 class NextorySource(Source):
     match = [
-        r"https?://(www.)?nextory.+",
+        r"https?://((www|catalog-\w\w).)?nextory.+",
     ]
     names = [ "Nextory" ]
     _authentication_methods = [
