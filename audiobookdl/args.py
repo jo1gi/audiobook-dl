@@ -114,4 +114,9 @@ def parse_arguments() -> Any:
         help = "Write metadata in a seperate json file",
         action="store_true",
     )
+    parser.add_argument(
+        '--config',
+        dest = "config_location",
+        help = "Alternative location of config file"
+    )
     return parser.parse_args()

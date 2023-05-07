@@ -1,3 +1,5 @@
+from audiobookdl.exceptions import ConfigNotFound
+
 from dataclasses import dataclass
 from typing import Optional
 
@@ -20,21 +22,39 @@ class Config:
     sources: dict[str, SourceConfig]
     output_template: Optional[str]
 
-
-def load_config() -> Config:
+def read_config(location: Optional[str]) -> dict:
     """
-    Load config file from disk
+    Read config from disk as dictionary
 
-    :returns: Content of config file
+    :param location: Optional alternative location of config file
+    :returns: Content of config file as dictionary
+    :raises: ConfigNotFound if location does not exists
     """
-    # Load config from disk
-    config_dir = appdirs.user_config_dir("audiobook-dl", "jo1gi")
-    config_file = os.path.join(config_dir, "audiobook-dl.toml")
+    if location:
+        if not os.path.exists(location):
+            raise ConfigNotFound
+        config_file = location
+    else:
+        config_dir = appdirs.user_config_dir("audiobook-dl", "jo1gi")
+        config_file = os.path.join(config_dir, "audiobook-dl.toml")
     if os.path.exists(config_file):
         with open(config_file, "rb") as f:
             config_dict = tomli.load(f)
     else:
         config_dict = {}
+    return config_dict
+
+
+
+def load_config(location: Optional[str]) -> Config:
+    """
+    Load config file from disk
+
+    :param location: Optional alternative location of config file
+    :returns: Content of config file
+    :raises: ConfigNotFound if location does not exists
+    """
+    config_dict = read_config(location)
     # Add sources
     sources: dict[str, SourceConfig] = {}
     if "sources" in config_dict:

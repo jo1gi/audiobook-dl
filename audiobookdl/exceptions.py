@@ -38,3 +38,6 @@ class UserNotAuthorized(AudiobookDLException):
 
 class MissingBookAccess(AudiobookDLException):
     error_description = "book_access"
+
+class ConfigNotFound(AudiobookDLException):
+    error_description = "config_not_found"

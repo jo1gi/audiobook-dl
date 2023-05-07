@@ -48,7 +48,7 @@ def run() -> None:
     """Main function"""
     # Parsing arguments
     options = args.parse_arguments()
-    config = load_config()
+    config = load_config(options.config_location)
     options.output_template = options.output_template or config.output_template
     # Applying arguments as global constants
     logging.debug_mode = options.debug
