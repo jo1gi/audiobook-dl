@@ -9,6 +9,7 @@ from typing import Any, Union, Optional
 from rich.progress import Progress, BarColumn, ProgressColumn
 from rich.prompt import Confirm
 from multiprocessing.pool import ThreadPool
+from pathlib import Path
 
 
 DOWNLOAD_PROGRESS: list[Union[str, ProgressColumn]] = [
@@ -104,6 +105,9 @@ def download_files_with_cli_output(audiobook: Audiobook, output_dir: str) -> lis
     """
     if len(audiobook.files) > 1:
         setup_download_dir(output_dir)
+    else:
+        parent = Path(output_dir).parent
+        os.makedirs(parent)
     with logging.progress(DOWNLOAD_PROGRESS) as progress:
         task = progress.add_task(
             f"Downloading {len(audiobook.files)} files [blue]{audiobook.title}",
@@ -178,6 +182,7 @@ def get_output_audio_format(option: Optional[str], files: list[str]) -> tuple[st
 
 def setup_download_dir(path: str):
     """Creates output folder"""
+    print("Creating output dir")
     if os.path.isdir(path):
         answer = Confirm.ask(f"The folder '[blue]{path}[/blue]' already exists. Do you want to override it?")
         if answer:
