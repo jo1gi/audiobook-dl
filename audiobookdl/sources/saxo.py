@@ -3,6 +3,7 @@ from audiobookdl import logging, AudiobookFile, AudiobookMetadata, Chapter, Cove
 from audiobookdl.exceptions import NoSourceFound
 from audiobookdl.utils.audiobook import AESEncryption
 import re
+from typing import List
 
 class SaxoSource(Source):
     _authentication_methods = [
@@ -67,7 +68,7 @@ class SaxoSource(Source):
             json = [ book_id ]
         )["items"][0]
 
-    def get_files(self) -> list[AudiobookFile]:
+    def get_files(self) -> List[AudiobookFile]:
         result = []
         for file in self.book_meta["techInfo"]["chapters"]:
             filename = file["fileName"]

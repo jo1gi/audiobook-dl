@@ -3,6 +3,7 @@ from audiobookdl import AudiobookFile, logging, AudiobookMetadata, Cover
 import re
 from urllib.parse import unquote
 from urllib3.util import parse_url
+from typing import List
 
 BASEURL = "https://www.audiobooks.com/book/stream/"
 
@@ -24,6 +25,7 @@ class AudiobooksdotcomSource(Source):
         title = self.find_elem_in_page(self.scrape_url, "h2#bookTitle")
         return AudiobookMetadata(title)
 
+
     def get_cover(self) -> Cover:
         cover_url = "http:" + \
             self.find_elem_in_page(
@@ -33,12 +35,14 @@ class AudiobooksdotcomSource(Source):
             )
         return Cover(self.get(cover_url), "jpg")
 
+
     def _get_user_agent(self) -> str:
         """Returns user agent from cookies"""
         raw = self._session.cookies.get("ci_session", domain="www.audiobooks.com")
         return unquote(raw).split("\"")[11]
 
-    def get_files(self) -> list[AudiobookFile]:
+
+    def get_files(self) -> List[AudiobookFile]:
         # User agent has to match the one in the cookies
         headers = { "User-Agent": self._get_user_agent() }
         media_url = self.find_in_page(

@@ -8,7 +8,7 @@ from .config import load_config, Config
 import os
 import sys
 from rich.prompt import Prompt
-from typing import Optional
+from typing import List, Optional
 import traceback
 
 def get_cookie_path(options) -> Optional[str]:
@@ -34,7 +34,7 @@ def login(source: Source, options, config: Config):
         login_data[name] = get_or_ask(name, hidden, source.name, options, config)
     source.login(**login_data)
 
-def get_urls(options) -> list[str]:
+def get_urls(options) -> List[str]:
     urls = []
     # Args
     urls.extend(options.urls)

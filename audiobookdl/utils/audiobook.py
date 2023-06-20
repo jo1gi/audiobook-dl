@@ -1,11 +1,10 @@
 import requests
 from dataclasses import dataclass, field
-from typing import Optional, Union
+from typing import Optional, Union, Sequence, List, Tuple, Dict
 import json
 
 
-
-@dataclass(slots=True)
+@dataclass
 class Chapter:
     # Start time of chapter in milliseconds
     start: int
@@ -13,20 +12,20 @@ class Chapter:
     title: str
 
 
-@dataclass(slots=True)
+@dataclass
 class Cover:
     image: bytes
     extension: str
 
 
-@dataclass(slots=True)
+@dataclass
 class AESEncryption:
     key: bytes
     iv: bytes
 
 AudiobookFileEncryption = AESEncryption
 
-@dataclass(slots=True)
+@dataclass
 class AudiobookFile:
     # Url to audio file
     url: str
@@ -35,18 +34,18 @@ class AudiobookFile:
     # Title of file
     title: Optional[str] = None
     # Headers for request
-    headers: dict[str, str] = field(default_factory=dict)
+    headers: Dict[str, str] = field(default_factory=dict)
     # Encryption method
     encryption_method: Optional[AudiobookFileEncryption] = None
 
 
 
-@dataclass(slots=True)
+@dataclass
 class AudiobookMetadata:
     title: str
     series: Optional[str] = None
-    authors: list[str] = field(default_factory=list)
-    narrators: list[str] = field(default_factory=list)
+    authors: List[str] = field(default_factory=list)
+    narrators: List[str] = field(default_factory=list)
     language: Optional[str] = None
     description: Optional[str] = None
     isbn: Optional[str] = None
@@ -59,14 +58,14 @@ class AudiobookMetadata:
         """Add narrator to metadata"""
         self.narrators.append(narrator)
 
-    def add_authors(self, authors: list[str]):
+    def add_authors(self, authors: Sequence[str]):
         self.authors.extend(authors)
 
-    def add_narrators(self, narrators: list[str]):
+    def add_narrators(self, narrators: Sequence[str]):
         self.narrators.extend(narrators)
 
-    def all_properties(self, allow_duplicate_keys = False) -> list[tuple[str, str]]:
-        result: list[tuple[str, str]] = []
+    def all_properties(self, allow_duplicate_keys = False) -> List[Tuple[str, str]]:
+        result: List[Tuple[str, str]] = []
         add = add_if_value_exists(self, result)
         add("title")
         add("series")
@@ -83,7 +82,7 @@ class AudiobookMetadata:
             result.append(("narrator", self.narrator))
         return result
 
-    def all_properties_dict(self) -> dict[str, str]:
+    def all_properties_dict(self) -> Dict[str, str]:
         result = {}
         for (key, value) in self.all_properties(allow_duplicate_keys=False):
             result[key] = value
@@ -129,7 +128,7 @@ class AudiobookMetadata:
         return json.dumps(self.as_dict())
 
 
-def add_if_value_exists(metadata: AudiobookMetadata, l: list[tuple[str, str]]):
+def add_if_value_exists(metadata: AudiobookMetadata, l: List[Tuple[str, str]]):
     def add(key: str):
         value = getattr(metadata, key, None)
         if value:
@@ -137,12 +136,12 @@ def add_if_value_exists(metadata: AudiobookMetadata, l: list[tuple[str, str]]):
     return add
 
 
-@dataclass(slots=True)
+@dataclass
 class Audiobook:
     session: requests.Session
     metadata: AudiobookMetadata
-    chapters: list[Chapter]
-    files: list[AudiobookFile]
+    chapters: List[Chapter]
+    files: List[AudiobookFile]
     cover: Optional[Cover]
 
     @property

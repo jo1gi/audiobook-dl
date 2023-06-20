@@ -1,4 +1,5 @@
 import importlib.resources
+from typing import Sequence
 
 def levenstein_distance(a: str, b: str) -> int:
     """
@@ -18,7 +19,7 @@ def levenstein_distance(a: str, b: str) -> int:
         levenstein_distance(a[1:], b[1:]) # Character is replaced
     )
 
-def nearest_string(input: str, list: list[str]) -> str:
+def nearest_string(input: str, list: Sequence[str]) -> str:
     """
     Returns the closest element in `list` to `input` based on the levenstein
     distance

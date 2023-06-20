@@ -1,6 +1,6 @@
 from .source import Source
 from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata, Cover
-from typing import Any, Optional
+from typing import Any, List, Optional
 import uuid
 from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess
 import base64
@@ -47,7 +47,7 @@ class BookBeatSource(Source):
         )
 
 
-    def get_files(self) -> list[AudiobookFile]:
+    def get_files(self) -> List[AudiobookFile]:
         dl_info = self.get_json(
             "https://api.bookbeat.com/api/downloadinfo/" + str(self.book_info["bookid"])
         )
@@ -100,7 +100,7 @@ class BookBeatSource(Source):
         except:
             return metadata
 
-    def get_chapters(self) -> list[Chapter]:
+    def get_chapters(self) -> List[Chapter]:
         chapters = []
         for chapter_number, track in enumerate(self.book_info["license"]["tracks"]):
             chapters.append(Chapter(track["start"], f"Chapter {chapter_number+1}"))

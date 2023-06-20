@@ -5,13 +5,14 @@ import os
 import shutil
 import platform
 import subprocess
+from typing import Sequence, Mapping
 
 LOCATION_DEFAULTS = {
     'album': 'NA',
     'artist': 'NA',
 }
 
-def gen_output_filename(booktitle: str, file: dict[str, str], template: str) -> str:
+def gen_output_filename(booktitle: str, file: Mapping[str, str], template: str) -> str:
     """Generates an output filename based on different attributes of the
     file"""
     arguments = {**file, **{"booktitle": booktitle}}
@@ -19,7 +20,7 @@ def gen_output_filename(booktitle: str, file: dict[str, str], template: str) -> 
     return _fix_output(filename)
 
 
-def combine_audiofiles(filenames: list[str], tmp_dir: str, output_path: str):
+def combine_audiofiles(filenames: Sequence[str], tmp_dir: str, output_path: str):
     """Combines the given audiofiles in `path` into a new file"""
     inputs = "|".join(filenames)
     subprocess.run(
@@ -45,7 +46,7 @@ def can_copy_codec(input_format: str, output_format: str) -> bool:
         or (input_format == "ts" and output_format == "mp3")
 
 
-def convert_output(filenames: list[str], output_format: str):
+def convert_output(filenames: Sequence[str], output_format: str):
     """Converts a list of audio files into another format and return new
     files"""
     new_paths = []

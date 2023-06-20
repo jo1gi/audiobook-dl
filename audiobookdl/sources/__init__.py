@@ -14,6 +14,7 @@ from .yourcloudlibrary import YourCloudLibrarySource
 
 from ..exceptions import NoSourceFound
 import re
+from typing import Iterable, List
 
 def find_compatible_source(url: str) -> Source:
     """Finds the first source that supports the given url"""
@@ -40,12 +41,12 @@ def get_source_classes():
         YourCloudLibrarySource,
     ]
 
-def get_source_names() -> list[str]:
+def get_source_names() -> Iterable[str]:
     """
     Returns the names of all sources available
     There are sometimes multiple names for the same source
     """
-    results: list[str] = []
+    results: List[str] = []
     for source in get_source_classes():
         for source_name in source.names:
             results.append(source_name)

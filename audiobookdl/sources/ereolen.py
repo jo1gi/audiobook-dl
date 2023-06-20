@@ -2,7 +2,7 @@ from .source import Source
 from audiobookdl import  AudiobookFile, logging, utils, AudiobookMetadata, Cover
 from audiobookdl.exceptions import UserNotAuthorized, RequestError
 
-from typing import Optional
+from typing import List, Optional
 import re
 import json
 
@@ -35,7 +35,7 @@ class EreolenSource(Source):
         cover_data = self.get(self.meta["cover"])
         return Cover(cover_data, "jpg")
 
-    def get_files(self) -> list[AudiobookFile]:
+    def get_files(self) -> List[AudiobookFile]:
         return self.get_stream_files(
             f"https://audio.api.streaming.pubhub.dk/v1/stream/hls/{self.book_id}/playlist.m3u8"
         )

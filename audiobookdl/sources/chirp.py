@@ -1,7 +1,7 @@
 from .source import Source
 from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover
 
-from typing import Optional
+from typing import List, Optional
 import base64
 from Crypto.Cipher import AES
 
@@ -71,7 +71,7 @@ class ChirpSource(Source):
         return cipher.decrypt(ciphertext).decode("utf8")[:-1]
 
 
-    def get_files(self) -> list[AudiobookFile]:
+    def get_files(self) -> List[AudiobookFile]:
         files = []
         for track in self.tracks:
             files.append(AudiobookFile(
@@ -82,7 +82,7 @@ class ChirpSource(Source):
         return files
 
 
-    def get_chapters(self) -> list[Chapter]:
+    def get_chapters(self) -> List[Chapter]:
         chapters = []
         start_time = 0
         for track in self.tracks:

@@ -1,14 +1,14 @@
 from audiobookdl.exceptions import ConfigNotFound
+from audiobookdl.utils.types import dataclass
 
-from dataclasses import dataclass
-from typing import Optional
+from typing import Dict, Optional
 
 import tomli
 import appdirs
 import os
 
 
-@dataclass(slots=True)
+@dataclass
 class SourceConfig:
     """Stores configuration for source"""
     username: Optional[str]
@@ -16,10 +16,10 @@ class SourceConfig:
     library: Optional[str]
 
 
-@dataclass(slots=True)
+@dataclass
 class Config:
     """audiobook-dl config"""
-    sources: dict[str, SourceConfig]
+    sources: Dict[str, SourceConfig]
     output_template: Optional[str]
 
 def read_config(location: Optional[str]) -> dict:
@@ -56,7 +56,7 @@ def load_config(location: Optional[str]) -> Config:
     """
     config_dict = read_config(location)
     # Add sources
-    sources: dict[str, SourceConfig] = {}
+    sources: Dict[str, SourceConfig] = {}
     if "sources" in config_dict:
         for source_name, values in config_dict["sources"].items():
             sources[source_name] = SourceConfig (

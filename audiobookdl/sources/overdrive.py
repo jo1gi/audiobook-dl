@@ -5,6 +5,7 @@ from audiobookdl.exceptions import DataNotPresent, UserNotAuthorized
 import re
 import json
 from urllib3.util import parse_url
+from typing import List
 
 
 class OverdriveSource(Source):
@@ -59,7 +60,7 @@ class OverdriveSource(Source):
         return self._get_previous_length(index-1) + \
             self.meta["spine"][index-1]["audio-duration"]
 
-    def get_chapters(self) -> list[Chapter]:
+    def get_chapters(self) -> List[Chapter]:
         chapters = []
         for chapter in self.meta["nav"]["toc"]:
             timepoint = 0.
@@ -73,7 +74,7 @@ class OverdriveSource(Source):
             chapters.append(Chapter(start, chapter["title"]))
         return chapters
 
-    def get_files(self) -> list[AudiobookFile]:
+    def get_files(self) -> List[AudiobookFile]:
         files = []
         for num, part in enumerate(self.meta["spine"]):
             files.append(AudiobookFile(

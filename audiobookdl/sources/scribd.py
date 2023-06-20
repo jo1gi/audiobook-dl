@@ -1,7 +1,7 @@
 from .source import Source
 from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover
 from audiobookdl.exceptions import UserNotAuthorized, RequestError, DataNotPresent
-from typing import Optional
+from typing import List, Optional
 
 import io
 from PIL import Image
@@ -52,7 +52,7 @@ class ScribdSource(Source):
             return "Introduction"
         return f"Chapter {number}"
 
-    def get_chapters(self) -> list[Chapter]:
+    def get_chapters(self) -> List[Chapter]:
         chapters = []
         if not self._original and "chapters" in self.meta:
             start_time = 0
@@ -62,7 +62,7 @@ class ScribdSource(Source):
                 start_time += chapter["duration"]
         return chapters
 
-    def get_files(self) -> list[AudiobookFile]:
+    def get_files(self) -> List[AudiobookFile]:
         if self._original:
             return self.get_stream_files(
                 self._stream_url,

@@ -7,6 +7,8 @@ from mutagen.easyid3 import EasyID3
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, APIC, CHAP, TIT2, CTOC, CTOCFlags, ID3NoHeaderError
 
+from typing import Sequence
+
 # Conversion table between metadata names and ID3 tags
 ID3_CONVERT = {
     "author": "artist",
@@ -29,6 +31,7 @@ def is_id3_file(filepath: str) -> bool:
     ext = re.search(r"(?<=(\.))\w+$", filepath)
     return ext is not None and ext.group(0) in ID3_FORMATS
 
+
 def add_id3_metadata(filepath: str, metadata: AudiobookMetadata):
     """Add ID3 metadata tags to the given audio file"""
     audio = MP3(filepath, ID3=EasyID3)
@@ -40,6 +43,7 @@ def add_id3_metadata(filepath: str, metadata: AudiobookMetadata):
             audio[key] = value
     audio.save(v2_version=3)
 
+
 def embed_id3_cover(filepath: str, cover: Cover):
     mimetype = EXTENSION_TO_MIMETYPE[cover.extension]
     try:
@@ -48,6 +52,7 @@ def embed_id3_cover(filepath: str, cover: Cover):
         return
     audio.add(APIC(type=0, data=cover.image, mime=mimetype))
     audio.save()
+
 
 def add_id3_chapter(audio: ID3, start: int, end: int, title: str, index: int):
     """Adds a single chapter to the given audio file"""
@@ -59,7 +64,7 @@ def add_id3_chapter(audio: ID3, start: int, end: int, title: str, index: int):
     ))
 
 
-def add_id3_chapters(filepath: str, chapters: list[Chapter]):
+def add_id3_chapters(filepath: str, chapters: Sequence[Chapter]):
     """Adds chapters to the given audio file"""
     audio = ID3(filepath)
     for i in range(len(chapters)-1):

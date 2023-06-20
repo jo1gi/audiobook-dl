@@ -3,7 +3,7 @@ from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cove
 from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 
 class StorytelSource(Source):
@@ -42,7 +42,7 @@ class StorytelSource(Source):
         self.user_data = resp.json()
 
 
-    def get_files(self) -> list[AudiobookFile]:
+    def get_files(self) -> List[AudiobookFile]:
         aid = self.book_info["book"]["AId"]
         url = f"https://www.storytel.com/mp3streamRangeReq?startposition=0&programId={aid}" \
               f"&token={self.user_data['accountInfo']['singleSignToken']}"
@@ -63,10 +63,10 @@ class StorytelSource(Source):
         except:
             return metadata
 
-    def get_chapters(self) -> list[Chapter]:
+    def get_chapters(self) -> List[Chapter]:
         url = f"https://api.storytel.net/playback-metadata/consumable/{self.book_info['book']['consumableId']}"
         try:
-            chapters: list[Chapter] = []
+            chapters: List[Chapter] = []
             storytel_metadata = self._session.get(url).json()
             if "formats" in storytel_metadata and len(storytel_metadata["formats"]) > 0:
                 # Find audiobook format

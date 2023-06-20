@@ -9,24 +9,24 @@ import lxml.html
 from lxml.cssselect import CSSSelector
 import re
 from http.cookiejar import MozillaCookieJar
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 class Source:
     """An abstract class for downloading audiobooks from a specific
     online source."""
 
     # Data required for logging in
-    login_data: list[str] = [ "username", "password" ]
+    login_data: List[str] = [ "username", "password" ]
     # A list of regexes that indicates which website a sevice supports
-    match: list[str] = []
+    match: List[str] = []
     # list of names
-    names: list[str] = []
+    names: List[str] = []
     # Methods for authenticating
-    _authentication_methods: list[str] = [ "cookies" ]
+    _authentication_methods: List[str] = [ "cookies" ]
     # If cookies are loaded
     __authenticated = False
     # Cache of previously loaded pages
-    __pages: dict[str, bytes] = {}
+    __pages: Dict[str, bytes] = {}
 
     def __init__(self, url, match_num):
         self.url = url
@@ -85,11 +85,11 @@ class Source:
         """Returns the image data for the audiobook"""
         return None
 
-    def get_files(self) -> list[AudiobookFile]:
+    def get_files(self) -> List[AudiobookFile]:
         """Return a list of audio files for the audiobook"""
         raise NotImplemented
 
-    def get_chapters(self) -> list[Chapter]:
+    def get_chapters(self) -> List[Chapter]:
         """
         Returns a list of tuples with the starting point of the chapter and
         the title of the chapter
@@ -120,7 +120,7 @@ class Source:
             return elem.text
         return elem.get(data)
 
-    def find_elems_in_page(self, url: str, selector: str, **kwargs) -> list[Any]:
+    def find_elems_in_page(self, url: str, selector: str, **kwargs) -> list:
         """
         Find all html elements in the page from `url` thats matches `selector`.
         Will cache the page.
@@ -143,7 +143,7 @@ class Source:
             raise DataNotPresent
         return m.group(group_index)
 
-    def find_all_in_page(self, url: str, regex: str, **kwargs) -> list[Any]:
+    def find_all_in_page(self, url: str, regex: str, **kwargs) -> list:
         """
         Find all places in a page that matches the regex.
         Will cache the page.

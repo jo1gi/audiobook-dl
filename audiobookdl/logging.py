@@ -3,7 +3,7 @@ from rich.style import Style
 from rich.markup import render, escape
 from rich.console import Console
 from rich.progress import Progress, ProgressColumn
-from typing import Union
+from typing import Union, List
 from audiobookdl.utils import read_asset_file
 
 debug_mode = False
@@ -48,5 +48,5 @@ def simple_help() -> None:
     """Print basic help information"""
     print_asset_file("assets/simple_help.txt")
 
-def progress(progress_format: list[Union[str, ProgressColumn]]) -> Progress:
+def progress(progress_format: List[Union[str, ProgressColumn]]) -> Progress:
     return Progress(*progress_format, console=console)

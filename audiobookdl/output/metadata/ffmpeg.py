@@ -2,6 +2,7 @@ from audiobookdl import Chapter, utils, logging
 from mutagen import File as MutagenFile
 import subprocess
 import os
+from typing import Sequence
 
 TMP_CHAPTER_FILE = "chapters.tmp.txt"
 TMP_MEDIA_FILE = "audiobook.tmp.mp4"
@@ -15,7 +16,7 @@ def create_chapter_text(title: str, start: int, end: int) -> str:
     )
 
 
-def create_tmp_chapter_file(filepath: str, chapters: list[Chapter]) -> str:
+def create_tmp_chapter_file(filepath: str, chapters: Sequence[Chapter]) -> str:
     result = ";FFMETADATA1\n"
     for i in range(len(chapters)-1):
         chapter = chapters[i]
@@ -29,7 +30,7 @@ def create_tmp_chapter_file(filepath: str, chapters: list[Chapter]) -> str:
     )
     return result
 
-def add_chapters_ffmpeg(filepath: str, chapters: list[Chapter]):
+def add_chapters_ffmpeg(filepath: str, chapters: Sequence[Chapter]):
     try:
         with open(TMP_CHAPTER_FILE, "w") as f:
             f.write(create_tmp_chapter_file(filepath, chapters))

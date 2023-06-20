@@ -1,9 +1,10 @@
 from .source import Source
 from audiobookdl import AudiobookFile, AudiobookMetadata, Cover
+from typing import List
 
 
 class LibrivoxSource(Source):
-    _authentication_methods: list[str] = []
+    _authentication_methods: List[str] = []
 
     names = [ "Librivox" ]
 
@@ -25,7 +26,7 @@ class LibrivoxSource(Source):
         cover_data = self.get(cover_url)
         return Cover(cover_data, "jpg")
 
-    def get_files(self) -> list[AudiobookFile]:
+    def get_files(self) -> List[AudiobookFile]:
         parts = self.find_elems_in_page(self.url,
                                         ".chapter-download .chapter-name")
         files = []

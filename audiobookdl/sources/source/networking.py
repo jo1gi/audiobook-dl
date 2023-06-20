@@ -1,6 +1,7 @@
 from audiobookdl import AudiobookFile, exceptions, logging
 from audiobookdl.utils.audiobook import AESEncryption
 
+from typing import Dict, List
 import json
 import os
 import m3u8
@@ -44,7 +45,7 @@ def get_json(self, url: str, **kwargs) -> dict:
     return json.loads(resp.decode('utf8'))
 
 
-def get_stream_files(self, url: str, headers={}) -> list[AudiobookFile]:
+def get_stream_files(self, url: str, headers={}) -> List[AudiobookFile]:
     """Creates a list of audio files from an m3u8 file"""
     playlist = m3u8.load(url, headers=headers)
     files = []
@@ -63,7 +64,7 @@ def get_stream_files(self, url: str, headers={}) -> list[AudiobookFile]:
     return files
 
 
-def _get_all_cookies(session: requests.Session) -> dict[str, str]:
+def _get_all_cookies(session: requests.Session) -> Dict[str, str]:
     """
     Retrieves all cookies from session
 

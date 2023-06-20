@@ -5,14 +5,14 @@ from . import metadata, output, encryption
 import os
 import shutil
 from functools import partial
-from typing import Any, Union, Optional
+from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union
 from rich.progress import Progress, BarColumn, ProgressColumn
 from rich.prompt import Confirm
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
 
-DOWNLOAD_PROGRESS: list[Union[str, ProgressColumn]] = [
+DOWNLOAD_PROGRESS: List[Union[str, ProgressColumn]] = [
     "{task.description}", BarColumn(), "[progress.percentage]{task.percentage:>3.0f}%"
 ]
 
@@ -83,7 +83,7 @@ def add_metadata_to_file(audiobook: Audiobook, filepath: str, options):
         metadata.embed_cover(filepath, audiobook.cover)
 
 
-def add_metadata_to_dir(audiobook: Audiobook, filepaths: list[str], output_dir: str, options):
+def add_metadata_to_dir(audiobook: Audiobook, filepaths: Iterable[str], output_dir: str, options):
     """Add metadata to a directory with audio files"""
     for filepath in filepaths:
         metadata.add_metadata(filepath, audiobook.metadata)
@@ -98,7 +98,7 @@ def add_metadata_to_dir(audiobook: Audiobook, filepaths: list[str], output_dir: 
             f.write(audiobook.cover.image)
 
 
-def download_files_with_cli_output(audiobook: Audiobook, output_dir: str) -> list[str]:
+def download_files_with_cli_output(audiobook: Audiobook, output_dir: str) -> List[str]:
     """
     Download `audiobook` with cli output
     Returns a list of paths of the downloaded files
@@ -133,7 +133,7 @@ def create_filepath(audiobook: Audiobook, output_dir: str, index: int) -> str:
     return path
 
 
-def download_file(args: tuple[Audiobook, str, int, Any]) -> str:
+def download_file(args: Tuple[Audiobook, str, int, Any]) -> str:
     # Prepare download
     audiobook, output_dir, index, update_progress = args
     file = audiobook.files[index]
@@ -154,7 +154,7 @@ def download_file(args: tuple[Audiobook, str, int, Any]) -> str:
     return filepath
 
 
-def download_files(audiobook: Audiobook, output_dir: str, update_progress) -> list[str]:
+def download_files(audiobook: Audiobook, output_dir: str, update_progress) -> List[str]:
     """Download files from audiobook and return paths of the downloaded files"""
     filepaths = []
     with ThreadPool(processes=20) as pool:
@@ -166,7 +166,7 @@ def download_files(audiobook: Audiobook, output_dir: str, update_progress) -> li
     return filepaths
 
 
-def get_output_audio_format(option: Optional[str], files: list[str]) -> tuple[str, str]:
+def get_output_audio_format(option: Optional[str], files: Sequence[str]) -> Tuple[str, str]:
     """
     Get output format for files
 
