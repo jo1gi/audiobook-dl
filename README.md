@@ -11,13 +11,13 @@ audiobook-dl currently supports downloading from the following sources:
 - [audiobooks.com](https://audiobooks.com)
 - [BookBeat](https://www.bookbeat.com/)
 - [Chirp](https://www.chirpbooks.com/)
-- [eReolen (Danish Library)](https://ereolen.dk)
+- [eReolen](https://ereolen.dk)
 - [Librivox](https://librivox.org)
 - [Nextory](https://nextory.com)
-- [Overdrive (Library service)](https://www.overdrive.com/)
+- [Overdrive / Libby](https://www.overdrive.com/)
 - [Saxo](https://saxo.com)
 - [Scribd](https://scribd.com)
-- [Storytel](https://www.storytel.com/)
+- [Storytel](https://www.storytel.com/) / [Mofibo](https://mofibo.com)
 - [YourCloudLibrary](https://www.yourcloudlibrary.com/)
 
 [More info](./supported_sites.md)
@@ -105,3 +105,14 @@ Issues, bug-reports, pull requests or ideas for features and improvements are
 If you like the project, please consider donating:
 - [Ko-fi](https://ko-fi.com/jo1gi)
 - [Buy me a Coffee](https://www.buymeacoffee.com/joakimholm)
+<details>
+<summary>Cryptocurrencies</summary>
+
+- Bitcoin: bc1qrh8hcnw0fd22y7rmljlmrztwrz2nd5tqckrt44
+- Bitcoin Cash: qp6rt9zx7tfyu9e4alxcn5yf4re5pfztvu8yx0rywh
+- Dash: XfgopGkj4BBpuzsUvrbj9jenXUZ6dXsr3J
+- Etherium: 0x8f5d2eb6d2a4d4615d2b9b1cfa28b4c5b9d18f9f
+- Litecoin: ltc1qfz2936a04m2h7t0srxftygjrq759auav7ndfd3
+- Monero: 853tLAbK5wQ93mdj884C31JGKBUEJCpM25gEjGGLnuVDc8PEDMJi6uC5Vcz9g37K2PeT8FY1bjEveUWqJXNPotFRLwLnn9a
+
+</details>
