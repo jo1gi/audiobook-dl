@@ -1,18 +1,12 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata, Cover
-from typing import Any, List, Optional
+from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata, Cover, Audiobook
+from typing import Any, List, Optional, Dict
 import uuid
 from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess
 import base64
 import re
 
 
-def get_device_id() -> str:
-    return (
-        str(uuid.uuid3(uuid.NAMESPACE_DNS, "audiobook-dl"))
-        + " "
-        + base64.b64encode(b"Personal Computer").decode()
-    )
 
 
 class BookBeatSource(Source):
@@ -23,46 +17,69 @@ class BookBeatSource(Source):
     _authentication_methods = [
         "login",
     ]
-
     saved_books: dict
     book_info: dict
 
-    def _login(self, username: str, password: str):
+    @staticmethod
+    def create_device_id() -> str:
+        """Create random device id"""
+        return (
+            str(uuid.uuid3(uuid.NAMESPACE_DNS, "audiobook-dl"))
+            + " "
+            + base64.b64encode(b"Personal Computer").decode()
+        )
+
+    def _login(self, url: str, username: str, password: str):
         headers = {
             "accept": "application/hal+json",
             "bb-client": "BookBeatApp",
-            "bb-device": get_device_id(),
+            "bb-device": self.create_device_id(),
         }
         self._session.headers = headers
-
         login_json = {"username": username, "password": password}
-
         tokens = self.post_json(
             "https://api.bookbeat.com/api/login",
             json=login_json
         )
-        self._session.headers.update({"authorization": "Bearer " + tokens["token"]})
+        token = tokens["token"]
+        self._session.headers.update({"authorization": f"Bearer {token}"})
         self.saved_books = self.get_json(
             "https://api.bookbeat.com/api/my/books/saved?offset=0&limit=100"
         )
 
 
-    def get_files(self) -> List[AudiobookFile]:
-        dl_info = self.get_json(
-            "https://api.bookbeat.com/api/downloadinfo/" + str(self.book_info["bookid"])
+    def download(self, url: str) -> Audiobook:
+        book_id_re = r"(\d+)$"
+        wanted_id_match = re.search(book_id_re, url)
+        if not wanted_id_match:
+            raise ValueError(f"Couldn't get bookid from url {url}")
+        wanted_id = wanted_id_match.group(1)
+        book_info = self.find_book_info(wanted_id)
+        return Audiobook(
+            session = self._session,
+            files = self.get_files(book_info),
+            metadata = self.get_metadata(book_info),
+            cover = self.get_cover(book_info),
+            chapters = self.get_chapters(book_info),
         )
-        # Find license_url
+
+
+    def download_license_url(self, book_info):
+        dl_info = self.get_json(
+            "https://api.bookbeat.com/api/downloadinfo/" + str(book_info["bookid"])
+        )
         if "_embedded" in dl_info:
             if "downloads" in dl_info["_embedded"]:
                 for dl in dl_info["_embedded"]["downloads"]:
                     if dl["format"] == "audioBook":
-                        license_url = dl["_links"]["license"]["href"]
-                        break
+                        return dl["_links"]["license"]["href"]
+        raise MissingBookAccess
 
-        if license_url is None:
-            raise MissingBookAccess
+
+    def get_files(self, book_info: Dict) -> List[AudiobookFile]:
+        license_url = self.download_license_url(book_info)
         lic = self.get_json(license_url)
-        self.book_info["license"] = lic
+        book_info["license"] = lic
         if "_links" in lic:
             return [
                 AudiobookFile(
@@ -74,20 +91,13 @@ class BookBeatSource(Source):
         raise MissingBookAccess
 
 
-    def get_metadata(self) -> AudiobookMetadata:
-        title = self.book_info["metadata"]["title"]
+    def get_metadata(self, book_info: Dict) -> AudiobookMetadata:
+        title = book_info["metadata"]["title"]
         metadata = AudiobookMetadata(title)
         try:
-            contributors = next(
-                iter(
-                    [
-                        e["contributors"]
-                        for e in self.book_info["metadata"]["editions"]
-                        if e["format"] == "audioBook"
-                    ]
-                ),
-                None,
-            )
+            contributors = [
+                e["contributors"] for e in book_info["metadata"]["editions"] if e["format"] == "audioBook"
+            ][0]
             if not contributors:
                 return metadata
             for contributor in contributors:
@@ -100,28 +110,27 @@ class BookBeatSource(Source):
         except:
             return metadata
 
-    def get_chapters(self) -> List[Chapter]:
+
+    @staticmethod
+    def get_chapters(book_info: Dict) -> List[Chapter]:
         chapters = []
-        for chapter_number, track in enumerate(self.book_info["license"]["tracks"]):
+        for chapter_number, track in enumerate(book_info["license"]["tracks"]):
             chapters.append(Chapter(track["start"], f"Chapter {chapter_number+1}"))
         return chapters
 
-    def get_cover(self) -> Cover:
-        cover_url = self.book_info["metadata"]["cover"]
+
+    def get_cover(self, book_info: Dict) -> Cover:
+        cover_url = book_info["metadata"]["cover"]
         cover_data = self.get(cover_url)
         return Cover(cover_data, "jpg")
 
-    def prepare(self):
-        book_id_re = r"(\d+)$"
-        wanted_id_match = re.search(book_id_re, self.url)
-        if not wanted_id_match:
-            raise ValueError(f"Couldn't get bookid from url {self.url}")
-        wanted_id = wanted_id_match.group(1)
+
+    def find_book_info(self, book_id: str) -> Dict:
+        """Find book by id from owned books"""
         for book in self.saved_books["_embedded"]["savedBooks"]:
-            if str(book["bookid"]) == wanted_id:
-                self.book_info = book
-                self.book_info["metadata"] = self._session.get(
-                    self.book_info["_links"]["book"]["href"]
+            if str(book["bookid"]) == book_id:
+                book["metadata"] = self._session.get(
+                    book["_links"]["book"]["href"]
                 ).json()
-                return
+                return book
         raise MissingBookAccess

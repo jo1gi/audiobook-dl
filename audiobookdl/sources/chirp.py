@@ -1,7 +1,7 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover
+from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover, Audiobook
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import base64
 from Crypto.Cipher import AES
 
@@ -11,14 +11,96 @@ class ChirpSource(Source):
     match = [
         r"https://www.chirpbooks.com/player/\d+"
     ]
-
     names = [ "Chirp" ]
-
     headers = {
         "content-type": "application/json"
     }
 
-    def _get_tracks(self, book_id):
+
+    def download(self, url: str) -> Audiobook:
+        book_id = int(self.find_elem_in_page(url, "div.user-audiobook", "data-audiobook-id"))
+        user_id = int(self.find_in_page(url, r'"id":(\d+)', 1))
+        tracks = self._get_tracks(book_id)
+        key, iv = self._create_key(url, user_id)
+        return Audiobook(
+            session = self._session,
+            files = self.get_files(book_id, key, iv, tracks),
+            metadata = self.get_metadata(url),
+            cover = self.get_cover(url),
+            chapters = self.get_chapters(tracks)
+        )
+
+
+    def get_metadata(self, url: str) -> AudiobookMetadata:
+        title = self.find_elem_in_page(url, "title")
+        metadata = AudiobookMetadata(title)
+        for credit in self.find_elems_in_page(url, ".credit"):
+            text = credit.text
+            if text.startswith("Written by"):
+                metadata.add_author(text[11:])
+            elif text.startswith("Narrated by"):
+                metadata.add_narrator(text[12:])
+        return metadata
+
+
+    def get_cover(self, url: str) -> Cover:
+        cover_url = self.find_elem_in_page(url, "img.cover-image", data="src")
+        cover_data = self.get(cover_url)
+        return Cover(cover_data, "jpg")
+
+
+    def get_audio_url(self, book_id: int, key: bytes, iv: bytes, track):
+        url_resp = self.post_json(
+            f"https://www.chirpbooks.com/api/graphql",
+            json = {
+                "operationName": "fetchAudiobookTrackUrl",
+                "query": "query fetchAudiobookTrackUrl($id:ID!,$partNumber:Int!,$chapterNumber:Int!){audiobook(id:$id){track(partNumber:$partNumber,chapterNumber:$chapterNumber){webPlayerMediaUrl}}}",
+                "variables": {
+                    "id": book_id,
+                    "chapterNumber": track["chapterNumber"],
+                    "partNumber": track["partNumber"]
+                }
+            },
+            headers = self.headers
+        )
+        webplayermediaurl = url_resp["data"]["audiobook"]["track"]["webPlayerMediaUrl"]
+        ciphertext = base64.b64decode(webplayermediaurl)
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        return cipher.decrypt(ciphertext).decode("utf8")[:-1]
+
+
+    def get_files(self, book_id: int, key: bytes, iv: bytes, tracks) -> List[AudiobookFile]:
+        files = []
+        for track in tracks:
+            files.append(AudiobookFile(
+                url = self.get_audio_url(book_id, key, iv, track),
+                ext = "mp3",
+                title = track["displayName"],
+            ))
+        return files
+
+
+    def get_chapters(self, tracks) -> List[Chapter]:
+        chapters = []
+        start_time = 0
+        for track in tracks:
+            title = track["displayName"]
+            chapters.append(Chapter(start_time, title))
+            start_time += track["durationMs"]
+        return chapters
+
+
+    def _create_key(self, url: str, user_id: int) -> Tuple[bytes, bytes]:
+        """Creates key and iv to decrypt audio url"""
+        key = bytes(self.find_elem_in_page(url, "div.user-audiobook", "data-dk"), "UTF-8")
+        # Creates IV based on `user_id`
+        padding = 'x'*(12-len(str(user_id)))
+        padded_user_id = f"{padding}{user_id}"
+        iv = base64.b64encode(bytes(padded_user_id, "UTF-8"))
+        return key, iv
+
+
+    def _get_tracks(self, book_id: int):
         response = self.post_json(
             f"https://www.chirpbooks.com/api/graphql",
             json = {
@@ -28,84 +110,6 @@ class ChirpSource(Source):
                     "id": book_id
                 }
             },
-            headers = self.headers,
-        )
-        return response["data"]["audiobook"]["tracks"]
-
-
-    def get_metadata(self) -> AudiobookMetadata:
-        title = self.find_elem_in_page(self.url, "title")
-        metadata = AudiobookMetadata(title)
-        for credit in self.find_elems_in_page(self.url, ".credit"):
-            text = credit.text
-            if text.startswith("Written by"):
-                metadata.add_author(text[11:])
-            elif text.startswith("Narrated by"):
-                metadata.add_narrator(text[12:])
-        return metadata
-
-
-    def get_cover(self) -> Cover:
-        cover_url = self.find_elem_in_page(self.url, "img.cover-image", data="src")
-        cover_data = self.get(cover_url)
-        return Cover(cover_data, "jpg")
-
-
-    def get_audio_url(self, track):
-        url_resp = self.post_json(
-            f"https://www.chirpbooks.com/api/graphql",
-            json = {
-                "operationName": "fetchAudiobookTrackUrl",
-                "query": "query fetchAudiobookTrackUrl($id:ID!,$partNumber:Int!,$chapterNumber:Int!){audiobook(id:$id){track(partNumber:$partNumber,chapterNumber:$chapterNumber){webPlayerMediaUrl}}}",
-                "variables": {
-                    "id": self.book_id,
-                    "chapterNumber": track["chapterNumber"],
-                    "partNumber": track["partNumber"]
-                }
-            },
             headers = self.headers
         )
-        webplayermediaurl = url_resp["data"]["audiobook"]["track"]["webPlayerMediaUrl"]
-        ciphertext = base64.b64decode(webplayermediaurl)
-        cipher = AES.new(self.key, AES.MODE_CBC, self.iv)
-        return cipher.decrypt(ciphertext).decode("utf8")[:-1]
-
-
-    def get_files(self) -> List[AudiobookFile]:
-        files = []
-        for track in self.tracks:
-            files.append(AudiobookFile(
-                url = self.get_audio_url(track),
-                ext = "mp3",
-                title = track["displayName"],
-            ))
-        return files
-
-
-    def get_chapters(self) -> List[Chapter]:
-        chapters = []
-        start_time = 0
-        for track in self.tracks:
-            title = track["displayName"]
-            chapters.append(Chapter(start_time, title))
-            start_time += track["durationMs"]
-        return chapters
-
-
-    def _calc_iv(self):
-        """Creates IV based on `user_id` to decrypt audio url"""
-        padding = 'x'*(12-len(str(self.user_id)))
-        padded_user_id = f"{padding}{self.user_id}"
-        return base64.b64encode(bytes(padded_user_id, "UTF-8"))
-
-
-    def prepare(self):
-        self.book_id = int(self.find_elem_in_page(self.url, "div.user-audiobook", "data-audiobook-id"))
-        logging.debug(f"{self.book_id=}")
-        self.user_id = int(self.find_in_page(self.url, r'"id":(\d+)', 1))
-        logging.debug(f"{self.user_id=}")
-        self.tracks = self._get_tracks(self.book_id)
-        self.iv = self._calc_iv()
-        logging.debug(f"{self.iv=}")
-        self.key = bytes(self.find_elem_in_page(self.url, "div.user-audiobook", "data-dk"), "UTF-8")
-        logging.debug(f"{self.key=}")
+        return response["data"]["audiobook"]["tracks"]

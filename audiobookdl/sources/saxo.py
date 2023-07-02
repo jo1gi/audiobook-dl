@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import logging, AudiobookFile, AudiobookMetadata, Chapter, Cover
+from audiobookdl import logging, AudiobookFile, AudiobookMetadata, Chapter, Cover, Audiobook
 from audiobookdl.exceptions import NoSourceFound
 from audiobookdl.utils.audiobook import AESEncryption
 import re
@@ -16,7 +16,7 @@ class SaxoSource(Source):
     _APP_OS = "android"
     _APP_VERSION = "6.2.4"
 
-    def _login(self, username: str, password: str) -> None:
+    def _login(self, url: str, username: str, password: str) -> None:
         resp = self.post_json(
             "https://auth-read.saxo.com/auth/token",
             data = {
@@ -33,9 +33,23 @@ class SaxoSource(Source):
         logging.debug(f"{self.bearer_token=}")
         logging.debug(f"{self.user_id=}")
 
-    def _get_isbn(self) -> str:
+
+    def download(self, url: str) -> Audiobook:
+        isbn = self._extract_isbn(url)
+        book_id = self._search_for_book(isbn)
+        logging.debug(f"{book_id=}")
+        book_info = self._get_book_metadata(book_id)
+        return Audiobook(
+            session = self._session,
+            files = self.get_files(book_info),
+            metadata = self.get_metadata(book_info),
+            cover = self.get_cover(book_info),
+        )
+
+
+    def _extract_isbn(self, url: str) -> str:
         """Extract isbn of book from url"""
-        isbn_match = re.search(f"\d+$", self.url)
+        isbn_match = re.search(f"\d+$", url)
         if isbn_match and isbn_match.group():
             return isbn_match.group()
         else:
@@ -68,12 +82,14 @@ class SaxoSource(Source):
             json = [ book_id ]
         )["items"][0]
 
-    def get_files(self) -> List[AudiobookFile]:
+
+    def get_files(self, book_info) -> List[AudiobookFile]:
         result = []
-        for file in self.book_meta["techInfo"]["chapters"]:
+        book_id = book_info["bookId"]
+        for file in book_info["techInfo"]["chapters"]:
             filename = file["fileName"]
             link = self.get_json(
-                f"https://api-read.saxo.com/api/v1/book/{self.book_meta['bookId']}/content/encryptedstream/{filename}",
+                f"https://api-read.saxo.com/api/v1/book/{book_id}/content/encryptedstream/{filename}",
                 headers = {
                     "Appauthorization": f"bearer {self.bearer_token}",
                     "App-Os": self._APP_OS,
@@ -91,8 +107,8 @@ class SaxoSource(Source):
             ))
         return result
 
-    def get_metadata(self) -> AudiobookMetadata:
-        metadata: dict = self.book_meta["bookMetadata"]
+    def get_metadata(self, book_info) -> AudiobookMetadata:
+        metadata: dict = book_info["bookMetadata"]
         title = metadata["title"]
         result = AudiobookMetadata(title)
         result.add_authors(metadata["authors"])
@@ -100,13 +116,8 @@ class SaxoSource(Source):
         result.series = metadata.get("seriesName")
         return result
 
-    def get_cover(self) -> Cover:
-        cover_url = self.book_meta["bookMetadata"]["image"]["highQualityImageUrl"]
+
+    def get_cover(self, book_info) -> Cover:
+        cover_url = book_info["bookMetadata"]["image"]["highQualityImageUrl"]
         bytes = self.get(cover_url)
         return Cover(bytes, "jpg")
-
-    def prepare(self) -> None:
-        isbn = self._get_isbn()
-        book_id = self._search_for_book(isbn)
-        logging.debug(f"{book_id=}")
-        self.book_meta = self._get_book_metadata(book_id)

@@ -1,9 +1,10 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover
+from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover, Audiobook
 from audiobookdl.exceptions import UserNotAuthorized, RequestError, DataNotPresent
 from typing import List, Optional
 
 import io
+import re
 from PIL import Image
 
 class ScribdSource(Source):
@@ -12,22 +13,109 @@ class ScribdSource(Source):
         r"https?://(www.)?scribd.com/audiobook/\d+/"
     ]
     names = [ "Scribd" ]
-    _original = False
-    media: dict = {}
 
-    def _get_title(self):
-        if self._title[-5:] == ", The":
-            split = self._title.split(', ')
-            if len(split) == 2:
-                return f"{split[1]} {split[0]}"
-        return self._title
+    def download(self, url: str) -> Audiobook:
+        try:
+            # Change url to listen page if info page was used
+            if re.match(self.match[1], url):
+                url_id = url.split("/")[4]
+                url = f"https://www.scribd.com/listen/{url_id}"
+            book_id = self.download_book_id(url)
+        except DataNotPresent:
+            raise UserNotAuthorized
+        if book_id[:7] == "scribd_":
+            return self.download_scribd_original(book_id[:7], url)
+        else:
+            return self.download_normal_book(book_id, url)
 
-    def get_cover(self) -> Optional[Cover]:
+
+    def download_scribd_original(self, book_id: str, url: str) -> Audiobook:
+        """
+        Download scribd original book
+
+        :param book_id: Id of book
+        :param url: Listening page for book
+        :returns: Audiobook
+        """
+        csrf = self.get_json(
+            "https://www.scribd.com/csrf_token",
+            headers = { "href": url }
+        )
+        jwt = self.find_in_page(url, r'(?<=("jwt_token":"))[^"]+')
+        stream_url = f"https://audio.production.scribd.com/audiobooks/{book_id}/192kbps.m3u8"
+        title = self.find_in_page(url, r'(?:("title":"))([^"]+)')
+        clean_title = self.clean_title(title)
+        cover_url = self.find_in_page(url, r'(?<=("cover_url":"))[^"]+')
+        return Audiobook(
+            session = self._session,
+            files = self.get_stream_files(stream_url, headers = { "Authorization": jwt }),
+            # Does not have the normal metadata available
+            metadata = AudiobookMetadata(title),
+            cover = self.download_cover(cover_url, True),
+        )
+
+
+    def download_normal_book(self, book_id: str, url: str) -> Audiobook:
+        """
+        Download normal book from scribd
+
+        :param book_id: Id of book
+        :param url: Url of listening page
+        :returns: Audiobook
+        """
+        try:
+            headers = {'Session-Key': self.find_in_page(url, '(?<=(session_key":"))[^"]+')}
+            user_id = self.find_in_page(url, r'(?<=(account_id":"scribd-))\d+')
+            misc = self.get_json(
+                f"https://api.findawayworld.com/v4/accounts/scribd-{user_id}/audiobooks/{book_id}",
+                headers=headers,
+            )
+            book_info = misc["audiobook"]
+            cover_url = book_info["cover_url"]
+            media = self.post_json(
+                f"https://api.findawayworld.com/v4/audiobooks/{book_id}/playlists",
+                headers=headers,
+                json={
+                    "license_id": misc['licenses'][0]['id']
+                }
+            )
+            return Audiobook(
+                session = self._session,
+                files = self.get_files(media),
+                metadata = self.get_metadata(book_info),
+                cover = self.download_cover(cover_url, original=False),
+                chapters = self.get_chapters(book_info)
+            )
+        except RequestError:
+            raise UserNotAuthorized
+
+
+    def download_book_id(self, url: str) -> str:
+        """
+        Download and extract book id from listening page
+
+        :param url: Url of listening page
+        """
+        return self.find_in_page(
+            url,
+            r'(?<=(external_id":"))(scribd_)?\d+',
+            force_cookies = True
+        )
+
+
+    def download_cover(self, cover_url: str, original: bool) -> Optional[Cover]:
+        """
+        Download and clean cover
+
+        :param cover_url: Url of cover
+        :param original: True if the book is a Scribd Original
+        :returns: Cover of book
+        """
         # Downloading image from scribd
-        raw_cover = self.get(self._cover)
+        raw_cover = self.get(cover_url)
         if raw_cover is None:
             return None
-        if self._original:
+        if original:
             return Cover(raw_cover, "jpg")
         # Removing padding on the top and bottom if it is a normal book
         im = Image.open(io.BytesIO(raw_cover))
@@ -37,107 +125,61 @@ class ScribdSource(Source):
         cropped.save(cover, format="jpeg")
         return Cover(cover.getvalue(), "jpg")
 
-    def get_metadata(self) -> AudiobookMetadata:
-        title = self._get_title()
+
+    @staticmethod
+    def clean_title(title: str):
+        """
+        Move ', The' from the end to the beginning of the title
+
+        :param title: Original title
+        :returns: Fixed title
+        """
+        if title[-5:] == ", The":
+            split = title.split(', ')
+            if len(split) == 2:
+                return f"{split[1]} {split[0]}"
+        return title
+
+
+    @staticmethod
+    def get_metadata(book_info) -> AudiobookMetadata:
+        title = book_info["title"]
         metadata = AudiobookMetadata(title)
-        if not self._original:
-            metadata.add_authors(self.meta["authors"])
-            if self.meta["series"]:
-                metadata.series = self.meta["series"][0]
+        metadata.add_authors(book_info["authors"])
+        if book_info["series"]:
+            metadata.series = book_info["series"][0]
         return metadata
 
-    def _get_chapter_title(self, chapter):
+
+    @staticmethod
+    def get_chapter_title(chapter):
+        """Extract title for chapter"""
         number = chapter["chapter_number"]
         if number == 0:
             return "Introduction"
         return f"Chapter {number}"
 
-    def get_chapters(self) -> List[Chapter]:
+
+    @staticmethod
+    def get_chapters(book_info) -> List[Chapter]:
         chapters = []
-        if not self._original and "chapters" in self.meta:
+        if "chapters" in book_info:
             start_time = 0
-            for chapter in self.meta["chapters"]:
-                title = self._get_chapter_title(chapter)
+            for chapter in book_info["chapters"]:
+                title = ScribdSource.get_chapter_title(chapter)
                 chapters.append(Chapter(start_time, title))
                 start_time += chapter["duration"]
         return chapters
 
-    def get_files(self) -> List[AudiobookFile]:
-        if self._original:
-            return self.get_stream_files(
-                self._stream_url,
-                headers={"Authorization": self._jwt},
-            )
-        else:
-            files = []
-            for i in self.media["playlist"]:
-                chapter = i["chapter_number"]
-                files.append(AudiobookFile(
-                    url = i["url"],
-                    title = f"Chapter {chapter}",
-                    ext = "mp3",
-                ))
-            return files
 
-    def prepare(self):
-        try:
-            # Change url to listen page if info page was used
-            if self.match_num == 1:
-                book_id = self.url.split("/")[4]
-                self.url = f"https://www.scribd.com/listen/{book_id}"
-            book_id = self.find_in_page(
-                self.url,
-                r'(?<=(external_id":"))(scribd_)?\d+',
-                force_cookies = True
-            )
-        except DataNotPresent:
-            raise UserNotAuthorized
-        # The audiobook is a Scribd original if the id starts with "scribd_"
-        if book_id[:7] == "scribd_":
-            self._original_prepare(book_id)
-        else:
-            self._normal_prepare(book_id)
-
-    def _normal_prepare(self, book_id: str):
-        """Download necessary data for normal audiobooks on scribd"""
-        try:
-            headers = {'Session-Key': self.find_in_page(self.url, '(?<=(session_key":"))[^"]+')}
-            user_id = self.find_in_page(self.url, r'(?<=(account_id":"scribd-))\d+')
-            misc = self.get_json(
-                f"https://api.findawayworld.com/v4/accounts/scribd-{user_id}/audiobooks/{book_id}",
-                headers=headers,
-            )
-            self.meta = misc['audiobook']
-            self._title = self.meta["title"]
-            self._cover = self.meta["cover_url"]
-            self.media = self.post_json(
-                f"https://api.findawayworld.com/v4/audiobooks/{book_id}/playlists",
-                headers=headers,
-                json={
-                    "license_id": misc['licenses'][0]['id']
-                }
-            )
-            self.misc = misc
-        except RequestError:
-            raise UserNotAuthorized
-
-    def _original_prepare(self, book_id: str):
-        """Download necessary data for scribd originals"""
-        self._original = True
-        self._csrf = self.get_json(
-            "https://www.scribd.com/csrf_token",
-            headers={"href": self.url}
-        )
-        self._jwt = self.find_in_page(
-            self.url,
-            r'(?<=("jwt_token":"))[^"]+'
-        )
-        self._stream_url = f"https://audio.production.scribd.com/audiobooks/{book_id[7:]}/192kbps.m3u8"
-        self._title = self.find_all_in_page(
-            self.url,
-            r'(?:("title":"))([^"]+)'
-        )[1][1]
-        self._cover = self.find_in_page(
-            self.url,
-            r'(?<=("cover_url":"))[^"]+'
-        )
+    @staticmethod
+    def get_files(media) -> List[AudiobookFile]:
+        files = []
+        for i in media["playlist"]:
+            chapter = i["chapter_number"]
+            files.append(AudiobookFile(
+                url = i["url"],
+                title = f"Chapter {chapter}",
+                ext = "mp3",
+            ))
+        return files

@@ -1,6 +1,7 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata, Cover
-from typing import Any, Optional
+from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata, Cover, Audiobook
+from audiobookdl.exceptions import DataNotPresent
+from typing import Any, Optional, Dict
 import hashlib
 import uuid
 import platform
@@ -34,6 +35,30 @@ class NextorySource(Source):
     user_data: dict
     book_info: dict
 
+    def download(self, url) -> Audiobook:
+        book_id = url.split("-")[-1].replace("/", "")
+        book_info = self.find_book_info(book_id)
+        return Audiobook(
+            session = self._session,
+            files = self.get_files(book_info),
+            metadata = self.get_metadata(book_info),
+            cover = self.get_cover(book_info),
+        )
+
+
+    def find_book_info(self, book_id: str) -> Dict:
+        """
+        Find metadata about book in list of active books
+
+        :param book_id: Book id
+        :returns: Book metadata
+        """
+        for book in self.user_data["active"]["data"]["books"]:
+            if str(book["id"]) == book_id:
+                return book
+        raise DataNotPresent
+
+
     def get_salt(self) -> str:
         url = "https://api.nextory.se/api/app/catalogue/7.5/salt"
         resp = self._session.get(url)
@@ -41,7 +66,8 @@ class NextorySource(Source):
             raise RuntimeError("Couldn't get salt from nextory.")
         return resp.json()["data"]["salt"]
 
-    def _login(self, username: str, password: str):
+
+    def _login(self, url: str, username: str, password: str):
         # Step one
         login_url = "https://api.nextory.se/api/app/user/7.5/login"
         headers = {
@@ -51,7 +77,6 @@ class NextorySource(Source):
             "deviceid": get_device_id(),
             "osinfo": platform.platform(),
             "version": "4.34.6",
-            #"user-agent": "okhttp/4.9.3",
         }
 
         self._session.headers = headers
@@ -75,9 +100,10 @@ class NextorySource(Source):
         account_list = resp.json()
 
         # Step three
+        login_key = account_list["data"]["accounts"][0]["loginkey"]
         params = {
-            "loginkey": account_list["data"]["accounts"][0]["loginkey"],
-            "checksum": calculate_password_checksum(account_list["data"]["accounts"][0]["loginkey"], salt)
+            "loginkey": login_key,
+            "checksum": calculate_password_checksum(login_key, salt)
         }
 
         resp = self._session.get(login_url, params=params)
@@ -104,17 +130,26 @@ class NextorySource(Source):
         self._session.headers.update({'apiver': "7.5"})
 
 
-    def get_files(self) -> list[AudiobookFile]:
-        return [AudiobookFile(url=self.book_info["file"]["url"], headers=self._session.headers, ext="mp3")]
+    def get_files(self, book_info) -> list[AudiobookFile]:
+        return [
+            AudiobookFile(
+                url=book_info["file"]["url"],
+                headers=self._session.headers,
+                ext="mp3"
+            )
+        ]
 
-    def get_metadata(self) -> AudiobookMetadata:
-        title = self.book_info["title"]
+
+    def get_metadata(self, book_info) -> AudiobookMetadata:
+        title = book_info["title"]
         metadata = AudiobookMetadata(title)
         try:
-            book_info = self._session.get("https://api.nextory.se/api/app/product/7.5/bookinfo",
-                                         params={"id": self.book_info["id"]}).json()
             metadata.add_authors(self.book_info["authors"])
-            metadata.add_narrators(book_info["data"]["books"]["narrators"])
+            narrators = self._session.get(
+                "https://api.nextory.se/api/app/product/7.5/bookinfo",
+                params={"id": self.book_info["id"]}
+            ).json()["data"]["books"]["narrators"]
+            metadata.add_narrators(narrators)
             return metadata
         except:
             return metadata
@@ -123,15 +158,8 @@ class NextorySource(Source):
         # Nextory has no chapters...?
         return []
 
-    def get_cover(self) -> Cover:
-        cover_url = self.book_info["imgurl"].replace("{$width}", "640")
+
+    def get_cover(self, book_info) -> Cover:
+        cover_url = book_info["imgurl"].replace("{$width}", "640")
         cover_data = self.get(cover_url)
         return Cover(cover_data, "jpg")
-
-    def prepare(self):
-        wanted_id = self.url.split("-")[-1].replace("/", "")
-        for book in self.user_data["active"]["data"]["books"]:
-            if str(book["id"]) == wanted_id:
-                self.book_info = book
-                return
-        raise PermissionError(f"Book with id {wanted_id} was not found in My Library.")

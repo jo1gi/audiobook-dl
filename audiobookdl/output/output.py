@@ -70,8 +70,14 @@ def convert_output(filenames: Sequence[str], output_format: str):
 
 
 def gen_output_location(template: str, metadata: AudiobookMetadata, remove_chars: str) -> str:
-    """Generates the location of the output based on attributes of the
-    audiobook"""
+    """
+    Generates the location of the output based on attributes of the audiobook.
+
+    :param template: Python string template audiobook metadata is put into
+    :param metadata: Audiobook metadata,
+    :param remove_chars: List of characters to be removed from the final path
+    :returns: `template` with metadata inserted
+    """
     if metadata is None:
         metadata = {}
     metadata.title = _fix_output(metadata.title)

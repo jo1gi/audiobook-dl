@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, logging, AudiobookMetadata, Cover
+from audiobookdl import AudiobookFile, logging, AudiobookMetadata, Cover, Audiobook
 from audiobookdl.exceptions import UserNotAuthorized, RequestError
 
 import requests.utils
@@ -15,47 +15,91 @@ class YourCloudLibrarySource(Source):
         "cookies",
         "login"
     ]
-    meta: dict
-    playlist: dict
+
+    def download(self, url: str) -> Audiobook:
+        fullfillment_token = self.download_fullfillment_token(url)
+        book_info = self.download_book_info(url)
+        library = self.extract_library_id(url)
+        audioplayer = self.post_json(
+            f"https://ebook.yourcloudlibrary.com/uisvc/{library}/AudioPlayer",
+            data = {
+                "url": f"{book_info['fullfillmentTokenUrl']}&token={fullfillment_token}"
+            }
+        )
+        fulfillment_id = audioplayer["fulfillmentId"]
+        account_id = audioplayer["accountId"]
+        session_key = audioplayer["sessionKey"]
+        headers = { "Session-Key": session_key }
+        meta = self.get_json(
+            f"https://api.findawayworld.com/v4/accounts/{account_id}/audiobooks/{fulfillment_id}",
+            headers=headers
+        )
+        playlist = self.post_json(
+            f"https://api.findawayworld.com/v4/audiobooks/{fulfillment_id}/playlists",
+            json = {
+                "license_id": audioplayer["licenseId"]
+            },
+            headers=headers
+        )
+        return Audiobook(
+            session = self._session,
+            files = self.get_files(playlist),
+            metadata = self.get_metadata(book_info, meta),
+            cover = self.download_cover(meta),
+        )
 
 
-    def get_files(self) -> List[AudiobookFile]:
+    @staticmethod
+    def get_files(playlist) -> List[AudiobookFile]:
         files = []
-        for f in self.playlist["playlist"]:
+        for f in playlist["playlist"]:
             files.append(AudiobookFile(
                 url = f["url"],
                 ext = "mp3"
             ))
         return files
 
-    def get_metadata(self) -> AudiobookMetadata:
-        title = self.book_info["Title"]
+
+    def get_metadata(self, book_info, meta) -> AudiobookMetadata:
+        title = book_info["Title"]
         metadata = AudiobookMetadata(title)
-        if not self.meta is None:
-            try:
-                audiobook = self.meta["audiobook"]
-                metadata.add_authors(audiobook["authors"])
-                metadata.add_narrators(audiobook["narrators"])
-                if audiobook["series"] is not None and len(audiobook["series"]) >= 1:
-                    metadata.series = audiobook["series"][0]
-            except:
-                return metadata
+        if not meta is None:
+            audiobook = meta["audiobook"]
+            metadata.add_authors(audiobook["authors"])
+            metadata.add_narrators(audiobook["narrators"])
+            if audiobook["series"] is not None and len(audiobook["series"]) >= 1:
+                metadata.series = audiobook["series"][0]
         return metadata
 
-    def get_cover(self) -> Cover:
-        cover_url = self.meta['audiobook']['cover_url']
+
+    def download_cover(self, meta) -> Cover:
+        cover_url = meta['audiobook']['cover_url']
         cover_data = self.get(cover_url)
         return Cover(cover_data, "jpg")
 
-    def _get_library_id(self) -> str:
-        return self.url.split("/")[-3]
+
+    @staticmethod
+    def extract_library_id(url: str) -> str:
+        """
+        Extract library id from url
+
+        :param url: Url 
+        :returns: Library id
+        """
+        return url.split("/")[-3]
 
 
-    def _get_fullfillmenttoken(self) -> str:
+    def download_fullfillment_token(self, url: str) -> str:
+        """
+        Download and extract fullfillment token
+
+        :param url: Book url
+        :returns: Fullfillment token
+        """
         token_base64 = self.find_in_page(
-            self.url,
+            url,
             r"(?<=(\"Osi\":\"x-))[^\"]+",
-            cookies=requests.utils.dict_from_cookiejar(self._session.cookies),
+            force_cookies = True,
         )
         if token_base64 is None:
             raise UserNotAuthorized
@@ -63,17 +107,24 @@ class YourCloudLibrarySource(Source):
         logging.debug(f"{token=}")
         return token
 
-    def _get_bookinfo(self) -> dict:
+
+    def download_book_info(self, url: str) -> dict:
+        """
+        Download metadata about book
+
+        :param url: Book url
+        :returns: Metadata about book
+        """
         # Get list of borrowed books
-        library = self._get_library_id()
+        library = self.extract_library_id(url)
         borrowed = self.get_json(
-                f"https://ebook.yourcloudlibrary.com/uisvc/{library}/Patron/Borrowed",
-                cookies=requests.utils.dict_from_cookiejar(self._session.cookies),
+            f"https://ebook.yourcloudlibrary.com/uisvc/{library}/Patron/Borrowed",
+            force_cookies = True
         )
         if borrowed is None:
             raise UserNotAuthorized
         # Find the matching book in list of borrowed books
-        url_id = self.url.split("/")[-1]
+        url_id = url.split("/")[-1]
         book_info = None
         for i in borrowed:
             if i["Id"] == url_id:
@@ -82,8 +133,9 @@ class YourCloudLibrarySource(Source):
             raise UserNotAuthorized
         return book_info
 
-    def _login(self, username: str, password: str):
-        library = self._get_library_id()
+
+    def _login(self, url: str, username: str, password: str):
+        library = self.extract_library_id(url)
         resp = self.post(
             f"https://ebook.yourcloudlibrary.com/uisvc/{library}/Patron/LoginPatron",
             data = {
@@ -91,28 +143,5 @@ class YourCloudLibrarySource(Source):
                 "Password": password
             }
         )
+        # TODO Validate authentication
         logging.debug(f"Authentication response {resp.decode('utf8')}")
-
-
-    def prepare(self):
-        self.book_info = self._get_bookinfo()
-        token = self._get_fullfillmenttoken()
-        library = self._get_library_id()
-        audioplayer = self.post_json(f"https://ebook.yourcloudlibrary.com/uisvc/{library}/AudioPlayer",
-                data={"url": f"{self.book_info['fulfillmentTokenUrl']}&token={token}"})
-        if audioplayer is None:
-            raise RequestError
-        fulfillment_id = audioplayer["fulfillmentId"]
-        account_id = audioplayer["accountId"]
-        headers = {"Session-Key": audioplayer["sessionKey"]}
-        self.meta = self.get_json(
-            f"https://api.findawayworld.com/v4/accounts/{account_id}/audiobooks/{fulfillment_id}",
-            headers=headers
-        )
-        logging.debug(f"{self.meta=}")
-        self.playlist = self.post_json(
-            f"https://api.findawayworld.com/v4/audiobooks/{fulfillment_id}/playlists",
-            data='{"license_id":"' + audioplayer["licenseId"] + '"}',
-            headers=headers)
-        if self.playlist is None:
-            raise UserNotAuthorized

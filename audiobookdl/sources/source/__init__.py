@@ -1,6 +1,6 @@
 # Internal imports
 from . import networking
-from audiobookdl import logging, AudiobookFile, Chapter, AudiobookMetadata, Cover
+from audiobookdl import logging, AudiobookFile, Chapter, AudiobookMetadata, Cover, Result
 from audiobookdl.exceptions import DataNotPresent
 
 # External imports
@@ -28,9 +28,7 @@ class Source:
     # Cache of previously loaded pages
     __pages: Dict[str, bytes] = {}
 
-    def __init__(self, url, match_num):
-        self.url = url
-        self.match_num = match_num
+    def __init__(self):
         self._session = requests.Session()
 
     @property
@@ -48,9 +46,12 @@ class Source:
         """Returns `True` if the source has been authenticated"""
         return self.__authenticated
 
+
     @property
     def supports_cookies(self):
+        """Returns `True` if the source supports authentication with cookies"""
         return "cookies" in self._authentication_methods
+
 
     def load_cookie_file(self, cookie_file: str):
         """Loads cookies from a cookie file into session"""
@@ -60,41 +61,27 @@ class Source:
             self._session.cookies.update(cookie_jar)
             self.__authenticated = True
 
+
     @property
     def supports_login(self):
+        """Returns `True` if the source supports authentication with login"""
         return "login" in self._authentication_methods
 
-    def _login(self, username: str, password: str):
+
+    def _login(self, url: str, username: str, password: str):
         pass
 
-    def login(self, **kwargs) -> None:
+
+    def login(self, url: str, **kwargs) -> None:
         """Authenticate with source using username and password"""
         if self.supports_login:
-            self._login(**kwargs)
+            self._login(url, **kwargs)
             self.__authenticated = True
 
-    def prepare(self) -> None:
-        """Operations to be run before the audiobook is downloaded"""
-        pass
 
-    def get_metadata(self) -> AudiobookMetadata:
-        """Returns metadata of the audiobook"""
-        raise NotImplemented
-
-    def get_cover(self) -> Optional[Cover]:
-        """Returns the image data for the audiobook"""
-        return None
-
-    def get_files(self) -> List[AudiobookFile]:
-        """Return a list of audio files for the audiobook"""
-        raise NotImplemented
-
-    def get_chapters(self) -> List[Chapter]:
-        """
-        Returns a list of tuples with the starting point of the chapter and
-        the title of the chapter
-        """
-        return []
+    def download(self, url: str) -> Result:
+        """Download book or series"""
+        raise NotImplementedError
 
 
     def _get_page(self, url: str, **kwargs) -> bytes:
@@ -103,6 +90,7 @@ class Source:
             resp = self.get(url, **kwargs)
             self.__pages[url] = resp
         return self.__pages[url]
+
 
     def find_elem_in_page(self, url: str, selector: str, data=None, **kwargs):
         """
@@ -120,6 +108,7 @@ class Source:
             return elem.text
         return elem.get(data)
 
+
     def find_elems_in_page(self, url: str, selector: str, **kwargs) -> list:
         """
         Find all html elements in the page from `url` thats matches `selector`.
@@ -130,6 +119,7 @@ class Source:
         tree = lxml.html.fromstring(page.decode("utf8"))
         results = sel(tree)
         return results
+
 
     def find_in_page(self, url: str, regex: str, group_index: int = 0, **kwargs) -> str:
         """
@@ -142,6 +132,7 @@ class Source:
             logging.debug(f"Could not find match from {url} with {regex}")
             raise DataNotPresent
         return m.group(group_index)
+
 
     def find_all_in_page(self, url: str, regex: str, **kwargs) -> list:
         """

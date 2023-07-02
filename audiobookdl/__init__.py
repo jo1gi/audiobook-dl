@@ -1,4 +1,4 @@
-from .utils.audiobook import AudiobookFile, Chapter, AudiobookMetadata, Cover, Audiobook
+from .utils.audiobook import AudiobookFile, Chapter, AudiobookMetadata, Cover, Audiobook, Result
 from .sources.source import Source
 from . import utils
 

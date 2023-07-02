@@ -1,9 +1,10 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover
-from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess
+from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover, Audiobook
+from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess, DataNotPresent
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from typing import Any, List, Optional
+from urllib.parse import urlunparse
 
 
 class StorytelSource(Source):
@@ -15,11 +16,15 @@ class StorytelSource(Source):
         "login",
     ]
 
-    user_data: dict
-    book_info: dict
-
     @staticmethod
     def encrypt_password(password: str) -> str:
+        """
+        Encrypt password with predifined keys.
+        This encrypted password is used for login.
+
+        :param password: User defined password
+        :returns: Encrypted password
+        """
         # Thanks to https://github.com/javsanpar/storytel-tui
         key = b"VQZBJ6TD8M9WBUWT"
         iv = b"joiwef08u23j341a"
@@ -28,74 +33,138 @@ class StorytelSource(Source):
         cipher_text = cipher.encrypt(msg)
         return cipher_text.hex()
 
-    def _login(self, username: str, password: str):
+
+    def _login(self, url: str, username: str, password: str):
         password = self.encrypt_password(password)
-        url = f"https://www.storytel.com/api/login.action?m=1&uid={username}&pwd={password}"
         self._session.headers.update({
             "content-type": "application/x-www-form-urlencoded",
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/109.0"
         })
-        resp = self._session.get(url)
+        resp = self._session.get(
+            f"https://www.storytel.com/api/login.action",
+            params = {
+                "m": 1,
+                "uid": username,
+                "pwd": password,
+            }
+        )
         if resp.status_code != 200:
             raise UserNotAuthorized
-        self._session.headers.update({"authorization": f"Bearer {resp.json()['accountInfo']['jwt']}"})
-        self.user_data = resp.json()
+        user_data = resp.json()
+        jwt = user_data["accountInfo"]["jwt"]
+        self.single_signon_token = user_data["singleSignToken"]
+        self._session.headers.update({"authorization": f"Bearer {jwt}"})
 
 
-    def get_files(self) -> List[AudiobookFile]:
-        aid = self.book_info["book"]["AId"]
-        url = f"https://www.storytel.com/mp3streamRangeReq?startposition=0&programId={aid}" \
-              f"&token={self.user_data['accountInfo']['singleSignToken']}"
-        return [AudiobookFile(url=url, headers=self._session.headers, ext="mp3")]
+    def download(self, url: str) -> Audiobook:
+        book_id = url.split("-")[-1]
+        bookshelf = self.download_bookshelf()
+        book_info = self.find_book_info(bookshelf, book_id)
+        return Audiobook(
+            session = self._session,
+            files = self.get_files(book_info),
+            metadata = self.get_metadata(book_info),
+            cover = self.download_cover(book_info),
+            chapters = self.get_chapters(book_info)
+        )
 
-    def get_metadata(self) -> AudiobookMetadata:
-        title = self.book_info["book"]["name"]
+
+    def download_bookshelf(self):
+        """Download bookshelf data"""
+        return self._session.get(
+            f"https://www.storytel.com/api/getBookShelf.action",
+            params = {
+                "token": self.single_signon_token
+            }
+        )
+
+
+    @staticmethod
+    def find_book_info(bookshelf, book_id: str):
+        """
+        Find book matching book_id in user bookshelf
+
+        :param bookshelf: Users current listening boooks
+        :param book_id: Id of book to download
+        :returns: Book information
+        """
+        for book in bookshelf["books"]:
+            if book["book"]["consumableId"] == book_id:
+                return book
+        raise MissingBookAccess
+
+
+
+
+    def get_files(self, book_info) -> List[AudiobookFile]:
+        aid = book_info["book"]["AId"]
+        audio_url = f"https://www.storytel.com/mp3streamRangeReq?" \
+            f"startposition=0&" \
+            f"programId={aid}&" \
+            f"token={self.single_signon_token}"
+        return [
+            AudiobookFile(
+                url=audio_url,
+                headers=self._session.headers,
+                ext="mp3"
+            )
+        ]
+
+
+    @staticmethod
+    def get_metadata(book_info) -> AudiobookMetadata:
+        title = book_info["book"]["name"]
         metadata = AudiobookMetadata(title)
         try:
-            for author in self.book_info["book"]["authors"]:
+            for author in book_info["book"]["authors"]:
                 metadata.add_author(author["name"])
-            for narrator in self.book_info["abook"]["narrators"]:
+            for narrator in book_info["abook"]["narrators"]:
                 metadata.add_narrator(narrator["name"])
-            if "series" in self.book_info["book"]:
-                if len(self.book_info["book"]["series"]) > 0:
-                    metadata.series = self.book_info["book"]["series"][0]["name"]
+            if "series" in book_info["book"]:
+                if len(book_info["book"]["series"]) > 0:
+                    metadata.series = book_info["book"]["series"][0]["name"]
             return metadata
         except:
             return metadata
 
-    def get_chapters(self) -> List[Chapter]:
-        url = f"https://api.storytel.net/playback-metadata/consumable/{self.book_info['book']['consumableId']}"
-        try:
-            chapters: List[Chapter] = []
-            storytel_metadata = self._session.get(url).json()
-            if "formats" in storytel_metadata and len(storytel_metadata["formats"]) > 0:
-                # Find audiobook format
-                for format in storytel_metadata["formats"]:
-                    if format["type"] == "abook":
-                        f = format
-                logging.debug(f"{f=}")
-                # Add chapters
-                if "chapters" in f and len(f["chapters"]) > 0:
-                    start_time = 0
-                    for c in f["chapters"]:
-                        chapters.append(Chapter(start_time, c["title"] if c["title"] else f"Chapter {c['number']}"))
-                        start_time += c["durationInMilliseconds"]
-            return chapters
-        except:
+
+    def download_audiobook_info(self, book_info):
+        """Download information about the audiobook files"""
+        consumable_id = book_info["book"]["consumableId"]
+        url = f"https://api.storytel.net/playback-metadata/consumable/{consumable_id}"
+        file_metadata = self._session.get(url).json()
+        if not "formats" in file_metadata:
+            raise DataNotPresent
+        for format in storytel_metadata["formats"]:
+            if format["type"] == "abook":
+                return format
+        raise DataNotPresnt
+
+
+    @staticmethod
+    def create_chapter(start_time: int, chapter_info) -> Chapter:
+        """Create chapter object"""
+        if "title" in chapter_info:
+            title = chapter_info["title"]
+        else:
+            title = f"Chapter {chapter_info['number']}"
+        return Chapter(start_time, title)
+
+
+    def get_chapters(self, book_info) -> List[Chapter]:
+        chapters: List[Chapter] = []
+        file_metadata = self.download_audiobook_info(book_info)
+        if not "chapters" in file_metadata:
             return []
+        start_time = 0
+        for chapter in file_metadata["chapters"]:
+            chapters.append(self.create_chapter(start_time, chapter))
+            start_time += chapter["durationInMilliseconds"]
+        return chapters
 
-    def get_cover(self) -> Cover:
-        cover_url = f"https://www.storytel.com/images/{self.book_info['abook']['isbn']}/640x640/cover.jpg"
+
+    def download_cover(self, book_info) -> Cover:
+        isbn = book_info["isbn"]
+        cover_url = f"https://www.storytel.com/images/{isbn}/640x640/cover.jpg"
         cover_data = self.get(cover_url)
         return Cover(cover_data, "jpg")
-
-    def prepare(self):
-        wanted_id = self.url.split("-")[-1]
-        bookshelf_url = f"https://www.storytel.com/api/getBookShelf.action" \
-                        f"?token={self.user_data['accountInfo']['singleSignToken']}"
-        self.user_data["bookshelf"] = self._session.get(bookshelf_url).json()
-        for book in self.user_data["bookshelf"]["books"]:
-            if book["book"]["consumableId"] == wanted_id:
-                self.book_info = book
-                return
-        raise MissingBookAccess

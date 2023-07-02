@@ -1,4 +1,4 @@
-from audiobookdl import Source, logging, args, output, __version__
+from audiobookdl import Source, logging, args, output, __version__, Audiobook
 from audiobookdl.exceptions import AudiobookDLException
 from .utils import dependencies
 from .output.download import download
@@ -19,22 +19,51 @@ def get_cookie_path(options) -> Optional[str]:
         return "./cookies.txt"
     return None
 
+
 def get_or_ask(attr: str, hidden: bool, source_name: str, options, config: Config) -> str:
-    """Return `value` if it exists else asks for a value"""
+    """
+    Check for `attr` in cli options and config options.
+    Ask the user for the value if it is not found.
+
+    :param attr: Attribute to search for
+    :param hidden: Should the user input be hidden (Used for passwords)
+    :param source_name: Name of source
+    :param options: Cli options
+    :param config: Config file options
+    :returns: `attr` value from either cli options, config options, or user input
+    """
     config_value = getattr(config.sources.get(source_name), attr, None)
     value: Optional[str] = getattr(options, attr, None) or config_value
     if value is None:
         return Prompt.ask(attr.capitalize(), password=hidden)
     return value
 
-def login(source: Source, options, config: Config):
+
+def login(url: str, source: Source, options, config: Config):
+    """
+    Login to source
+
+    :param url: Url for book
+    :param source: Source the user is trying to login to
+    :param options: Cli options
+    :param config: Config file options
+    """
     login_data = {}
     for name in source.login_data:
         hidden = name == "password"
         login_data[name] = get_or_ask(name, hidden, source.name, options, config)
-    source.login(**login_data)
+    source.login(url, **login_data)
+
 
 def get_urls(options) -> List[str]:
+    """
+    Creates a list of all urls in cli options.
+    Urls a found in `options.urls` and read from `options.input_file` if the
+    file exists
+
+    :param options: Cli options
+    :returns: Combined list of all urls
+    """
     urls = []
     # Args
     urls.extend(options.urls)
@@ -43,6 +72,7 @@ def get_urls(options) -> List[str]:
         with open(options.input_file, "r") as f:
             urls.extend(f.read().split())
     return urls
+
 
 def run() -> None:
     """Main function"""
@@ -69,39 +99,50 @@ def run() -> None:
         traceback.print_exc()
         exit(1)
 
+
 def run_on_url(url: str, options, config: Config):
     logging.log("Finding compatible source")
-    s = find_compatible_source(url)
+    source = find_compatible_source(url)
     # Load cookie file
     cookie_path = get_cookie_path(options)
     if cookie_path is not None:
-        s.load_cookie_file(cookie_path)
-    # Adding username and password
-    if s.supports_login and not s.authenticated:
-        login(s, options, config)
+        source.load_cookie_file(cookie_path)
+    # Authenticating with username and password
+    if source.supports_login and not source.authenticated:
+        login(url, source, options, config)
     # Running program
+    audiobook = source.download(url)
+    if not isinstance(audiobook, Audiobook):
+        raise NotImplementedError
     if options.print_output:
-        print_output(s, options)
+        print_output(url, source, options)
     elif options.cover:
-        download_cover(s)
+        download_cover(url, source)
     else:
-        download(s, options)
+        download(audiobook, options)
 
 
-def print_output(source: Source, options):
+def print_output(url: str, source: Source, options):
     """Prints output location"""
-    source.prepare()
-    meta = source.get_metadata()
-    location = output.gen_output_location(options.template, meta, options.remove_chars)
-    print(location)
+    audiobook = source.download(url)
+    if isinstance(audiobook, Audiobook):
+        metadata = audiobook.metadata
+        location = output.gen_output_location(options.template, metadata, options.remove_chars)
+        print(location)
+    else:
+        raise NotImplementedError
 
 
-def download_cover(source: Source):
-    source.prepare()
-    cover = source.get_cover()
-    if cover:
-        with open(f"cover.{cover.extension}", "wb") as f:
-            f.write(cover.image)
+def download_cover(url: str, source: Source):
+    audiobook = source.download(url)
+    if isinstance(audiobook, Audiobook):
+        cover = audiobook.cover
+        if cover:
+            with open(f"cover.{cover.extension}", "wb") as f:
+                f.write(cover.image)
+    else:
+        raise NotImplementedError
+
 
 if __name__ == "__main__":
     run()

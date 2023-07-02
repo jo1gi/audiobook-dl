@@ -17,33 +17,24 @@ DOWNLOAD_PROGRESS: List[Union[str, ProgressColumn]] = [
 ]
 
 
-def download(source: Source, options):
-    """Downloads audiobook from source object"""
+def download(audiobook: Audiobook, options):
+    """
+    Download contents of audiobook
+
+    :param audiobook: Audiobook to download
+    :param options: Cli options
+    """
     try:
-        audiobook = create_audiobook(source)
-        output_dir = output.gen_output_location(options.output_template, audiobook.metadata, options.remove_chars)
+        output_dir = output.gen_output_location(
+            options.output_template,
+            audiobook.metadata, 
+            options.remove_chars
+        )
         download_audiobook(audiobook, output_dir, options)
     except KeyboardInterrupt:
         logging.log("Stopped download")
         logging.log("Cleaning up files")
         shutil.rmtree(output_dir)
-
-
-def create_audiobook(source: Source) -> Audiobook:
-    """Creates a new `Audiobook` object from a `Source`"""
-    if source.requires_authentication and not source.authenticated:
-        raise UserNotAuthorized
-    source.prepare()
-    files = source.get_files()
-    if len(files) == 0:
-        raise NoFilesFound
-    return Audiobook(
-        session = source._session,
-        metadata = source.get_metadata(),
-        chapters = source.get_chapters(),
-        files = files,
-        cover = source.get_cover()
-    )
 
 
 def download_audiobook(audiobook: Audiobook, output_dir: str, options):
@@ -171,6 +162,9 @@ def get_output_audio_format(option: Optional[str], files: Sequence[str]) -> Tupl
     Get output format for files
 
     `option` is used if specied; else it's based on the file extensions
+    :param option: User specified value
+    :param files: Audio file names
+    :returns: A tuple with current format and output format
     """
     current_format = os.path.splitext(files[0])[1][1:]
     if option:
@@ -180,11 +174,19 @@ def get_output_audio_format(option: Optional[str], files: Sequence[str]) -> Tupl
     return current_format, output_format
 
 
-def setup_download_dir(path: str):
-    """Creates output folder"""
-    print("Creating output dir")
+def setup_download_dir(path: str) -> None:
+    """
+    Creates output folder for the audiobook.
+    Will give a prompt if the folder already exists.
+
+    :param path: Path of output folder
+    :returns: Nothing
+    """
+    logging.log("Creating output dir")
     if os.path.isdir(path):
-        answer = Confirm.ask(f"The folder '[blue]{path}[/blue]' already exists. Do you want to override it?")
+        answer = Confirm.ask(
+            f"The folder '[blue]{path}[/blue]' already exists. Do you want to override it?"
+        )
         if answer:
             shutil.rmtree(path)
         else:

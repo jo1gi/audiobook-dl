@@ -1,6 +1,6 @@
 import requests
 from dataclasses import dataclass, field
-from typing import Optional, Union, Sequence, List, Tuple, Dict
+from typing import Dict, Generic, List, Optional, Union, Sequence, Tuple, TypeVar
 import json
 
 
@@ -23,7 +23,9 @@ class AESEncryption:
     key: bytes
     iv: bytes
 
+
 AudiobookFileEncryption = AESEncryption
+
 
 @dataclass
 class AudiobookFile:
@@ -140,10 +142,28 @@ def add_if_value_exists(metadata: AudiobookMetadata, l: List[Tuple[str, str]]):
 class Audiobook:
     session: requests.Session
     metadata: AudiobookMetadata
-    chapters: List[Chapter]
     files: List[AudiobookFile]
-    cover: Optional[Cover]
+    chapters: List[Chapter] = field(default_factory=list)
+    cover: Optional[Cover] = None
 
     @property
     def title(self) -> str:
         return self.metadata.title
+
+T = TypeVar("T")
+
+@dataclass
+class BookId(Generic[T]):
+    id: T
+
+@dataclass
+class Series(Generic[T]):
+    # Title of series
+    title: str
+    # Internal ids of book in series
+    books: List[Union[BookId, Audiobook]]
+
+Result = Union[
+    Audiobook,
+    Series
+]
