@@ -1,6 +1,7 @@
-from audiobookdl import logging, Chapter, AudiobookMetadata, Cover
-from audiobookdl.utils import dependencies
 from . import id3, mp4, ffmpeg
+from audiobookdl import logging, Chapter, AudiobookMetadata, Cover
+from audiobookdl.utils import program_in_path
+
 import os
 from typing import Sequence
 
@@ -28,7 +29,7 @@ def add_chapters(filepath: str, chapters: Sequence[Chapter]):
     """Adds chapters to the given audio file"""
     if id3.is_id3_file(filepath):
         id3.add_id3_chapters(filepath, chapters)
-    elif dependencies.program_in_path("ffmpeg"):
+    elif program_in_path("ffmpeg"):
         ffmpeg.add_chapters_ffmpeg(filepath, chapters)
     else:
         if logging.debug_mode:

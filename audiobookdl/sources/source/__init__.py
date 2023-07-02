@@ -1,6 +1,6 @@
 # Internal imports
 from . import networking
-from audiobookdl import logging, AudiobookFile, Chapter, AudiobookMetadata, Cover, Result
+from audiobookdl import logging, AudiobookFile, Chapter, AudiobookMetadata, Cover, Result, Audiobook
 from audiobookdl.exceptions import DataNotPresent
 
 # External imports
@@ -9,9 +9,11 @@ import lxml.html
 from lxml.cssselect import CSSSelector
 import re
 from http.cookiejar import MozillaCookieJar
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TypeVar, Generic
 
-class Source:
+T = TypeVar("T")
+
+class Source(Generic[T]):
     """An abstract class for downloading audiobooks from a specific
     online source."""
 
@@ -28,18 +30,22 @@ class Source:
     # Cache of previously loaded pages
     __pages: Dict[str, bytes] = {}
 
+
     def __init__(self):
         self._session = requests.Session()
+
 
     @property
     def name(self) -> str:
         """Primary name of source"""
         return self.names[0].lower()
 
+
     @property
     def requires_authentication(self):
         """Returns `True` if this source requires authentication to download books"""
         return len(self._authentication_methods) > 0
+
 
     @property
     def authenticated(self):
@@ -77,6 +83,10 @@ class Source:
         if self.supports_login:
             self._login(url, **kwargs)
             self.__authenticated = True
+
+    def download_from_book_id(self, book_id: T) -> Audiobook:
+        """Download book specified by id"""
+        raise NotImplementedError
 
 
     def download(self, url: str) -> Result:

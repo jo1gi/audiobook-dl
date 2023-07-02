@@ -161,7 +161,7 @@ class Series(Generic[T]):
     # Title of series
     title: str
     # Internal ids of book in series
-    books: List[Union[BookId, Audiobook]]
+    books: List[Union[BookId[T], Audiobook]]
 
 Result = Union[
     Audiobook,

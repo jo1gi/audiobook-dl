@@ -1,6 +1,6 @@
-from audiobookdl import Source, logging, args, output, __version__, Audiobook
-from audiobookdl.exceptions import AudiobookDLException
-from .utils import dependencies
+from audiobookdl import Source, logging, args, output, __version__
+from .exceptions import AudiobookDLException
+from .utils.audiobook import Audiobook, Series, BookId
 from .output.download import download
 from .sources import find_compatible_source
 from .config import load_config, Config
@@ -8,11 +8,64 @@ from .config import load_config, Config
 import os
 import sys
 from rich.prompt import Prompt
-from typing import List, Optional
+from typing import List, Optional, Union
 import traceback
 
+
+def main() -> None:
+    # Parsing arguments
+    options = args.parse_arguments()
+    config = load_config(options.config_location)
+    options.output_template = options.output_template or config.output_template
+    # Applying arguments as global constants
+    logging.debug_mode = options.debug
+    logging.quiet_mode = options.quiet
+    logging.ffmpeg_output = options.ffmpeg_output or options.debug
+    logging.debug(f"audiobook-dl {__version__}", remove_styling=True)
+    logging.debug(f"python {sys.version}", remove_styling=True)
+    urls = args.get_urls(options)
+    if not urls:
+        logging.simple_help()
+        exit()
+    try:
+        for url in urls:
+            process_url(url, options, config)
+    except AudiobookDLException as e:
+        e.print()
+        traceback.print_exc()
+        exit(1)
+
+
+def process_url(url: str, options, config: Config):
+    """
+    Process url based on cli options.
+    Will by default download the audiobook the url is pointing to.
+
+    :param url: Url to process
+    :param options: Cli options
+    :param config: Configuration file options
+    """
+    logging.log("Finding compatible source")
+    source = find_compatible_source(url)
+    authenticate(url, source, options, config)
+    # Running program
+    result = source.download(url)
+    if isinstance(result, Audiobook):
+        process_audiobook(result, options)
+    elif isinstance(result, Series):
+        for book in result.books:
+            audiobook = audiobook_from_series(source, book)
+            process_audiobook(audiobook, options)
+
+
 def get_cookie_path(options) -> Optional[str]:
-    """Find path to cookie file"""
+    """
+    Find path to cookie file. The cookie files a looked for in cli arguments
+    and in the current directory.
+
+    :param options: Cli options
+    :returns: Path to cookie file
+    """
     if options.cookie_file is not None and os.path.exists(options.cookie_file):
         return options.cookie_file
     if os.path.exists("./cookies.txt"):
@@ -55,54 +108,15 @@ def login(url: str, source: Source, options, config: Config):
     source.login(url, **login_data)
 
 
-def get_urls(options) -> List[str]:
+def authenticate(url: str, source: Source, options, config: Config):
     """
-    Creates a list of all urls in cli options.
-    Urls a found in `options.urls` and read from `options.input_file` if the
-    file exists
+    Authenticate source
 
+    :param url: Url of book the user is trying to download
+    :param source: Source the book should be downloaded from
     :param options: Cli options
-    :returns: Combined list of all urls
+    :param config: Config file options
     """
-    urls = []
-    # Args
-    urls.extend(options.urls)
-    # File
-    if options.input_file:
-        with open(options.input_file, "r") as f:
-            urls.extend(f.read().split())
-    return urls
-
-
-def run() -> None:
-    """Main function"""
-    # Parsing arguments
-    options = args.parse_arguments()
-    config = load_config(options.config_location)
-    options.output_template = options.output_template or config.output_template
-    # Applying arguments as global constants
-    logging.debug_mode = options.debug
-    logging.quiet_mode = options.quiet
-    logging.ffmpeg_output = options.ffmpeg_output or options.debug
-    logging.debug(f"audiobook-dl {__version__}", remove_styling=True)
-    logging.debug(f"python {sys.version}", remove_styling=True)
-    urls = get_urls(options)
-    if not urls:
-        logging.simple_help()
-        exit()
-    try:
-        dependencies.check_dependencies(options)
-        for url in urls:
-            run_on_url(url, options, config)
-    except AudiobookDLException as e:
-        e.print()
-        traceback.print_exc()
-        exit(1)
-
-
-def run_on_url(url: str, options, config: Config):
-    logging.log("Finding compatible source")
-    source = find_compatible_source(url)
     # Load cookie file
     cookie_path = get_cookie_path(options)
     if cookie_path is not None:
@@ -110,39 +124,56 @@ def run_on_url(url: str, options, config: Config):
     # Authenticating with username and password
     if source.supports_login and not source.authenticated:
         login(url, source, options, config)
-    # Running program
-    audiobook = source.download(url)
-    if not isinstance(audiobook, Audiobook):
-        raise NotImplementedError
+
+
+def audiobook_from_series(source: Source, book: Union[Audiobook, BookId]) -> Audiobook:
+    """
+    Make an audiobook object from book result in series
+
+    :param source: Source book originates from
+    :param book: Audiobook metadata or book id
+    :returns: Audiobook
+    """
+    if isinstance(book, Audiobook):
+        return book
+    return source.download_from_book_id(book.id)
+
+
+def process_audiobook(audiobook: Audiobook, options) -> None:
+    """
+    Operate on audiobook based on cli arguments
+
+    :param audiobook: Audiobook to operate on
+    :param options: Cli options
+    :returns: Nothing
+    """
     if options.print_output:
-        print_output(url, source, options)
+        print_output(audiobook, options)
     elif options.cover:
-        download_cover(url, source)
+        download_cover(audiobook)
     else:
         download(audiobook, options)
 
 
-def print_output(url: str, source: Source, options):
+
+def print_output(audiobook: Audiobook, options) -> None:
     """Prints output location"""
-    audiobook = source.download(url)
-    if isinstance(audiobook, Audiobook):
-        metadata = audiobook.metadata
-        location = output.gen_output_location(options.template, metadata, options.remove_chars)
-        print(location)
-    else:
-        raise NotImplementedError
+    metadata = audiobook.metadata
+    location = output.gen_output_location(options.template, metadata, options.remove_chars)
+    print(location)
 
 
-def download_cover(url: str, source: Source):
-    audiobook = source.download(url)
-    if isinstance(audiobook, Audiobook):
-        cover = audiobook.cover
-        if cover:
-            with open(f"cover.{cover.extension}", "wb") as f:
-                f.write(cover.image)
-    else:
-        raise NotImplementedError
+def download_cover(audiobook: Audiobook) -> None:
+    """
+    Download audiobook cover
+
+    :param audiobook
+    """
+    cover = audiobook.cover
+    if cover:
+        with open(f"cover.{cover.extension}", "wb") as f:
+            f.write(cover.image)
 
 
 if __name__ == "__main__":
-    run()
+    main()

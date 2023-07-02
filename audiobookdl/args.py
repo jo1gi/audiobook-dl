@@ -120,3 +120,22 @@ def parse_arguments() -> Any:
         help = "Alternative location of config file"
     )
     return parser.parse_args()
+
+
+def get_urls(options) -> List[str]:
+    """
+    Creates a list of all urls in cli options.
+    Urls a found in `options.urls` and read from `options.input_file` if the
+    file exists
+
+    :param options: Cli options
+    :returns: Combined list of all urls
+    """
+    urls = []
+    # Args
+    urls.extend(options.urls)
+    # File
+    if options.input_file:
+        with open(options.input_file, "r") as f:
+            urls.extend(f.read().split())
+    return urls

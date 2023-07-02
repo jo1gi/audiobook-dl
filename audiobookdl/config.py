@@ -22,6 +22,7 @@ class Config:
     sources: Dict[str, SourceConfig]
     output_template: Optional[str]
 
+
 def read_config(location: Optional[str]) -> dict:
     """
     Read config from disk as dictionary
