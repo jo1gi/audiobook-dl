@@ -1,6 +1,6 @@
 import argparse
 from audiobookdl import __version__
-from typing import Any
+from typing import Any, List
 
 
 def parse_arguments() -> Any:
