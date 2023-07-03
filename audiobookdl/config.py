@@ -60,7 +60,7 @@ def load_config(location: Optional[str]) -> Config:
     sources: Dict[str, SourceConfig] = {}
     if "sources" in config_dict:
         for source_name, values in config_dict["sources"].items():
-            sources[source_name] = SourceConfig (
+            sources[source_name] = SourceConfig(
                 username = values.get("username"),
                 password = values.get("password"),
                 library = values.get("library")

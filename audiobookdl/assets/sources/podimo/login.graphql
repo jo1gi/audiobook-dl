@@ -1,0 +1,1 @@
+query LoginResultsQuery($email: String!, $password: String!) {  tokenWithCredentials(email: $email, password: $password, source: WEB) {    ...AuthTokensFragment    __typename  }}fragment AuthTokensFragment on AccessToken {  accessToken: token  refreshToken  __typename}

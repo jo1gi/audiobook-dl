@@ -1,5 +1,6 @@
 import importlib.resources
 from typing import Sequence
+import shutil
 
 def levenstein_distance(a: str, b: str) -> int:
     """
@@ -31,6 +32,7 @@ def read_asset_file(path: str) -> str:
     return importlib.resources.files("audiobookdl") \
         .joinpath(path) \
         .read_text(encoding="utf8")
+
 
 def program_in_path(program: str) -> bool:
     """Checks whethher `program` is in the path"""

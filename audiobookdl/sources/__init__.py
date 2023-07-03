@@ -7,6 +7,7 @@ from .ereolen import EreolenSource
 from .librivox import LibrivoxSource
 from .nextory import NextorySource
 from .overdrive import OverdriveSource
+from .podimo import PodimoSource
 from .saxo import SaxoSource
 from .scribd import ScribdSource
 from .storytel import StorytelSource
@@ -22,8 +23,9 @@ def find_compatible_source(url: str) -> Source:
     for source in sources:
         for n, m in enumerate(source.match):
             if not re.match(m, url) is None:
-                return source(url, n)
+                return source()
     raise NoSourceFound
+
 
 def get_source_classes():
     """Returns a list of all available sources"""
@@ -35,11 +37,13 @@ def get_source_classes():
         LibrivoxSource,
         NextorySource,
         OverdriveSource,
+        PodimoSource,
         SaxoSource,
         ScribdSource,
         StorytelSource,
         YourCloudLibrarySource,
     ]
+
 
 def get_source_names() -> Iterable[str]:
     """

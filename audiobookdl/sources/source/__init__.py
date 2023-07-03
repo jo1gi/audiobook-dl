@@ -1,6 +1,6 @@
 # Internal imports
 from . import networking
-from audiobookdl import logging, AudiobookFile, Chapter, AudiobookMetadata, Cover, Result, Audiobook
+from audiobookdl import logging, AudiobookFile, Chapter, AudiobookMetadata, Cover, Result, Audiobook, BookId
 from audiobookdl.exceptions import DataNotPresent
 
 # External imports
@@ -62,6 +62,7 @@ class Source(Generic[T]):
     def load_cookie_file(self, cookie_file: str):
         """Loads cookies from a cookie file into session"""
         if self.supports_cookies:
+            logging.debug(f"Loading cookies from '{cookie_file}'")
             cookie_jar = MozillaCookieJar()
             cookie_jar.load(cookie_file, ignore_expires=True)
             self._session.cookies.update(cookie_jar)
@@ -81,10 +82,12 @@ class Source(Generic[T]):
     def login(self, url: str, **kwargs) -> None:
         """Authenticate with source using username and password"""
         if self.supports_login:
+            logging.debug("Logging in")
             self._login(url, **kwargs)
             self.__authenticated = True
 
-    def download_from_book_id(self, book_id: T) -> Audiobook:
+
+    def download_from_id(self, book_id: T) -> Audiobook:
         """Download book specified by id"""
         raise NotImplementedError
 

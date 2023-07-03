@@ -15,6 +15,7 @@ audiobook-dl currently supports downloading from the following sources:
 - [Librivox](https://librivox.org)
 - [Nextory](https://nextory.com)
 - [Overdrive / Libby](https://www.overdrive.com/)
+- [Podimo](https://podimo.com)
 - [Saxo](https://saxo.com)
 - [Scribd](https://scribd.com)
 - [Storytel](https://www.storytel.com/) / [Mofibo](https://mofibo.com)

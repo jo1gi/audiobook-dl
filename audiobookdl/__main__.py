@@ -1,6 +1,6 @@
 from audiobookdl import Source, logging, args, output, __version__
 from .exceptions import AudiobookDLException
-from .utils.audiobook import Audiobook, Series, BookId
+from .utils.audiobook import Audiobook, Series
 from .output.download import download
 from .sources import find_compatible_source
 from .config import load_config, Config
@@ -126,7 +126,7 @@ def authenticate(url: str, source: Source, options, config: Config):
         login(url, source, options, config)
 
 
-def audiobook_from_series(source: Source, book: Union[Audiobook, BookId]) -> Audiobook:
+def audiobook_from_series(source: Source, book) -> Audiobook:
     """
     Make an audiobook object from book result in series
 
@@ -136,7 +136,7 @@ def audiobook_from_series(source: Source, book: Union[Audiobook, BookId]) -> Aud
     """
     if isinstance(book, Audiobook):
         return book
-    return source.download_from_book_id(book.id)
+    return source.download_from_id(book.id)
 
 
 def process_audiobook(audiobook: Audiobook, options) -> None:

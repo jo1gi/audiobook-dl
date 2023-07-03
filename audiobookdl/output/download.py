@@ -27,7 +27,7 @@ def download(audiobook: Audiobook, options):
     try:
         output_dir = output.gen_output_location(
             options.output_template,
-            audiobook.metadata, 
+            audiobook.metadata,
             options.remove_chars
         )
         download_audiobook(audiobook, output_dir, options)
@@ -98,7 +98,8 @@ def download_files_with_cli_output(audiobook: Audiobook, output_dir: str) -> Lis
         setup_download_dir(output_dir)
     else:
         parent = Path(output_dir).parent
-        os.makedirs(parent)
+        if not parent.exists():
+            os.makedirs(parent)
     with logging.progress(DOWNLOAD_PROGRESS) as progress:
         task = progress.add_task(
             f"Downloading {len(audiobook.files)} files [blue]{audiobook.title}",
