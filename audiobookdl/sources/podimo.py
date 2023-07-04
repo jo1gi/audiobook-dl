@@ -99,7 +99,7 @@ class PodimoSource(Source[dict]):
                 "limit": 1000,
                 "offset": 0,
                 "podcastId": podcast_id,
-                "sorting": "PUBLISHED_DESCENDING"
+                "sorting": "PUBLISHED_ASCENDING"
             }
         )
         episodes = []
@@ -137,7 +137,11 @@ class PodimoSource(Source[dict]):
             }
         )
         file_url = response.json()["data"]["podcastEpisodeStreamMediaById"]["url"]
-        return [ AudiobookFile( url = file_url, ext = "mp3" ) ]
+        if "m3u8" in file_url:
+            audio_url = file_url.replace("main.m3u8", "stream_audio_high/stream.m3u8")
+            return self.get_stream_files(audio_url)
+        else:
+            return [ AudiobookFile( url = file_url, ext = "mp3" ) ]
 
 
     def format_podcast_metadata(self, episode_info) -> AudiobookMetadata:
