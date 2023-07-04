@@ -6,14 +6,17 @@ import os
 import shutil
 from functools import partial
 from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union
-from rich.progress import Progress, BarColumn, ProgressColumn
+from rich.progress import Progress, BarColumn, ProgressColumn, SpinnerColumn
 from rich.prompt import Confirm
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
 
 DOWNLOAD_PROGRESS: List[Union[str, ProgressColumn]] = [
-    "{task.description}", BarColumn(), "[progress.percentage]{task.percentage:>3.0f}%"
+    SpinnerColumn(),
+    "{task.description}",
+    BarColumn(),
+    "[progress.percentage]{task.percentage:>3.0f}%"
 ]
 
 
@@ -61,21 +64,25 @@ def download_audiobook(audiobook: Audiobook, output_dir: str, options):
 
 def add_metadata_to_file(audiobook: Audiobook, filepath: str, options):
     """Embed metadata into a single file"""
+    # Chapters
     if audiobook.chapters and not options.no_chapters:
-        logging.log("Adding chapters")
+        logging.log("  Adding chapters")
         metadata.add_chapters(filepath, audiobook.chapters)
-    logging.log("Adding metadata")
+    # General metadata
+    logging.log("  Adding metadata")
     metadata.add_metadata(filepath, audiobook.metadata)
     if options.write_json_metadata:
         with open(f"{filepath}.json", "w") as f:
             f.write(audiobook.metadata.as_json())
+    # Cover
     if audiobook.cover:
-        logging.log("Embedding cover")
+        logging.log("  Embedding cover")
         metadata.embed_cover(filepath, audiobook.cover)
 
 
 def add_metadata_to_dir(audiobook: Audiobook, filepaths: Iterable[str], output_dir: str, options):
     """Add metadata to a directory with audio files"""
+    logging.log(" Addding metadata")
     for filepath in filepaths:
         metadata.add_metadata(filepath, audiobook.metadata)
     if options.write_json_metadata:
@@ -83,7 +90,7 @@ def add_metadata_to_dir(audiobook: Audiobook, filepaths: Iterable[str], output_d
         with open(metadata_file_path, "w") as f:
             f.write(audiobook.metadata.as_json())
     if audiobook.cover:
-        logging.log("Adding cover")
+        logging.log("  Adding cover")
         cover_path = os.path.join(output_dir, f"cover.{audiobook.cover.extension}")
         with open(cover_path, "wb") as f:
             f.write(audiobook.cover.image)
@@ -102,7 +109,7 @@ def download_files_with_cli_output(audiobook: Audiobook, output_dir: str) -> Lis
             os.makedirs(parent)
     with logging.progress(DOWNLOAD_PROGRESS) as progress:
         task = progress.add_task(
-            f"Downloading {len(audiobook.files)} files [blue]{audiobook.title}",
+            f"Downloading [blue]{audiobook.title}",
             total = len(audiobook.files)
         )
         update_progress = partial(progress.advance, task)

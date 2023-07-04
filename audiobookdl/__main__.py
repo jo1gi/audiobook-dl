@@ -47,12 +47,18 @@ def process_url(url: str, options, config: Config):
     """
     logging.log("Finding compatible source")
     source = find_compatible_source(url)
-    authenticate(url, source, options, config)
+    if source.requires_authentication and not source.authenticated:
+        authenticate(url, source, options, config)
     # Running program
     result = source.download(url)
+    logging.log("") # Empty line
     if isinstance(result, Audiobook):
+        logging.log(f"Downloading [blue]{result.title}[/] from [magenta]{source.name}[/]")
         process_audiobook(result, options)
     elif isinstance(result, Series):
+        count = len(result.books)
+        logging.log(
+            f"Downloading [yellow not bold]{count}[/] books in [blue]{result.title}[/] from [magenta]{source.name}[/]")
         for book in result.books:
             audiobook = audiobook_from_series(source, book)
             process_audiobook(audiobook, options)
@@ -117,6 +123,7 @@ def authenticate(url: str, source: Source, options, config: Config):
     :param options: Cli options
     :param config: Config file options
     """
+    logging.log(f"Authenticating with [magenta]{source.name}[/]")
     # Load cookie file
     cookie_path = get_cookie_path(options)
     if cookie_path is not None:
