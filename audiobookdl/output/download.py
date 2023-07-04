@@ -63,7 +63,13 @@ def download_audiobook(audiobook: Audiobook, output_dir: str, options):
 
 
 def add_metadata_to_file(audiobook: Audiobook, filepath: str, options):
-    """Embed metadata into a single file"""
+    """
+    Embed metadata into a single file
+
+    :param audiobook: Audiobook object. Stores metadata
+    :param filepath: Filepath of output file
+    :options: Cli options
+    """
     # Chapters
     if audiobook.chapters and not options.no_chapters:
         logging.log("  Adding chapters")
@@ -81,7 +87,14 @@ def add_metadata_to_file(audiobook: Audiobook, filepath: str, options):
 
 
 def add_metadata_to_dir(audiobook: Audiobook, filepaths: Iterable[str], output_dir: str, options):
-    """Add metadata to a directory with audio files"""
+    """
+    Add metadata to a directory with audio files
+
+    :param audiobook: Audiobook object. Stores metadata
+    :param filepaths: Iterable over filepaths of output files
+    :param output_dir: Directory where files are stored
+    :param optiosn: Cli options
+    """
     logging.log(" Addding metadata")
     for filepath in filepaths:
         metadata.add_metadata(filepath, audiobook.metadata)
@@ -98,8 +111,11 @@ def add_metadata_to_dir(audiobook: Audiobook, filepaths: Iterable[str], output_d
 
 def download_files_with_cli_output(audiobook: Audiobook, output_dir: str) -> List[str]:
     """
-    Download `audiobook` with cli output
-    Returns a list of paths of the downloaded files
+    Download `audiobook` with cli progress bar
+
+    :param audiobook: Audiobook to download
+    :param output_dir: Output directory where files are downloaded to
+    :returns: A list of paths of the downloaded files
     """
     if len(audiobook.files) > 1:
         setup_download_dir(output_dir)
@@ -122,7 +138,14 @@ def download_files_with_cli_output(audiobook: Audiobook, output_dir: str) -> Lis
 
 
 def create_filepath(audiobook: Audiobook, output_dir: str, index: int) -> str:
-    """Create output file path for file number `index` in `audibook`"""
+    """
+    Create output file path for file number `index` in `audibook`
+
+    :param audiobook: Currently downloading audiobook
+    :param output_dir: Directory where file should be stored
+    :param index: Index in audiobooks list of files
+    :returns: Filepath
+    """
     extension = audiobook.files[index].ext
     if len(audiobook.files) == 1:
         path = f"{output_dir}.{extension}"

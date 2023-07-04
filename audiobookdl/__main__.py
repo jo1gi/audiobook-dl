@@ -174,7 +174,7 @@ def download_cover(audiobook: Audiobook) -> None:
     """
     Download audiobook cover
 
-    :param audiobook
+    :param audiobook: Audiobook with cover
     """
     cover = audiobook.cover
     if cover:
