@@ -1,10 +1,10 @@
 import requests
-from dataclasses import dataclass, field
 from typing import Dict, Generic, List, Optional, Union, Sequence, Tuple, TypeVar
 import json
+from attrs import define, Factory
 
 
-@dataclass
+@define
 class Chapter:
     # Start time of chapter in milliseconds
     start: int
@@ -12,13 +12,13 @@ class Chapter:
     title: str
 
 
-@dataclass
+@define
 class Cover:
     image: bytes
     extension: str
 
 
-@dataclass
+@define
 class AESEncryption:
     key: bytes
     iv: bytes
@@ -27,7 +27,7 @@ class AESEncryption:
 AudiobookFileEncryption = AESEncryption
 
 
-@dataclass
+@define
 class AudiobookFile:
     # Url to audio file
     url: str
@@ -36,18 +36,18 @@ class AudiobookFile:
     # Title of file
     title: Optional[str] = None
     # Headers for request
-    headers: Dict[str, str] = field(default_factory=dict)
+    headers: Dict[str, str] = Factory(dict)
     # Encryption method
     encryption_method: Optional[AudiobookFileEncryption] = None
 
 
 
-@dataclass
+@define
 class AudiobookMetadata:
     title: str
     series: Optional[str] = None
-    authors: List[str] = field(default_factory=list)
-    narrators: List[str] = field(default_factory=list)
+    authors: List[str] = Factory(list)
+    narrators: List[str] = Factory(list)
     language: Optional[str] = None
     description: Optional[str] = None
     isbn: Optional[str] = None
@@ -138,12 +138,12 @@ def add_if_value_exists(metadata: AudiobookMetadata, l: List[Tuple[str, str]]):
     return add
 
 
-@dataclass
+@define
 class Audiobook:
     session: requests.Session
     metadata: AudiobookMetadata
     files: List[AudiobookFile]
-    chapters: List[Chapter] = field(default_factory=list)
+    chapters: List[Chapter] = Factory(list)
     cover: Optional[Cover] = None
 
     @property
@@ -152,11 +152,11 @@ class Audiobook:
 
 T = TypeVar("T")
 
-@dataclass
+@define
 class BookId(Generic[T]):
     id: T
 
-@dataclass
+@define
 class Series(Generic[T]):
     # Title of series
     title: str

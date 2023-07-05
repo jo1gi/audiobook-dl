@@ -15,6 +15,7 @@ mkShell {
       importlib-resources
       appdirs
       tomli
+      attrs
 
       # Test
       pytest

@@ -49,7 +49,7 @@ class SaxoSource(Source):
 
     def _extract_isbn(self, url: str) -> str:
         """Extract isbn of book from url"""
-        isbn_match = re.search(f"\d+$", url)
+        isbn_match = re.search(r"\d+$", url)
         if isbn_match and isbn_match.group():
             return isbn_match.group()
         else:

@@ -1,5 +1,5 @@
 from audiobookdl.exceptions import ConfigNotFound
-from audiobookdl.utils.types import dataclass
+from attrs import define, Factory
 
 from typing import Dict, Optional
 
@@ -8,7 +8,7 @@ import appdirs
 import os
 
 
-@dataclass
+@define
 class SourceConfig:
     """Stores configuration for source"""
     username: Optional[str]
@@ -16,7 +16,7 @@ class SourceConfig:
     library: Optional[str]
 
 
-@dataclass
+@define
 class Config:
     """audiobook-dl config"""
     sources: Dict[str, SourceConfig]

@@ -1,9 +1,11 @@
 from .source import Source
 from audiobookdl import AudiobookFile, logging, AudiobookMetadata, Cover, Audiobook
+from audiobookdl.exceptions import NoSourceFound
+
 import re
+from typing import List
 from urllib.parse import unquote
 from urllib3.util import parse_url
-from typing import List
 
 BASEURL = "https://www.audiobooks.com/book/stream/"
 
@@ -16,6 +18,8 @@ class AudiobooksdotcomSource(Source):
 
     def download(self, url: str) -> Audiobook:
         path = parse_url(url).path
+        if not path:
+            raise NoSourceFound
         book_id = path.split("/")[3]
         scrape_url = f"{BASEURL}{book_id}/1"
         return Audiobook(
