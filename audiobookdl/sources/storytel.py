@@ -52,7 +52,7 @@ class StorytelSource(Source):
             raise UserNotAuthorized
         user_data = resp.json()
         jwt = user_data["accountInfo"]["jwt"]
-        self.single_signon_token = user_data["singleSignToken"]
+        self.single_signon_token = user_data["accountInfo"]["singleSignToken"]
         self._session.headers.update({"authorization": f"Bearer {jwt}"})
 
 
@@ -88,6 +88,7 @@ class StorytelSource(Source):
         :param book_id: Id of book to download
         :returns: Book information
         """
+        bookshelf = bookshelf.json()
         for book in bookshelf["books"]:
             if book["book"]["consumableId"] == book_id:
                 return book
@@ -135,10 +136,10 @@ class StorytelSource(Source):
         file_metadata = self._session.get(url).json()
         if not "formats" in file_metadata:
             raise DataNotPresent
-        for format in storytel_metadata["formats"]:
+        for format in file_metadata["formats"]:
             if format["type"] == "abook":
                 return format
-        raise DataNotPresnt
+        raise DataNotPresent
 
 
     @staticmethod
@@ -164,7 +165,7 @@ class StorytelSource(Source):
 
 
     def download_cover(self, book_info) -> Cover:
-        isbn = book_info["isbn"]
+        isbn = book_info["abook"]["iisbn"]
         cover_url = f"https://www.storytel.com/images/{isbn}/640x640/cover.jpg"
         cover_data = self.get(cover_url)
         return Cover(cover_data, "jpg")
