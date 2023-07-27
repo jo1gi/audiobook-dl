@@ -1,11 +1,12 @@
 from .source import Source
 from audiobookdl import AudiobookFile, logging, AudiobookMetadata, Cover, Audiobook
-from audiobookdl.exceptions import NoSourceFound
+from audiobookdl.exceptions import NoSourceFound, DataNotPresent
 
 import re
 from typing import List
 from urllib.parse import unquote
 from urllib3.util import parse_url
+import requests
 
 BASEURL = "https://www.audiobooks.com/book/stream/"
 
@@ -20,22 +21,26 @@ class AudiobooksdotcomSource(Source):
         path = parse_url(url).path
         if not path:
             raise NoSourceFound
+        # User-Agent has to match the one in the cookies
+        user_agent = self.extract_useragent_from_cookies()
+        logging.debug(f"{user_agent=}")
+        self._session.headers.update({"User-Agent": user_agent})
         book_id = path.split("/")[3]
         scrape_url = f"{BASEURL}{book_id}/1"
         return Audiobook(
             session = self._session,
-            metadata = self.get_metadata(scrape_url),
-            cover = self.get_cover(scrape_url),
-            files = self.get_files(scrape_url),
+            metadata = self.extract_metadata(scrape_url),
+            cover = self.download_cover(scrape_url),
+            files = self.extract_file(scrape_url),
         )
 
 
-    def get_metadata(self, scrape_url: str) -> AudiobookMetadata:
+    def extract_metadata(self, scrape_url: str) -> AudiobookMetadata:
         title = self.find_elem_in_page(scrape_url, "h2#bookTitle")
         return AudiobookMetadata(title)
 
 
-    def get_cover(self, scrape_url: str) -> Cover:
+    def download_cover(self, scrape_url: str) -> Cover:
         cover_url = "http:" + \
             self.find_elem_in_page(
                 scrape_url,
@@ -55,13 +60,21 @@ class AudiobooksdotcomSource(Source):
         return unquote(raw).split("\"")[11]
 
 
-    def get_files(self, scrape_url: str) -> List[AudiobookFile]:
-        media_url = self.find_in_page(
+    def extract_file(self, scrape_url: str) -> List[AudiobookFile]:
+        """
+        Extract audio url from html page
+
+        :param scrape_url: Url of page to scrape for audio link
+        :returns: List of audio files with a single file in it
+        """
+        response = self._session.get(
             scrape_url,
-            r"(?<=(mp3: \")).+(?=(&rs))",
-            headers = {
-                # User agent has to match the one in the cookies
-                "User-Agent": self.extract_useragent_from_cookies()
-            }
         )
-        return [ AudiobookFile(url=media_url, ext="mp3") ]
+        audio_match = re.search(
+            r'(?<=(mp3: ")).+(?=(&rs))',
+            response.text
+        )
+        if audio_match is None:
+            raise DataNotPresent
+        audio_url = audio_match.group()
+        return [ AudiobookFile(url=audio_url, ext="mp3") ]
