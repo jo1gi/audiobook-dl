@@ -1,5 +1,5 @@
 from .source import Source
-from audiobookdl import AudiobookFile, logging, AudiobookMetadata, Cover, Audiobook
+from audiobookdl import AudiobookFile, logging, AudiobookMetadata, Cover, Audiobook, Chapter
 from audiobookdl.exceptions import UserNotAuthorized, RequestError
 
 import requests.utils
@@ -8,49 +8,54 @@ from typing import List
 
 class YourCloudLibrarySource(Source):
     match = [
-        r"https?://ebook.yourcloudlibrary.com/library/[^/]+/AudioPlayer/.+"
+        # r"https?://ebook.yourcloudlibrary.com/library/[^/]+/AudioPlayer/.+"
+        r"https?://audio.yourcloudlibrary.com/listen/.+"
     ]
     names = [ "YourCloudLibrary" ]
+    login_data = [ "username", "password", "library" ]
     _authentication_methods = [
         "cookies",
         "login"
     ]
+    _library: str
 
     def download(self, url: str) -> Audiobook:
-        fullfillment_token = self.download_fullfillment_token(url)
-        book_info = self.download_book_info(url)
-        library = self.extract_library_id(url)
-        audioplayer = self.post_json(
-            f"https://ebook.yourcloudlibrary.com/uisvc/{library}/AudioPlayer",
-            data = {
-                "url": f"{book_info['fullfillmentTokenUrl']}&token={fullfillment_token}"
-            }
-        )
-        fulfillment_id = audioplayer["fulfillmentId"]
-        account_id = audioplayer["accountId"]
-        session_key = audioplayer["sessionKey"]
-        headers = { "Session-Key": session_key }
-        meta = self.get_json(
-            f"https://api.findawayworld.com/v4/accounts/{account_id}/audiobooks/{fulfillment_id}",
-            headers=headers
-        )
-        playlist = self.post_json(
-            f"https://api.findawayworld.com/v4/audiobooks/{fulfillment_id}/playlists",
-            json = {
-                "license_id": audioplayer["licenseId"]
-            },
-            headers=headers
-        )
+        account_id = self.extract_json_string(url, "accountId")
+        logging.debug(f"{account_id=}")
+        fulfillment_id = self.extract_json_string(url, "fulfillmentId")
+        logging.debug(f"{fulfillment_id=}")
+        license_id = self.extract_json_string(url, "licenseId")
+        logging.debug(f"{license_id=}")
+        session_key = self.extract_json_string(url, "session_key")
+        self._session.headers.update({"Session-Key": session_key})
+        book_info = self.download_book_info(account_id, fulfillment_id)
+        playlist = self.download_playlist(fulfillment_id, license_id)
         return Audiobook(
             session = self._session,
             files = self.get_files(playlist),
-            metadata = self.get_metadata(book_info, meta),
-            cover = self.download_cover(meta),
+            metadata = self.get_metadata(book_info),
+            cover = self.download_cover(book_info),
+            chapters = self.create_chapters(book_info)
+        )
+
+
+    def extract_json_string(self, url: str, key: str) -> str:
+        """
+        Extracts string from json in web page
+
+        :param url: Url of page to extract from
+        :param key: Key of value to extract
+        :returns: Value
+        """
+        return self.find_in_page(
+            url,
+            fr"(?<=(\"{key}\":\"))[^\"]+",
+            force_cookies = True,
         )
 
 
     @staticmethod
-    def get_files(playlist) -> List[AudiobookFile]:
+    def get_files(playlist: dict) -> List[AudiobookFile]:
         files = []
         for f in playlist["playlist"]:
             files.append(AudiobookFile(
@@ -60,88 +65,70 @@ class YourCloudLibrarySource(Source):
         return files
 
 
-    def get_metadata(self, book_info, meta) -> AudiobookMetadata:
-        title = book_info["Title"]
-        metadata = AudiobookMetadata(title)
-        if not meta is None:
-            audiobook = meta["audiobook"]
-            metadata.add_authors(audiobook["authors"])
-            metadata.add_narrators(audiobook["narrators"])
-            if audiobook["series"] is not None and len(audiobook["series"]) >= 1:
-                metadata.series = audiobook["series"][0]
+    @staticmethod
+    def get_metadata(book_info: dict) -> AudiobookMetadata:
+        metadata = AudiobookMetadata(
+            title = book_info["title"],
+            authors = book_info["authors"],
+            narrators = book_info["narrators"]
+        )
+        if book_info["series"] is not None and len(book_info["series"]) >= 1:
+            metadata.series = book_info["series"][0]
         return metadata
 
 
     def download_cover(self, meta) -> Cover:
-        cover_url = meta['audiobook']['cover_url']
-        cover_data = self.get(cover_url)
+        cover_url = meta['cover_url']
+        cover_data = self.get(f"{cover_url}?aspect=1:1")
         return Cover(cover_data, "jpg")
 
 
     @staticmethod
-    def extract_library_id(url: str) -> str:
-        """
-        Extract library id from url
+    def create_chapters(book_info: dict) -> List[Chapter]:
+        chapters = []
+        time = 0
+        for chapter in book_info["chapters"]:
+            time += chapter["duration"]
+            chapters.append(
+                Chapter(
+                    start = time,
+                    title = f"Chapter {chapter['chapter_number']}"
+                )
+            )
+        return chapters
 
-        :param url: Url 
-        :returns: Library id
-        """
-        return url.split("/")[-3]
-
-
-    def download_fullfillment_token(self, url: str) -> str:
-        """
-        Download and extract fullfillment token
-
-        :param url: Book url
-        :returns: Fullfillment token
-        """
-        token_base64 = self.find_in_page(
-            url,
-            r"(?<=(\"Osi\":\"x-))[^\"]+",
-            force_cookies = True,
-        )
-        if token_base64 is None:
-            raise UserNotAuthorized
-        token = base64.b64decode(token_base64).decode('utf8')
-        logging.debug(f"{token=}")
-        return token
-
-
-    def download_book_info(self, url: str) -> dict:
+    def download_book_info(self, account_id: str, fulfillment_id: str) -> dict:
         """
         Download metadata about book
 
         :param url: Book url
+        :param fulfillment_id: Id used for book
         :returns: Metadata about book
         """
-        # Get list of borrowed books
-        library = self.extract_library_id(url)
-        borrowed = self.get_json(
-            f"https://ebook.yourcloudlibrary.com/uisvc/{library}/Patron/Borrowed",
+        return self.get_json(
+            f"https://api.findawayworld.com/v4/accounts/{account_id}/audiobooks/{fulfillment_id}",
             force_cookies = True
+        )["audiobook"]
+
+
+    def download_playlist(self, fulfillment_id: str, license_id: str) -> dict:
+        """
+        Download list of audio files
+        """
+        license_str = f'{{"license_id":"{license_id}"}}'
+        return self.post_json(
+            f"https://api.findawayworld.com/v4/audiobooks/{fulfillment_id}/playlists",
+            data = license_str
         )
-        if borrowed is None:
-            raise UserNotAuthorized
-        # Find the matching book in list of borrowed books
-        url_id = url.split("/")[-1]
-        book_info = None
-        for i in borrowed:
-            if i["Id"] == url_id:
-                book_info = i
-        if book_info is None:
-            raise UserNotAuthorized
-        return book_info
 
 
-    def _login(self, url: str, username: str, password: str):
-        library = self.extract_library_id(url)
+    def _login(self, url: str, username: str, password: str, library: str): # type: ignore
+        self.library = library
         resp = self.post(
-            f"https://ebook.yourcloudlibrary.com/uisvc/{library}/Patron/LoginPatron",
+            f"https://ebook.yourcloudlibrary.com/library/{library}/?_data=root",
             data = {
-                "UserId": username,
-                "Password": password
+                "action": "login",
+                "barcode": username,
+                "pin": password
             }
         )
-        # TODO Validate authentication
-        logging.debug(f"Authentication response {resp.decode('utf8')}")
