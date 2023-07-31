@@ -143,7 +143,7 @@ class ScribdSource(Source):
 
     @staticmethod
     def get_metadata(book_info) -> AudiobookMetadata:
-        title = book_info["title"]
+        title = ScribdSource.clean_title(book_info["title"])
         metadata = AudiobookMetadata(title)
         metadata.add_authors(book_info["authors"])
         if book_info["series"]:
