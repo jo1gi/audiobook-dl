@@ -50,6 +50,7 @@ def process_url(url: str, options, config: Config):
     if source.requires_authentication and not source.authenticated:
         authenticate(url, source, options, config)
     # Running program
+    logging.debug(f"Downloading result of [underline]{url}")
     result = source.download(url)
     logging.log("") # Empty line
     if isinstance(result, Audiobook):

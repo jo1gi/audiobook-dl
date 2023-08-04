@@ -1,0 +1,3 @@
+[red]ERROR: Book not found in want to read list[/]
+
+Nextory books have to be added to your want to read list to be downloadable.
