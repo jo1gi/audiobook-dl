@@ -1,6 +1,7 @@
 from .source import Source
 
 from .audiobooksdotcom import AudiobooksdotcomSource
+from .blinkist import BlinkistSource
 from .bookbeat import BookBeatSource
 from .chirp import ChirpSource
 from .ereolen import EreolenSource
@@ -31,6 +32,7 @@ def get_source_classes():
     """Returns a list of all available sources"""
     return [
         AudiobooksdotcomSource,
+        BlinkistSource,
         BookBeatSource,
         ChirpSource,
         EreolenSource,
