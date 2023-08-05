@@ -20,13 +20,34 @@ def gen_output_filename(booktitle: str, file: Mapping[str, str], template: str) 
     return _fix_output(filename)
 
 
-def combine_audiofiles(filenames: Sequence[str], tmp_dir: str, output_path: str):
-    """Combines the given audiofiles in `path` into a new file"""
-    inputs = "|".join(filenames)
-    subprocess.run(
-        ["ffmpeg", "-i", f"concat:{inputs}", "-safe", "0", "-codec", "copy", output_path],
-        capture_output=not logging.ffmpeg_output,
-    )
+def combine_audiofiles(filepaths: Sequence[str], tmp_dir: str, output_path: str):
+    """
+    Combines the given audiofiles in `path` into a new file
+
+    :param filepaths: Paths to audio files
+    :param tmp_dir: Temporary directory with audio files
+    :param output_path: Path of combined audio files
+    """
+    output_extension = get_extension(output_path)
+    tmp_input = os.path.join(tmp_dir, f"input_file.{output_extension}")
+    tmp_output = os.path.join(tmp_dir, f"output_file.{output_extension}")
+    shutil.move(filepaths[0], tmp_input)
+    chunk_size = 500
+    for i in range(1, len(filepaths), chunk_size):
+        inputs = "|".join(filepaths[i:i+chunk_size])
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-i", f"concat:{tmp_input}|{inputs}",
+                "-safe", "0",
+                "-codec", "copy",
+                tmp_output
+            ],
+            capture_output=not logging.ffmpeg_output,
+        )
+        os.remove(tmp_input)
+        shutil.move(tmp_output, tmp_input)
+    shutil.move(tmp_input, output_path)
     if not os.path.exists(output_path):
         raise FailedCombining
     shutil.rmtree(tmp_dir)
@@ -85,6 +106,16 @@ def gen_output_location(template: str, metadata: AudiobookMetadata, remove_chars
     formatted = template.format(**metadata_dict)
     formatted = _remove_chars(formatted, remove_chars)
     return formatted
+
+
+def get_extension(path: str) -> str:
+    """
+    Get extension from path
+
+    :param path: Path to get extension from
+    :returns: Extension of path
+    """
+    return os.path.splitext(path)[1][1:]
 
 
 def _fix_output(title: str) -> str:
