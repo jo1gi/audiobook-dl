@@ -134,10 +134,10 @@ class ScribdSource(Source):
         :param title: Original title
         :returns: Fixed title
         """
+        if title[-3:] == ", A":
+            return f"A {title[:-3]}"
         if title[-5:] == ", The":
-            split = title.split(', ')
-            if len(split) == 2:
-                return f"{split[1]} {split[0]}"
+            return f"The {title[:-5]}"
         return title
 
 
@@ -147,7 +147,11 @@ class ScribdSource(Source):
         metadata = AudiobookMetadata(title)
         metadata.add_authors(book_info["authors"])
         if book_info["series"]:
-            metadata.series = book_info["series"][0]
+            series = book_info["series"][0]
+            if re.match(r"#\d+$", series):
+                split = series.split(" #")
+                series = split[1]
+            metadata.series = series
         return metadata
 
 
