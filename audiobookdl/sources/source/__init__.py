@@ -141,7 +141,6 @@ class Source(Generic[T]):
         Will cache the page.
         """
         page = self._get_page(url, **kwargs).decode("utf8")
-        print(f"{page=}")
         m = re.search(regex, page)
         if m is None:
             logging.debug(f"Could not find match from {url} with {regex}")
