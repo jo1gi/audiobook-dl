@@ -1,20 +1,72 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover, Audiobook
+from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover, Audiobook, Series, Result, BookId
 from audiobookdl.exceptions import UserNotAuthorized, RequestError, DataNotPresent
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 import io
 import re
 from PIL import Image
 
-class ScribdSource(Source):
+class ScribdSource(Source[str]):
     match = [
         r"https?://(www.)?scribd.com/listen/\d+",
-        r"https?://(www.)?scribd.com/audiobook/\d+/"
+        r"https?://(www.)?scribd.com/audiobook/\d+/",
+        r"https?://(www.)?scribd.com/series/\d+"
     ]
     names = [ "Scribd" ]
 
-    def download(self, url: str) -> Audiobook:
+    def download(self, url: str) -> Result:
+        # Matches series url
+        if re.match(self.match[2], url):
+            return self.download_series(url)
+        else:
+            return self.download_book_from_url(url)
+
+
+    def download_series(self, url: str) -> Series[str]:
+        series_id: str = url.split("/")[-2]
+        logging.debug(f"{series_id=}")
+        return Series(
+            title = self.download_series_title(url),
+            books = self.download_series_books(series_id)
+        )
+
+
+    def download_series_title(self, url: str) -> str:
+        """
+        Download and extract title of series from information page
+
+        :param url: Link to information page
+        :returns: Title of series
+        """
+        return self.find_elem_in_page(url, "h1")
+
+
+    def download_series_books(self, series_id: str) -> list:
+        """
+        Downloads ids of books in series
+
+        :param series_id: Id of series
+        :returns: Book ids of books in series
+        """
+        response = self._session.get(
+            f"https://www.scribd.com/series/{series_id}/data",
+            headers = {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        ).json()
+        return [
+            BookId(i["id"])
+            for i in response["compilation"]["modules"][0]["documents"]
+        ]
+
+    def download_book_from_url(self, url: str) -> Audiobook:
+        """
+        Download audiobook
+
+        :param url: Url to information page or listening page of audiobook
+        :returns: Audiobook object
+        """
         try:
             # Change url to listen page if info page was used
             if re.match(self.match[1], url):
@@ -27,6 +79,11 @@ class ScribdSource(Source):
             return self.download_scribd_original(book_id[:7], url)
         else:
             return self.download_normal_book(book_id, url)
+
+    def download_from_id(self, book_id: str) -> Audiobook:
+        return self.download_book_from_url(
+            f"https://www.scribd.com/listen/{book_id}"
+        )
 
 
     def download_scribd_original(self, book_id: str, url: str) -> Audiobook:
