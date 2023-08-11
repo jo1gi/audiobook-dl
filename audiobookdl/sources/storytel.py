@@ -165,7 +165,7 @@ class StorytelSource(Source):
 
 
     def download_cover(self, book_info) -> Cover:
-        isbn = book_info["abook"]["iisbn"]
+        isbn = book_info["abook"]["isbn"]
         cover_url = f"https://www.storytel.com/images/{isbn}/640x640/cover.jpg"
         cover_data = self.get(cover_url)
         return Cover(cover_data, "jpg")
