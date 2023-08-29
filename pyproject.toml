@@ -16,6 +16,7 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
 ]
 dependencies = [
+    "appdirs",
     "attrs",
     "cssselect",
     "importlib-resources",
