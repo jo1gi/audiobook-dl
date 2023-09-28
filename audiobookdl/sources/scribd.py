@@ -98,10 +98,11 @@ class ScribdSource(Source[str]):
             "https://www.scribd.com/csrf_token",
             headers = { "href": url }
         )
-        jwt = self.find_in_page(url, r'(?<=("jwt_token":"))[^"]+')
-        stream_url = f"https://audio.production.scribd.com/audiobooks/{book_id}/192kbps.m3u8"
+        jwt = self.find_in_page(url, r'(?<=("jwt_token":\{"token":"))[^"]+')
+        logging.debug(f"{jwt=}")
+        stream_url = f"https://audio.production.scribd.com/audiobooks/{book_id}/96kbps.m3u8"
         title = self.find_in_page(url, r'(?:("title":"))([^"]+)')
-        clean_title = self.clean_title(title)
+        title = self.clean_title(title)
         cover_url = self.find_in_page(url, r'(?<=("cover_url":"))[^"]+')
         return Audiobook(
             session = self._session,

@@ -4,6 +4,7 @@ from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess, DataNot
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from typing import Any, List, Optional
+from urllib3.util import parse_url
 from urllib.parse import urlunparse
 
 
@@ -56,8 +57,9 @@ class StorytelSource(Source):
         self._session.headers.update({"authorization": f"Bearer {jwt}"})
 
 
+
     def download(self, url: str) -> Audiobook:
-        book_id = url.split("-")[-1]
+        book_id = self.get_book_id(url)
         bookshelf = self.download_bookshelf()
         book_info = self.find_book_info(bookshelf, book_id)
         return Audiobook(
@@ -68,6 +70,15 @@ class StorytelSource(Source):
             chapters = self.get_chapters(book_info)
         )
 
+    @staticmethod
+    def get_book_id(url: str) -> str:
+        """
+        Find book id in url
+
+        :param url: Url to book
+        :returns: Id of book from url
+        """
+        return parse_url(url).path.split("-")[-1]
 
     def download_bookshelf(self):
         """Download bookshelf data"""
