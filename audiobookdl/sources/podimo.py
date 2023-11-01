@@ -44,7 +44,7 @@ class PodimoSource(Source[dict]):
         :returns: Response from server
         """
         return self._session.post(
-            "https://open.podimo.com/graphql",
+            "https://podimo.com/graphql",
             params = { "queryName": operation_name },
             json = {
                 "operationName": operation_name,
