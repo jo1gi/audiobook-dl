@@ -10,7 +10,7 @@ from .nextory import NextorySource
 from .overdrive import OverdriveSource
 from .podimo import PodimoSource
 from .saxo import SaxoSource
-from .scribd import ScribdSource
+from .everand import EverandSource
 from .storytel import StorytelSource
 from .yourcloudlibrary import YourCloudLibrarySource
 
@@ -41,7 +41,7 @@ def get_source_classes():
         OverdriveSource,
         PodimoSource,
         SaxoSource,
-        ScribdSource,
+        EverandSource,
         StorytelSource,
         YourCloudLibrarySource,
     ]
