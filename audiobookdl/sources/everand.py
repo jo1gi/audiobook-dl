@@ -74,32 +74,25 @@ class EverandSource(Source[str]):
         :return: Audiobook object
         """
         url = self.create_listen_url(url)
-        book_id = self.download_book_id(url)
+        book_info = self.extract_info(url)
+        metadata = book_info["doc"]
+        logging.debug(f"{metadata=}")
         csrf = self.post_json(
             "https://www.everand.com/csrf_token",
             headers = { "href": url }
         )
         logging.debug(f"{csrf=}")
-        jwt = self.find_in_page(url, r'(?<=("jwt_token":\{"token":"))[^"]+')
-        logging.debug(f"{jwt=}")
-        stream_url = f"https://audio.production.scribd.com/audiobooks/{book_id}/96kbps.m3u8"
-        logging.debug(f"{stream_url=}")
-        metadata = self.extract_metadata(url)
-        logging.debug(f"{metadata=}")
         return Audiobook(
             session = self._session,
-            files = self.get_stream_files(
-                stream_url,
-                headers = { "Authorization": jwt }
-            ),
+            files = self.get_files(book_info),
             metadata = self.format_metadata(metadata),
             cover = self.download_cover(metadata),
         )
 
 
-    def extract_metadata(self, url: str) -> dict:
+    def extract_info(self, url: str) -> dict:
         """
-        Extract metadata from page
+        Extract information from listening page
 
         :param url: Url of listening page
         :return: Metadata from page as dictionary
@@ -108,7 +101,68 @@ class EverandSource(Source[str]):
             url,
             r'(?<=(Scribd.Audiobooks.Show, )){.+}(?=\))'
         )
-        return json.loads(raw)["doc"]
+        return json.loads(raw)
+
+
+    def get_files(self, book_info: dict) -> List[AudiobookFile]:
+        """
+        Format audio files
+
+        :param book_info: Information extracted from listening page
+        """
+        if book_info["jwt_token"]["token"] is not None:
+            return self.get_internal_files(book_info)
+        else:
+            return self.get_external_files(book_info)
+
+
+    def get_internal_files(self, book_info: dict) -> List[AudiobookFile]:
+        """
+        Format audio files for internal books
+
+        :param book_info: Information extracted from listening page
+        """
+        book_id = book_info["share_opts"]["id"]
+        jwt = book_info["jwt_token"]["token"]
+        stream_url = f"https://audio.production.scribd.com/audiobooks/{book_id}/96kbps.m3u8"
+        return self.get_stream_files(
+            stream_url,
+            headers = { "Authorization": jwt }
+        )
+
+
+    def get_external_files(self, book_info: dict) -> List[AudiobookFile]:
+        """
+        Format audio files for external books
+
+        :param book_info: Information extracted from listening page
+        """
+        external_id = book_info["audiobook"]["external_id"]
+        logging.debug(f"{external_id=}")
+        account_id = book_info["audiobook"]["account_id"]
+        logging.debug(f"{account_id=}")
+        session_key = book_info["audiobook"]["session_key"]
+        logging.debug(f"{session_key=}")
+        headers = { "Session-Key": session_key }
+        license_id = self.get_json(
+            f"https://api.findawayworld.com/v4/accounts/{account_id}/audiobooks/{external_id}",
+            headers = headers,
+        )["licenses"][0]["id"]
+        response = self.post_json(
+            f"https://api.findawayworld.com/v4/audiobooks/{external_id}/playlists",
+            json = { "license_id": license_id },
+            headers = headers,
+        )
+        files = []
+        for i in response["playlist"]:
+            chapter = i["chapter_number"]
+            files.append(AudiobookFile(
+                url = i["url"],
+                title = f"Chapter {chapter}",
+                ext = "mp3",
+            ))
+        return files
+
 
 
     def create_listen_url(self, url: str) -> str:
@@ -209,16 +263,3 @@ class EverandSource(Source[str]):
                 chapters.append(Chapter(start_time, title))
                 start_time += chapter["duration"]
         return chapters
-
-
-    @staticmethod
-    def get_files(media) -> List[AudiobookFile]:
-        files = []
-        for i in media["playlist"]:
-            chapter = i["chapter_number"]
-            files.append(AudiobookFile(
-                url = i["url"],
-                title = f"Chapter {chapter}",
-                ext = "mp3",
-            ))
-        return files
