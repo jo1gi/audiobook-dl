@@ -119,6 +119,16 @@ def gen_output_location(template: str, metadata: AudiobookMetadata, remove_chars
     return formatted
 
 
+def get_extension(path: str) -> str:
+    """
+    Get extension from path
+
+    :param path: Path to get extension from
+    :returns: Extension of path
+    """
+    return os.path.splitext(path)[1][1:]
+
+
 def _fix_output(title: str) -> str:
     """Returns title without characters system can't handle"""
     title = title.replace("/", "-")

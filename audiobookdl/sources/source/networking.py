@@ -52,10 +52,10 @@ def get_stream_files(self, url: str, headers={}) -> List[AudiobookFile]:
     for _, seg in enumerate(playlist.segments):
         current = AudiobookFile(
             url = seg.absolute_uri,
-            ext = os.path.splitext(seg.absolute_uri)[1][1:],
+            ext = os.path.splitext(seg.absolute_uri)[1][1:].split("?")[0],
             headers = headers
         )
-        if seg.key:
+        if not seg.key.method == "NONE":
             current.encryption_method = AESEncryption(
                 key = self._get_page(seg.key.absolute_uri, headers=headers),
                 iv = int(seg.key.iv, 0).to_bytes(16, byteorder='big')
