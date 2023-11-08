@@ -1,6 +1,7 @@
 from .source import Source
 
 from .audiobooksdotcom import AudiobooksdotcomSource
+from .blinkist import BlinkistSource
 from .bookbeat import BookBeatSource
 from .chirp import ChirpSource
 from .ereolen import EreolenSource
@@ -9,7 +10,7 @@ from .nextory import NextorySource
 from .overdrive import OverdriveSource
 from .podimo import PodimoSource
 from .saxo import SaxoSource
-from .scribd import ScribdSource
+from .everand import EverandSource
 from .storytel import StorytelSource
 from .yourcloudlibrary import YourCloudLibrarySource
 
@@ -31,6 +32,7 @@ def get_source_classes():
     """Returns a list of all available sources"""
     return [
         AudiobooksdotcomSource,
+        BlinkistSource,
         BookBeatSource,
         ChirpSource,
         EreolenSource,
@@ -39,7 +41,7 @@ def get_source_classes():
         OverdriveSource,
         PodimoSource,
         SaxoSource,
-        ScribdSource,
+        EverandSource,
         StorytelSource,
         YourCloudLibrarySource,
     ]

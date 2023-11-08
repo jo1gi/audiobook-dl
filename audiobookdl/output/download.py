@@ -36,8 +36,8 @@ def download(audiobook: Audiobook, options):
         )
         download_audiobook(audiobook, output_dir, options)
     except KeyboardInterrupt:
-        logging.log("Stopped download")
-        logging.log("Cleaning up files")
+        logging.book_update("Stopped download")
+        logging.book_update("Cleaning up files")
         shutil.rmtree(output_dir)
 
 
@@ -48,11 +48,11 @@ def download_audiobook(audiobook: Audiobook, output_dir: str, options):
     # Converting files
     current_format, output_format = get_output_audio_format(options.output_format, filepaths)
     if current_format != output_format:
-        logging.log("  Converting files")
+        logging.book_update("Converting files")
         filepaths = output.convert_output(filepaths, output_format)
     # Combine files
     if options.combine and len(filepaths) > 1:
-        logging.log("  Combining files")
+        logging.book_update("Combining files")
         output_path = f"{output_dir}.{output_format}"
         output.combine_audiofiles(filepaths, output_dir, output_path)
         filepaths = [output_path]
@@ -73,17 +73,17 @@ def add_metadata_to_file(audiobook: Audiobook, filepath: str, options):
     """
     # Chapters
     if audiobook.chapters and not options.no_chapters:
-        logging.log("  Adding chapters")
+        logging.book_update("Adding chapters")
         metadata.add_chapters(filepath, audiobook.chapters)
     # General metadata
-    logging.log("  Adding metadata")
+    logging.book_update("Adding metadata")
     metadata.add_metadata(filepath, audiobook.metadata)
     if options.write_json_metadata:
         with open(f"{filepath}.json", "w") as f:
             f.write(audiobook.metadata.as_json())
     # Cover
     if audiobook.cover:
-        logging.log("  Embedding cover")
+        logging.book_update("Embedding cover")
         metadata.embed_cover(filepath, audiobook.cover)
 
 
@@ -96,7 +96,7 @@ def add_metadata_to_dir(audiobook: Audiobook, filepaths: Iterable[str], output_d
     :param output_dir: Directory where files are stored
     :param optiosn: Cli options
     """
-    logging.log(" Addding metadata")
+    logging.book_update("Addding metadata")
     for filepath in filepaths:
         metadata.add_metadata(filepath, audiobook.metadata)
     if options.write_json_metadata:
@@ -104,7 +104,7 @@ def add_metadata_to_dir(audiobook: Audiobook, filepaths: Iterable[str], output_d
         with open(metadata_file_path, "w") as f:
             f.write(audiobook.metadata.as_json())
     if audiobook.cover:
-        logging.log("  Adding cover")
+        logging.book_update("Adding cover")
         cover_path = os.path.join(output_dir, f"cover.{audiobook.cover.extension}")
         with open(cover_path, "wb") as f:
             f.write(audiobook.cover.image)
@@ -214,7 +214,7 @@ def setup_download_dir(path: str) -> None:
     :param path: Path of output folder
     :returns: Nothing
     """
-    logging.log("Creating output dir")
+    logging.book_update("Creating output dir")
     if os.path.isdir(path):
         answer = Confirm.ask(
             f"The folder '[blue]{path}[/blue]' already exists. Do you want to override it?"

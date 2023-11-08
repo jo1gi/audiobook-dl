@@ -11,6 +11,7 @@ quiet_mode = False
 ffmpeg_output = False
 console = Console(stderr=True)
 DEBUG_PREFIX = render("[yellow bold]DEBUG[/]")
+INFO_PREFIX = render("[cyan bold] INFO[/]")
 
 def debug(msg: str, remove_styling=False):
     """Print debug msg"""
@@ -25,7 +26,18 @@ def debug(msg: str, remove_styling=False):
 def log(msg: str):
     """Display msg in log"""
     if not quiet_mode:
-        console.print(msg)
+        if debug_mode:
+            console.print(INFO_PREFIX, msg)
+        else:
+            console.print(msg)
+
+
+def book_update(msg: str):
+    """Display indented msg in log"""
+    if debug_mode:
+        log(msg)
+    else:
+        log(f"  {msg}")
 
 
 def error(msg: str):

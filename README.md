@@ -9,15 +9,16 @@ CLI tool for downloading audiobooks from online sources.
 ## Supported Services
 audiobook-dl currently supports downloading from the following sources:
 - [audiobooks.com](https://audiobooks.com)
+- [Blinkist](https://www.blinkist.com)
 - [BookBeat](https://www.bookbeat.com/)
 - [Chirp](https://www.chirpbooks.com/)
 - [eReolen](https://ereolen.dk)
+- [Everand (previously Scribd)](https://everand.com)
 - [Librivox](https://librivox.org)
 - [Nextory](https://nextory.com)
 - [Overdrive / Libby](https://www.overdrive.com/)
 - [Podimo](https://podimo.com)
 - [Saxo](https://saxo.com)
-- [Scribd](https://scribd.com)
 - [Storytel](https://www.storytel.com/) / [Mofibo](https://mofibo.com)
 - [YourCloudLibrary](https://www.yourcloudlibrary.com/)
 

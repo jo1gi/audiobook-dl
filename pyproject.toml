@@ -16,16 +16,18 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
 ]
 dependencies = [
-    "requests",
+    "appdirs",
+    "attrs",
+    "cssselect",
+    "importlib-resources",
     "lxml",
-    "rich",
+    "m3u8",
     "mutagen",
     "pillow",
-    "cssselect",
-    "m3u8",
     "pycryptodome",
-    "importlib-resources",
-    "attrs"
+    "requests",
+    "rich",
+    "tomli",
 ]
 dynamic = ["version"]
 

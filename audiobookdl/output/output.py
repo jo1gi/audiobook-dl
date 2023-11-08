@@ -12,6 +12,8 @@ LOCATION_DEFAULTS = {
     'artist': 'NA',
 }
 
+COMBINE_CHUNK_SIZE = 500
+
 def gen_output_filename(booktitle: str, file: Mapping[str, str], template: str) -> str:
     """Generates an output filename based on different attributes of the
     file"""
@@ -32,9 +34,8 @@ def combine_audiofiles(filepaths: Sequence[str], tmp_dir: str, output_path: str)
     tmp_input = os.path.join(tmp_dir, f"input_file.{output_extension}")
     tmp_output = os.path.join(tmp_dir, f"output_file.{output_extension}")
     shutil.move(filepaths[0], tmp_input)
-    chunk_size = 500
-    for i in range(1, len(filepaths), chunk_size):
-        inputs = "|".join(filepaths[i:i+chunk_size])
+    for i in range(1, len(filepaths), COMBINE_CHUNK_SIZE):
+        inputs = "|".join(filepaths[i:i+COMBINE_CHUNK_SIZE])
         subprocess.run(
             [
                 "ffmpeg",
@@ -51,6 +52,16 @@ def combine_audiofiles(filepaths: Sequence[str], tmp_dir: str, output_path: str)
     if not os.path.exists(output_path):
         raise FailedCombining
     shutil.rmtree(tmp_dir)
+
+
+def get_extension(path: str) -> str:
+    """
+    Get extension from path
+
+    :param path: Path to get extension from
+    :returns: Extension of path
+    """
+    return os.path.splitext(path)[1][1:]
 
 
 def can_copy_codec(input_format: str, output_format: str) -> bool:

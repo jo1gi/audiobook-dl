@@ -97,11 +97,12 @@ class Source(Generic[T]):
         raise NotImplementedError
 
 
-    def _get_page(self, url: str, **kwargs) -> bytes:
+    def _get_page(self, url: str, use_cache: bool = True, **kwargs) -> bytes:
         """Download a page and caches it"""
-        if url not in self.__pages:
+        if url not in self.__pages and use_cache:
             resp = self.get(url, **kwargs)
-            self.__pages[url] = resp
+            if use_cache:
+                self.__pages[url] = resp
         return self.__pages[url]
 
 

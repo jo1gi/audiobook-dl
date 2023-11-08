@@ -4,6 +4,7 @@ from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess, DataNot
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from typing import Any, List, Optional
+from urllib3.util import parse_url
 from urllib.parse import urlunparse
 
 
@@ -52,12 +53,13 @@ class StorytelSource(Source):
             raise UserNotAuthorized
         user_data = resp.json()
         jwt = user_data["accountInfo"]["jwt"]
-        self.single_signon_token = user_data["singleSignToken"]
+        self.single_signon_token = user_data["accountInfo"]["singleSignToken"]
         self._session.headers.update({"authorization": f"Bearer {jwt}"})
 
 
+
     def download(self, url: str) -> Audiobook:
-        book_id = url.split("-")[-1]
+        book_id = self.get_book_id(url)
         bookshelf = self.download_bookshelf()
         book_info = self.find_book_info(bookshelf, book_id)
         return Audiobook(
@@ -68,6 +70,15 @@ class StorytelSource(Source):
             chapters = self.get_chapters(book_info)
         )
 
+    @staticmethod
+    def get_book_id(url: str) -> str:
+        """
+        Find book id in url
+
+        :param url: Url to book
+        :returns: Id of book from url
+        """
+        return parse_url(url).path.split("-")[-1]
 
     def download_bookshelf(self):
         """Download bookshelf data"""
@@ -88,6 +99,7 @@ class StorytelSource(Source):
         :param book_id: Id of book to download
         :returns: Book information
         """
+        bookshelf = bookshelf.json()
         for book in bookshelf["books"]:
             if book["book"]["consumableId"] == book_id:
                 return book
@@ -135,10 +147,10 @@ class StorytelSource(Source):
         file_metadata = self._session.get(url).json()
         if not "formats" in file_metadata:
             raise DataNotPresent
-        for format in storytel_metadata["formats"]:
+        for format in file_metadata["formats"]:
             if format["type"] == "abook":
                 return format
-        raise DataNotPresnt
+        raise DataNotPresent
 
 
     @staticmethod
@@ -164,7 +176,7 @@ class StorytelSource(Source):
 
 
     def download_cover(self, book_info) -> Cover:
-        isbn = book_info["isbn"]
+        isbn = book_info["abook"]["isbn"]
         cover_url = f"https://www.storytel.com/images/{isbn}/640x640/cover.jpg"
         cover_data = self.get(cover_url)
         return Cover(cover_data, "jpg")

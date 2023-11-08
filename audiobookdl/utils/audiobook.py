@@ -75,9 +75,9 @@ class AudiobookMetadata:
         add("description")
         add("isbn")
         if allow_duplicate_keys:
-            for author in self.author:
+            for author in self.authors:
                 result.append(("author", author))
-            for narrator in self.narrator:
+            for narrator in self.narrators:
                 result.append(("narrator", narrator))
         else:
             result.append(("author", self.author))
