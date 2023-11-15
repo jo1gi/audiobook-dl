@@ -78,7 +78,10 @@ class StorytelSource(Source):
         :param url: Url to book
         :returns: Id of book from url
         """
-        return parse_url(url).path.split("-")[-1]
+        parsed = parse_url(url)
+        if parsed.path is None:
+            raise DataNotPresent
+        return parsed.path.split("-")[-1]
 
     def download_bookshelf(self):
         """Download bookshelf data"""
