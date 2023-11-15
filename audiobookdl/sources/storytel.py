@@ -153,16 +153,6 @@ class StorytelSource(Source):
         raise DataNotPresent
 
 
-    @staticmethod
-    def create_chapter(start_time: int, chapter_info) -> Chapter:
-        """Create chapter object"""
-        if "title" in chapter_info:
-            title = chapter_info["title"]
-        else:
-            title = f"Chapter {chapter_info['number']}"
-        return Chapter(start_time, title)
-
-
     def get_chapters(self, book_info) -> List[Chapter]:
         chapters: List[Chapter] = []
         file_metadata = self.download_audiobook_info(book_info)
@@ -170,7 +160,11 @@ class StorytelSource(Source):
             return []
         start_time = 0
         for chapter in file_metadata["chapters"]:
-            chapters.append(self.create_chapter(start_time, chapter))
+            if "title" in chapter and chapter["title"] is not None:
+                title = chapter["title"]
+            else:
+                title = f"Chapter {chapter['number']}"
+            chapters.append(Chapter(start_time, title))
             start_time += chapter["durationInMilliseconds"]
         return chapters
 
