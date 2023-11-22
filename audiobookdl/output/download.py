@@ -47,15 +47,15 @@ def download_audiobook(audiobook: Audiobook, output_dir: str, options):
     filepaths = download_files_with_cli_output(audiobook, output_dir)
     # Converting files
     current_format, output_format = get_output_audio_format(options.output_format, filepaths)
-    if current_format != output_format:
-        logging.book_update("Converting files")
-        filepaths = output.convert_output(filepaths, output_format)
     # Combine files
     if options.combine and len(filepaths) > 1:
         logging.book_update("Combining files")
-        output_path = f"{output_dir}.{output_format}"
+        output_path = f"{output_dir}.{current_format}"
         output.combine_audiofiles(filepaths, output_dir, output_path)
         filepaths = [output_path]
+    if current_format != output_format:
+        logging.book_update("Converting files")
+        filepaths = output.convert_output(filepaths, output_format)
     # Add metadata
     if len(filepaths) == 1:
         add_metadata_to_file(audiobook, filepaths[0], options)
