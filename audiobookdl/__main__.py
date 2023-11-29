@@ -9,7 +9,6 @@ import os
 import sys
 from rich.prompt import Prompt
 from typing import List, Optional, Union
-import traceback
 
 
 def main() -> None:
@@ -32,7 +31,8 @@ def main() -> None:
             process_url(url, options, config)
     except AudiobookDLException as e:
         e.print()
-        traceback.print_exc()
+        if logging.debug_mode:
+            logging.print_traceback()
         exit(1)
 
 

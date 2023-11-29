@@ -5,6 +5,7 @@ from rich.console import Console
 from rich.progress import Progress, ProgressColumn
 from typing import Union, List
 from audiobookdl.utils import read_asset_file
+import traceback
 
 debug_mode = False
 quiet_mode = False
@@ -62,3 +63,9 @@ def simple_help() -> None:
 
 def progress(progress_format: List[Union[str, ProgressColumn]]) -> Progress:
     return Progress(*progress_format, console=console)
+
+def print_traceback() -> None:
+    """Print traceback"""
+    console.print()
+    console.print("[underline white bold]Traceback[/]")
+    traceback.print_exc()
