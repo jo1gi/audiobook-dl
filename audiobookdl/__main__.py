@@ -167,7 +167,7 @@ def process_audiobook(audiobook: Audiobook, options) -> None:
 def print_output(audiobook: Audiobook, options) -> None:
     """Prints output location"""
     metadata = audiobook.metadata
-    location = output.gen_output_location(options.template, metadata, options.remove_chars)
+    location = output.gen_output_location(options.output_template, metadata, options.remove_chars)
     print(location)
 
 
