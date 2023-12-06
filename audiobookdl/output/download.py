@@ -10,7 +10,7 @@ from rich.progress import Progress, BarColumn, ProgressColumn, SpinnerColumn
 from rich.prompt import Confirm
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-import rich # TODO Remove
+from math import log10
 
 
 DOWNLOAD_PROGRESS: List[Union[str, ProgressColumn]] = [
@@ -151,7 +151,8 @@ def create_filepath(audiobook: Audiobook, output_dir: str, index: int) -> str:
     if len(audiobook.files) == 1:
         path = f"{output_dir}.{extension}"
     else:
-        name = f"{audiobook.title} - Part {index}.{extension}"
+        padded_index = str(index).zfill(int(log10(len(audiobook.files))))
+        name = f"Part {padded_index}.{extension}"
         path = os.path.join(output_dir, name)
     return path
 
