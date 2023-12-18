@@ -5,11 +5,12 @@ from audiobookdl.exceptions import UserNotAuthorized, RequestError
 import requests.utils
 import base64
 from typing import List
+import re
 
 class YourCloudLibrarySource(Source):
     match = [
-        # r"https?://ebook.yourcloudlibrary.com/library/[^/]+/AudioPlayer/.+"
-        r"https?://audio.yourcloudlibrary.com/listen/.+"
+        r"https?://audio.yourcloudlibrary.com/listen/.+",
+        r"https://ebook.yourcloudlibrary.com/library/[^/]+/detail/.+",
     ]
     names = [ "YourCloudLibrary" ]
     login_data = [ "username", "password", "library" ]
@@ -17,9 +18,9 @@ class YourCloudLibrarySource(Source):
         "cookies",
         "login"
     ]
-    _library: str
 
     def download(self, url: str) -> Audiobook:
+        url = self.get_listening_url(url)
         account_id = self.extract_json_string(url, "accountId")
         logging.debug(f"{account_id=}")
         fulfillment_id = self.extract_json_string(url, "fulfillmentId")
@@ -38,6 +39,19 @@ class YourCloudLibrarySource(Source):
             chapters = self.create_chapters(book_info)
         )
 
+
+    @staticmethod
+    def get_listening_url(url: str) -> str:
+        """
+        Get url for listening page
+
+        :param url: Url to information or listening page
+        :return: Url to listening page
+        """
+        if re.match(YourCloudLibrarySource.match[0], url):
+            return url
+        book_id = url.split("/")[-1]
+        return f"https://audio.yourcloudlibrary.com/listen/{book_id}"
 
     def extract_json_string(self, url: str, key: str) -> str:
         """
@@ -123,12 +137,13 @@ class YourCloudLibrarySource(Source):
 
 
     def _login(self, url: str, username: str, password: str, library: str): # type: ignore
-        self.library = library
+        self.get(f"https://ebook.yourcloudlibrary.com/library/{library}/featured")
         resp = self.post(
-            f"https://ebook.yourcloudlibrary.com/library/{library}/?_data=root",
+            "https://ebook.yourcloudlibrary.com/?_data=root",
             data = {
                 "action": "login",
                 "barcode": username,
-                "pin": password
+                "pin": password,
+                "library": library
             }
         )

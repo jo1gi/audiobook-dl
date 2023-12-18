@@ -71,16 +71,16 @@ def add_metadata_to_file(audiobook: Audiobook, filepath: str, options):
     :param filepath: Filepath of output file
     :options: Cli options
     """
-    # Chapters
-    if audiobook.chapters and not options.no_chapters:
-        logging.book_update("Adding chapters")
-        metadata.add_chapters(filepath, audiobook.chapters)
     # General metadata
     logging.book_update("Adding metadata")
     metadata.add_metadata(filepath, audiobook.metadata)
     if options.write_json_metadata:
         with open(f"{filepath}.json", "w") as f:
             f.write(audiobook.metadata.as_json())
+    # Chapters
+    if audiobook.chapters and not options.no_chapters:
+        logging.book_update("Adding chapters")
+        metadata.add_chapters(filepath, audiobook.chapters)
     # Cover
     if audiobook.cover:
         logging.book_update("Embedding cover")

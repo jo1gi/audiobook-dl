@@ -44,7 +44,7 @@ class NextorySource(Source):
             {
                 # New version headers
                 "X-Application-Id": self.APP_ID,
-                "X-App-Version": "5.0.0",
+                "X-App-Version": "5.4.1",
                 "X-Locale": self.LOCALE,
                 "X-Model": "Personal Computer",
                 "X-Device-Id": device_id,
@@ -59,6 +59,7 @@ class NextorySource(Source):
             },
         )
         session_response = session_response.json()
+        logging.debug(f"{session_response=}")
         login_token = session_response["login_token"]
         country = session_response["country"]
         self._session.headers.update(
@@ -88,7 +89,7 @@ class NextorySource(Source):
 
 
     def download(self, url) -> Audiobook:
-        book_id = int(url.split("-")[-1].replace("/", ""))
+        book_id = int(url.split("/")[-1].split("-")[-1])
         want_to_read_list = self.download_want_to_read_list()
         book_info = self.find_book_info(book_id, want_to_read_list)
         audio_data = self.download_audio_data(book_info)
