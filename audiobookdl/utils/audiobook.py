@@ -1,7 +1,9 @@
+from datetime import date
 import requests
 from typing import Dict, Generic, List, Optional, Union, Sequence, Tuple, TypeVar
 import json
 from attrs import define, Factory
+import pycountry
 
 
 @define
@@ -45,12 +47,17 @@ class AudiobookFile:
 @define
 class AudiobookMetadata:
     title: str
+    scrape_url: Optional[str] = None
     series: Optional[str] = None
+    series_order: Optional[int] = None
     authors: List[str] = Factory(list)
     narrators: List[str] = Factory(list)
-    language: Optional[str] = None
+    genres: List[str] = Factory(list)
+    language: Optional["pycountry.db.Language"] = None
     description: Optional[str] = None
     isbn: Optional[str] = None
+    publisher: Optional[str] = None
+    release_date: Optional[date] = None
 
     def add_author(self, author: str):
         """Add author to metadata"""
@@ -60,28 +67,46 @@ class AudiobookMetadata:
         """Add narrator to metadata"""
         self.narrators.append(narrator)
 
+    def add_genre(self, genre: str):
+        """Add genre to metadata"""
+        self.genres.append(genre)
+
     def add_authors(self, authors: Sequence[str]):
         self.authors.extend(authors)
 
     def add_narrators(self, narrators: Sequence[str]):
         self.narrators.extend(narrators)
 
+    def add_genres(self, genres: Sequence[str]):
+        self.genres.extend(genres)
+
     def all_properties(self, allow_duplicate_keys = False) -> List[Tuple[str, str]]:
         result: List[Tuple[str, str]] = []
         add = add_if_value_exists(self, result)
         add("title")
+        add("scrape_url")
         add("series")
+        add("series_order")
         add("language")
         add("description")
         add("isbn")
-        if allow_duplicate_keys:
+        add("publisher")
+        add("release_date")
+        if allow_duplicate_keys == None: # return original lists
+            add("authors")
+            add("narrators")
+            add("genres")
+        elif allow_duplicate_keys == True: # return lists as multiple keys
             for author in self.authors:
                 result.append(("author", author))
             for narrator in self.narrators:
                 result.append(("narrator", narrator))
-        else:
+            for genre in self.genres:
+                result.append(("genre", genre))
+        else: # return lists concatenated into a string
             result.append(("author", self.author))
             result.append(("narrator", self.narrator))
+            result.append(("genre", self.genre))
         return result
 
     def all_properties_dict(self) -> Dict[str, str]:
@@ -100,6 +125,11 @@ class AudiobookMetadata:
         """All narrators concatenated into a single string"""
         return "; ".join(self.narrators)
 
+    @property
+    def genre(self) -> str:
+        """All genres concatenated into a single string"""
+        return "; ".join(self.genres)
+
 
     def as_dict(self) -> dict:
         """
@@ -111,13 +141,25 @@ class AudiobookMetadata:
             "title": self.title,
             "authors": self.authors,
             "narrators": self.narrators,
+            "genres": self.genres,
         }
+        if self.scrape_url:
+            result["scrape_url"] = self.scrape_url
+        if self.series:
+            result["series"] = self.series
+        if self.series_order:
+            result["series_order"] = self.series_order
         if self.language:
             result["language"] = self.language
         if self.description:
             result["description"] = self.description
         if self.isbn:
             result["isbn"] = self.isbn
+        if self.publisher:
+            result["publisher"] = self.publisher
+        if self.release_date:
+            result["release_date"] = self.release_date
+
         return result
 
 
@@ -127,7 +169,15 @@ class AudiobookMetadata:
 
         :returns: Metadata as json
         """
-        return json.dumps(self.as_dict())
+        class AudiobookMetadataJSONEncoder(json.JSONEncoder):
+            def default(self, z):
+                if isinstance(z, date):
+                    return str(z)
+                elif isinstance(z, pycountry.db.Data) and z.__class__.__name__ == "Language":
+                    return z.alpha_3
+                else:
+                    return super().default(z)
+        return json.dumps(self.as_dict(), cls=AudiobookMetadataJSONEncoder)
 
 
 def add_if_value_exists(metadata: AudiobookMetadata, l: List[Tuple[str, str]]):
