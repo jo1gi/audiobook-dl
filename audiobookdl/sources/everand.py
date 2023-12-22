@@ -31,20 +31,11 @@ class EverandSource(Source[str]):
     def download_series(self, url: str) -> Series[str]:
         series_id: str = url.split("/")[-2]
         logging.debug(f"{series_id=}")
+
         return Series(
-            title = self.download_series_title(url),
+            title = self.find_elem_in_page(url, "h1"),
             books = self.download_series_books(series_id)
         )
-
-
-    def download_series_title(self, url: str) -> str:
-        """
-        Download and extract title of series from information page
-
-        :param url: Link to information page
-        :returns: Title of series
-        """
-        return self.find_elem_in_page(url, "h1")
 
 
     def download_series_books(self, series_id: str) -> list:
