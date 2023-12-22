@@ -1,6 +1,6 @@
 from datetime import date
 import requests
-from typing import Dict, Generic, List, Optional, Union, Sequence, Tuple, TypeVar
+from typing import Dict, Generic, List, Optional, Union, Sequence, Tuple, TypeVar, Any
 import json
 from attrs import define, Factory
 import pycountry
@@ -80,7 +80,7 @@ class AudiobookMetadata:
     def add_genres(self, genres: Sequence[str]):
         self.genres.extend(genres)
 
-    def all_properties(self, allow_duplicate_keys = False) -> List[Tuple[str, str]]:
+    def all_properties(self, allow_duplicate_keys = False) -> List[Tuple[str, Any]]:
         result: List[Tuple[str, str]] = []
         add = add_if_value_exists(self, result)
         add("title")

@@ -40,11 +40,11 @@ def add_mp4_metadata(filepath: str, metadata: AudiobookMetadata):
     for key, value in metadata.all_properties(allow_duplicate_keys=None):
         # System defined metadata tags
         if key == "release_date":
-            value: date
-            audio["date"] = value.strftime("%Y-%m-%d")
-            audio["year"] = str(value.year)
+            release_date: date = value
+            audio["date"] = release_date.strftime("%Y-%m-%d")
+            audio["year"] = str(release_date.year)
         elif key == "language":
-            audio.tags.RegisterFreeformKey(key, key.capitalize())
+            audio.tags.RegisterFreeformKey(key, key.capitalize()) # type: ignore
             audio["language"] = value.alpha_3
         elif key == "series_order":
             audio["track"] = str(value)

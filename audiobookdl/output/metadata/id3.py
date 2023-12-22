@@ -64,7 +64,6 @@ def add_id3_metadata(filepath: str, metadata: AudiobookMetadata):
     # Adding tags
     for key, value in metadata.all_properties(allow_duplicate_keys=None):
         if key == "release_date":
-            value: date
             audio["originaldate"] = value.strftime("%Y-%m-%d")
             audio["year"] = audio["originaldate"]
         elif key == "language":
