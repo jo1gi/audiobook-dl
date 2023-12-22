@@ -16,6 +16,7 @@ mkShell {
       appdirs
       tomli
       attrs
+      pycountry
 
       # Test
       pytest

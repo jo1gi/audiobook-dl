@@ -28,6 +28,7 @@ dependencies = [
     "requests",
     "rich",
     "tomli",
+    "pycountry",
 ]
 dynamic = ["version"]
 
