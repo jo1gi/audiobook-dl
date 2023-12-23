@@ -5,6 +5,7 @@ from audiobookdl.exceptions import UserNotAuthorized, RequestError
 from typing import List, Optional, Dict
 import re
 import json
+import pycountry
 
 LOGIN_PAGE_URL = "https://ereolen.dk/adgangsplatformen/login?destination=/user"
 
@@ -35,7 +36,7 @@ class EreolenSource(Source):
             data = {
                 library_attr_name: library,
                 "agency": libraries[library],
-                "userId": username,
+                "loginBibDkUserId": username,
                 "pincode": password
             }
         )
@@ -60,16 +61,32 @@ class EreolenSource(Source):
         return Audiobook(
             session = self._session,
             files = self.get_files(book_id),
-            metadata = self.get_metadata(meta),
+            metadata = self.get_metadata(url),
             cover = self.get_cover(meta),
         )
 
 
-    def get_metadata(self, meta) -> AudiobookMetadata:
-        title = meta["title"]
-        metadata = AudiobookMetadata(title)
-        metadata.add_author(meta["artist"])
-        return metadata
+    def get_metadata(self, url: str) -> AudiobookMetadata:
+        """
+        Extract metadata from information page
+
+        :param url: Url of information page
+        """
+
+        language: pycountry.language.Language = None
+        language_str = self.find_elem_in_page(url, ".field-type-ting-details-language .field-item")
+        if language_str == "dansk":
+            language = pycountry.languages.get(alpha_3 = "dan")
+
+        return AudiobookMetadata(
+            title = self.find_elem_in_page(url, ".field-name-ting-title .field-item h1"),
+            authors = [ self.find_elem_in_page(url, ".author") ],
+            narrators = [ self.find_elem_in_page(url, ".field-type-ting-details-audiobook-reader .field-item") ],
+            publisher = self.find_elem_in_page(url, ".field-name-ting-details-publisher .field-item a"),
+            description = self.find_elem_in_page(url, ".field-name-ting-abstract .field-item"),
+            scrape_url = url,
+            language = language,
+        )
 
 
     def get_cover(self, meta) -> Cover:
@@ -79,7 +96,8 @@ class EreolenSource(Source):
 
     def get_files(self, book_id: str) -> List[AudiobookFile]:
         return self.get_stream_files(
-            f"https://audio.api.streaming.pubhub.dk/v1/stream/hls/{book_id}/playlist.m3u8"
+            f"https://audio.api.streaming.pubhub.dk/v1/stream/hls/{book_id}/playlist.m3u8",
+            extension = "mp3"
         )
 
 
@@ -96,4 +114,3 @@ class EreolenSource(Source):
             library_id = library["branchId"]
             libraries[library_name] = library_id
         return libraries
-
