@@ -45,14 +45,16 @@ def get_json(self, url: str, **kwargs) -> dict:
     return json.loads(resp.decode('utf8'))
 
 
-def get_stream_files(self, url: str, headers={}) -> List[AudiobookFile]:
+def get_stream_files(self, url: str, headers={}, extension=None) -> List[AudiobookFile]:
     """Creates a list of audio files from an m3u8 file"""
     playlist = m3u8.load(url, headers=headers)
     files = []
     for _, seg in enumerate(playlist.segments):
+        if extension is None:
+            extension = os.path.splitext(seg.absolute_uri)[1][1:].split("?")[0]
         current = AudiobookFile(
             url = seg.absolute_uri,
-            ext = os.path.splitext(seg.absolute_uri)[1][1:].split("?")[0],
+            ext = extension,
             headers = headers
         )
         if not seg.key.method == "NONE":
