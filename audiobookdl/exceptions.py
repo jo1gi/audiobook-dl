@@ -41,5 +41,23 @@ class UserNotAuthorized(AudiobookDLException):
 class MissingBookAccess(AudiobookDLException):
     error_description = "book_access"
 
+class BookNotFound(AudiobookDLException):
+    error_description = "book_not_found"
+
+class BookNotReleased(AudiobookDLException):
+    error_description = "book_not_released"
+
+class BookHasNoAudiobook(AudiobookDLException):
+    error_description = "book_has_no_audiobook"
+
 class ConfigNotFound(AudiobookDLException):
     error_description = "config_not_found"
+
+class GenericAudiobookDLException(AudiobookDLException):
+    error_description: str = "generic"
+
+    def __init__(self, heading: str, body: str = None) -> None:
+        self.data = {'heading': heading, 'body': body if body else ""}
+
+class DownloadError(AudiobookDLException):
+    error_description: str = "download_error"
