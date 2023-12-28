@@ -56,7 +56,7 @@ class ConfigNotFound(AudiobookDLException):
 class GenericAudiobookDLException(AudiobookDLException):
     error_description: str = "generic"
 
-    def __init__(self, heading: str, body: Optional[int] = None) -> None:
+    def __init__(self, heading: str, body: Optional[str] = None) -> None:
         self.data = {'heading': heading, 'body': body if body else ""}
 
 class DownloadError(AudiobookDLException):
