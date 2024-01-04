@@ -112,8 +112,9 @@ def gen_output_location(template: str, metadata: AudiobookMetadata, remove_chars
     """
     if metadata is None:
         metadata = {}
-    metadata.title = _fix_output(metadata.title)
+    title = _fix_output(metadata.title)
     metadata_dict = {**LOCATION_DEFAULTS, **metadata.all_properties_dict()}
+    metadata_dict['title'] = title
     formatted = template.format(**metadata_dict)
     formatted = _remove_chars(formatted, remove_chars)
     return formatted
