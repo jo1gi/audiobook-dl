@@ -110,9 +110,17 @@ def gen_output_location(template: str, metadata: AudiobookMetadata, remove_chars
     :param remove_chars: List of characters to be removed from the final path
     :returns: `template` with metadata inserted
     """
+    max_name_length = os.pathconf(".", 'PC_NAME_MAX')
+
     if metadata is None:
         metadata = {}
     title = _fix_output(metadata.title)
+    title_bytes = title.encode('utf-8')
+    title_len = len(title_bytes)
+    ext_len = 9 # extra length needed for file extensions: len('.mp3.json')
+    if title_len > max_name_length - ext_len:
+        title = title_bytes[0:max_name_length-ext_len].decode('utf-8', errors='ignore')
+        logging.log(f"title to long, using [blue]{title}[/blue] as filename base")
     metadata_dict = {**LOCATION_DEFAULTS, **metadata.all_properties_dict()}
     metadata_dict['title'] = title
     formatted = template.format(**metadata_dict)
