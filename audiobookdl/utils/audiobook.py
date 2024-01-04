@@ -198,6 +198,7 @@ class Audiobook:
     files: List[AudiobookFile]
     chapters: List[Chapter] = Factory(list)
     cover: Optional[Cover] = None
+    source_data: Any = None
 
     @property
     def title(self) -> str:

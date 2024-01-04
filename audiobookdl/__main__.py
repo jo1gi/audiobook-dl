@@ -1,5 +1,5 @@
 from audiobookdl import Source, logging, args, output, __version__
-from .exceptions import AudiobookDLException
+from .exceptions import AudiobookDLException, BookNotReleased
 from .utils.audiobook import Audiobook, Series
 from .output.download import download
 from .sources import find_compatible_source
@@ -16,6 +16,8 @@ def main() -> None:
     options = args.parse_arguments()
     config = load_config(options.config_location)
     options.output_template = options.output_template or config.output_template
+    options.database_directory = options.database_directory or config.database_directory
+    options.skip_downloaded = options.skip_downloaded or config.skip_downloaded
     # Applying arguments as global constants
     logging.debug_mode = options.debug
     logging.quiet_mode = options.quiet
@@ -46,7 +48,8 @@ def process_url(url: str, options, config: Config):
     :param config: Configuration file options
     """
     logging.log("Finding compatible source")
-    source = find_compatible_source(url)
+    source_class = find_compatible_source(url)
+    source = source_class(options)
     if source.requires_authentication and not source.authenticated:
         authenticate(url, source, options, config)
     # Running program
@@ -55,14 +58,18 @@ def process_url(url: str, options, config: Config):
     logging.log("") # Empty line
     if isinstance(result, Audiobook):
         logging.log(f"Downloading [blue]{result.title}[/] from [magenta]{source.name}[/]")
-        process_audiobook(result, options)
+        process_audiobook(source, result, options)
     elif isinstance(result, Series):
         count = len(result.books)
         logging.log(
             f"Downloading [yellow not bold]{count}[/] books in [blue]{result.title}[/] from [magenta]{source.name}[/]")
         for book in result.books:
-            audiobook = audiobook_from_series(source, book)
-            process_audiobook(audiobook, options)
+            try:
+                audiobook = audiobook_from_series(source, book)
+                process_audiobook(source, audiobook, options)
+            except BookNotReleased:
+                logging.log(f"Skipped [blue]{book}[/] (not released)")
+                continue
 
 
 def get_cookie_path(options) -> Optional[str]:
@@ -147,7 +154,7 @@ def audiobook_from_series(source: Source, book) -> Audiobook:
     return source.download_from_id(book.id)
 
 
-def process_audiobook(audiobook: Audiobook, options) -> None:
+def process_audiobook(source: Source, audiobook: Audiobook, options) -> None:
     """
     Operate on audiobook based on cli arguments
 
@@ -161,6 +168,7 @@ def process_audiobook(audiobook: Audiobook, options) -> None:
         download_cover(audiobook)
     else:
         download(audiobook, options)
+        source.on_download_complete(audiobook)
 
 
 

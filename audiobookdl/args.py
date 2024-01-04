@@ -1,4 +1,6 @@
 import argparse
+import os
+import appdirs
 from audiobookdl import __version__
 from typing import Any, List
 
@@ -107,6 +109,18 @@ def parse_arguments() -> Any:
         '--library',
         dest="library",
         help="Library for source",
+    )
+    parser.add_argument(
+        '--skip-downloaded',
+        dest="skip_downloaded",
+        help="Skip already downloaded books when downloading series (If supported by source)",
+        action="store_true",
+    )
+    parser.add_argument(
+        '--database_directory',
+        dest="database_directory",
+        help="Directory for sources to store data (default: %(default)s)",
+        default=os.path.join(appdirs.user_config_dir("audiobook-dl", "jo1gi"), "db")
     )
     parser.add_argument(
         '--write-json-metadata',

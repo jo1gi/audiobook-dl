@@ -18,13 +18,13 @@ from ..exceptions import NoSourceFound
 import re
 from typing import Iterable, List
 
-def find_compatible_source(url: str) -> Source:
+def find_compatible_source(url: str) -> type[Source]:
     """Finds the first source that supports the given url"""
     sources = get_source_classes()
     for source in sources:
         for n, m in enumerate(source.match):
             if not re.match(m, url) is None:
-                return source()
+                return source
     raise NoSourceFound
 
 
