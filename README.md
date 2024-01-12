@@ -10,7 +10,6 @@ CLI tool for downloading audiobooks from online sources.
 audiobook-dl currently supports downloading from the following sources:
 - [audiobooks.com](https://audiobooks.com)
 - [Blinkist](https://www.blinkist.com)
-- [BookBeat](https://www.bookbeat.com/)
 - [Chirp](https://www.chirpbooks.com/)
 - [eReolen](https://ereolen.dk)
 - [Everand (previously Scribd)](https://everand.com)
