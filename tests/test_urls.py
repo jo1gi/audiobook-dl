@@ -16,4 +16,4 @@ TEST_DATA = {
 def test_url_to_source():
     for url, source_name in TEST_DATA.items():
         source = find_compatible_source(url)
-        assert source.__class__.__name__ == source_name + "Source"
+        assert source.__name__ == source_name + "Source"
