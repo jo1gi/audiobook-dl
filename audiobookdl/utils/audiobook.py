@@ -41,7 +41,10 @@ class AudiobookFile:
     headers: Dict[str, str] = Factory(dict)
     # Encryption method
     encryption_method: Optional[AudiobookFileEncryption] = None
-
+    # Expected content-type of the download request
+    expected_content_type: Optional[str] = None
+    # Expected status code of the download request
+    expected_status_code: Optional[int] = None
 
 
 @define
