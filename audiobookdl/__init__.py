@@ -2,4 +2,4 @@ from .utils.audiobook import AudiobookFile, Chapter, AudiobookMetadata, Cover, A
 from .sources.source import Source
 from . import utils
 
-__version__ = "0.7.2"
+__version__ = "0.7.3"
