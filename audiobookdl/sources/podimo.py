@@ -22,14 +22,14 @@ class PodimoSource(Source[dict]):
 
     def _login(self, url: str, username: str, password: str) -> None:
         response = self.graphql_request(
-            operation_name = "LoginResultsQuery",
+            operation_name = "web_logInUser",
             query = "login",
             variables = {
                 "email": username,
                 "password": password
             }
         )
-        authorization_token = response.json()["data"]["tokenWithCredentials"]["accessToken"]
+        authorization_token = response.json()["data"]["tokenWithCredentials"]["token"]
         logging.debug(f"{authorization_token=}")
         self._session.headers.update({"authorization": authorization_token})
 
@@ -45,7 +45,7 @@ class PodimoSource(Source[dict]):
         """
         return self._session.post(
             "https://podimo.com/graphql",
-            params = { "queryName": operation_name },
+            headers = {"User-Agent": "JS GraphQL"},
             json = {
                 "operationName": operation_name,
                 "query": read_asset_file(f"assets/sources/podimo/{query}.graphql"),
