@@ -14,6 +14,7 @@ class SourceConfig:
     username: Optional[str]
     password: Optional[str]
     library: Optional[str]
+    cookie_file: Optional[str]
 
 
 @define
@@ -23,21 +24,50 @@ class Config:
     output_template: Optional[str]
 
 
-def read_config(location: Optional[str]) -> dict:
+def load_config(overwrite: Optional[str]) -> Config:
+    """
+    Load config file from disk
+
+    :param overwrite: Optional alternative location of config file
+    :returns: Content of config file
+    :raises: ConfigNotFound if location does not exists
+    """
+    config_location = get_config_location(overwrite)
+    config_dict = read_config(config_location)
+    return structure_config(config_location, config_dict)
+
+
+def config_dir() -> str:
+    """
+    Get path of configuration directory
+
+    :returns: Path of configuration directory
+    """
+    return appdirs.user_config_dir("audiobook-dl", "jo1gi")
+
+
+def get_config_location(overwrite: Optional[str]) -> str:
+    """
+    Get path of configuration file
+
+    :param overwrite: Overwrite of default configuration file location
+    :returns: Path of configuration file
+    """
+    if overwrite:
+        if not os.path.exists(overwrite):
+            raise ConfigNotFound
+        return overwrite
+    return os.path.join(config_dir(), "audiobook-dl.toml")
+
+
+def read_config(config_file: str) -> dict:
     """
     Read config from disk as dictionary
 
-    :param location: Optional alternative location of config file
+    :param location: Location of configuration file
     :returns: Content of config file as dictionary
     :raises: ConfigNotFound if location does not exists
     """
-    if location:
-        if not os.path.exists(location):
-            raise ConfigNotFound
-        config_file = location
-    else:
-        config_dir = appdirs.user_config_dir("audiobook-dl", "jo1gi")
-        config_file = os.path.join(config_dir, "audiobook-dl.toml")
     if os.path.exists(config_file):
         with open(config_file, "rb") as f:
             config_dict = tomli.load(f)
@@ -46,24 +76,25 @@ def read_config(location: Optional[str]) -> dict:
     return config_dict
 
 
-
-def load_config(location: Optional[str]) -> Config:
+def structure_config(config_location: str, config_dict: dict) -> Config:
     """
-    Load config file from disk
+    Structure configuration file content as `Config`
 
-    :param location: Optional alternative location of config file
-    :returns: Content of config file
-    :raises: ConfigNotFound if location does not exists
+    :param config_dict: Configuration file as a dictionary
+    :returns: Configuration file `Config`
     """
-    config_dict = read_config(location)
     # Add sources
     sources: Dict[str, SourceConfig] = {}
     if "sources" in config_dict:
         for source_name, values in config_dict["sources"].items():
+            cookie_file = values.get("cookie_file")
+            if cookie_file:
+                cookie_file = os.path.relpath(values.get("cookie_file"), start=config_location)
             sources[source_name] = SourceConfig(
                 username = values.get("username"),
                 password = values.get("password"),
-                library = values.get("library")
+                library = values.get("library"),
+                cookie_file = cookie_file
             )
     # Create config object
     return Config(

@@ -98,6 +98,28 @@ Not all fields are available for all audiobooks.
 
 The file extension can be changed with the `--output-format` argument.
 
+## Configuration
+audiobook-dl can be configured using a configuration file, which should be placed at:
+- Windows: `C:\\Users\\$user\\AppData\\Local\\jo1gi\\audiobook-dl\\audiobook-dl.toml`
+- Mac: `/Users/$user/Library/Application Support/audiobook-dl/audiobook-dl.toml`
+- Linux `$XDG_CONFIG_DIR/audiobook-dl/audiobook-dl.toml`
+
+### Authentications
+Source credentials can be provided in the configuration file:
+```toml
+[sources.yourcloudlibrary]
+username = "yourusername"
+password = "supersecretpassword"
+library = "hometown"
+```
+
+Cookie files can be specified in a similar way:
+```toml
+[sources.everand]
+cookie_file = "./everand_cookies.txt"
+```
+Paths are relative to the configuration directory.
+
 ## Contributions
 Issues, bug-reports, pull requests or ideas for features and improvements are
 **very welcome**.

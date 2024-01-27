@@ -3,7 +3,7 @@ from .exceptions import AudiobookDLException
 from .utils.audiobook import Audiobook, Series
 from .output.download import download
 from .sources import find_compatible_source
-from .config import load_config, Config
+from .config import load_config, Config, SourceConfig
 
 import os
 import sys
@@ -65,41 +65,43 @@ def process_url(url: str, options, config: Config):
             process_audiobook(audiobook, options)
 
 
-def get_cookie_path(options) -> Optional[str]:
+def get_cookie_path(options, config: Optional[SourceConfig]) -> Optional[str]:
     """
     Find path to cookie file. The cookie files a looked for in cli arguments
     and in the current directory.
 
     :param options: Cli options
+    :param config: Configuration for source
     :returns: Path to cookie file
     """
     if options.cookie_file is not None and os.path.exists(options.cookie_file):
         return options.cookie_file
+    if config is not None and config.cookie_file is not None and os.path.exists(config.cookie_file):
+        return config.cookie_file
     if os.path.exists("./cookies.txt"):
         return "./cookies.txt"
     return None
 
 
-def get_or_ask(attr: str, hidden: bool, source_name: str, options, config: Config) -> str:
+def get_or_ask(attr: str, hidden: bool, options, config: Optional[SourceConfig]) -> str:
     """
     Check for `attr` in cli options and config options.
     Ask the user for the value if it is not found.
 
     :param attr: Attribute to search for
     :param hidden: Should the user input be hidden (Used for passwords)
-    :param source_name: Name of source
     :param options: Cli options
-    :param config: Config file options
+    :param config: Configuration for source
     :returns: `attr` value from either cli options, config options, or user input
     """
-    config_value = getattr(config.sources.get(source_name), attr, None)
+    config_value = getattr(config, attr, None)
     value: Optional[str] = getattr(options, attr, None) or config_value
     if value is None:
         return Prompt.ask(attr.capitalize(), password=hidden)
     return value
 
 
-def login(url: str, source: Source, options, config: Config):
+def login(url: str, source: Source, options, config: Optional[SourceConfig]):
     """
     Login to source
 
@@ -111,7 +113,7 @@ def login(url: str, source: Source, options, config: Config):
     login_data = {}
     for name in source.login_data:
         hidden = name == "password"
-        login_data[name] = get_or_ask(name, hidden, source.name, options, config)
+        login_data[name] = get_or_ask(name, hidden, options, config)
     source.login(url, **login_data)
 
 
@@ -125,13 +127,14 @@ def authenticate(url: str, source: Source, options, config: Config):
     :param config: Config file options
     """
     logging.log(f"Authenticating with [magenta]{source.name}[/]")
+    source_config = config.sources.get(source.name)
     # Load cookie file
-    cookie_path = get_cookie_path(options)
+    cookie_path = get_cookie_path(options, source_config)
     if cookie_path is not None:
         source.load_cookie_file(cookie_path)
     # Authenticating with username and password
     if source.supports_login and not source.authenticated:
-        login(url, source, options, config)
+        login(url, source, options, source_config)
 
 
 def audiobook_from_series(source: Source, book) -> Audiobook:
