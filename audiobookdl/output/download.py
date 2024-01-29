@@ -96,7 +96,7 @@ def add_metadata_to_dir(audiobook: Audiobook, filepaths: Iterable[str], output_d
     :param output_dir: Directory where files are stored
     :param optiosn: Cli options
     """
-    logging.book_update("Addding metadata")
+    logging.book_update("Adding metadata")
     for filepath in filepaths:
         metadata.add_metadata(filepath, audiobook.metadata)
     if options.write_json_metadata:
@@ -206,7 +206,7 @@ def get_output_audio_format(option: Optional[str], files: Sequence[str]) -> Tupl
     """
     Get output format for files
 
-    `option` is used if specied; else it's based on the file extensions
+    `option` is used if specified; else it's based on the file extensions
     :param option: User specified value
     :param files: Audio file names
     :returns: A tuple with current format and output format
