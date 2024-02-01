@@ -19,7 +19,7 @@ class Source(Generic[T]):
 
     # Data required for logging in
     login_data: List[str] = [ "username", "password" ]
-    # A list of regexes that indicates which website a sevice supports
+    # A list of regexes that indicates which website a service supports
     match: List[str] = []
     # list of names
     names: List[str] = []
@@ -125,7 +125,7 @@ class Source(Generic[T]):
 
     def find_elems_in_page(self, url: str, selector: str, **kwargs) -> list:
         """
-        Find all html elements in the page from `url` thats matches `selector`.
+        Find all html elements in the page from `url` that's matches `selector`.
         Will cache the page.
         """
         sel = CSSSelector(selector)

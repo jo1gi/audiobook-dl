@@ -1,1 +1,1 @@
-[red]ERROR: {dependeny} is required for audiobook-dl to run[/red]
+[red]ERROR: {dependency} is required for audiobook-dl to run[/red]

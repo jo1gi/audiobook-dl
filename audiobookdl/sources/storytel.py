@@ -20,7 +20,7 @@ class StorytelSource(Source):
     @staticmethod
     def encrypt_password(password: str) -> str:
         """
-        Encrypt password with predifined keys.
+        Encrypt password with predefined keys.
         This encrypted password is used for login.
 
         :param password: User defined password

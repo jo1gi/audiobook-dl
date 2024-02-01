@@ -111,7 +111,7 @@ def parse_arguments() -> Any:
     parser.add_argument(
         '--write-json-metadata',
         dest = "write_json_metadata",
-        help = "Write metadata in a seperate json file",
+        help = "Write metadata in a separate json file",
         action="store_true",
     )
     parser.add_argument(
