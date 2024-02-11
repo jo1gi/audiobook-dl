@@ -99,6 +99,7 @@ class StorytelSource(Source):
         "login",
     ]
     _download_counter = 0
+    create_storage_dir = True
 
     def __init__(self, options) -> None:
         super().__init__(options)

@@ -26,6 +26,8 @@ class Source(Generic[T]):
     names: List[str] = []
     # Methods for authenticating
     _authentication_methods: List[str] = [ "cookies" ]
+    # Create database directory for source
+    create_storage_dir: bool = False
     # If cookies are loaded
     __authenticated = False
     # Cache of previously loaded pages
@@ -35,7 +37,8 @@ class Source(Generic[T]):
         self.database_directory = os.path.join(options.database_directory, self.name)
         self.skip_downloaded = options.skip_downloaded
         self._session = requests.Session()
-        os.makedirs(self.database_directory, exist_ok=True)
+        if self.create_storage_dir:
+            os.makedirs(self.database_directory, exist_ok=True)
 
 
     @property
