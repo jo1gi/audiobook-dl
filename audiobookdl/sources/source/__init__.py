@@ -8,6 +8,7 @@ import requests
 import lxml.html
 from lxml.cssselect import CSSSelector
 import re
+import os
 from http.cookiejar import MozillaCookieJar
 from typing import Any, Dict, List, Optional, TypeVar, Generic
 
@@ -25,14 +26,19 @@ class Source(Generic[T]):
     names: List[str] = []
     # Methods for authenticating
     _authentication_methods: List[str] = [ "cookies" ]
+    # Create database directory for source
+    create_storage_dir: bool = False
     # If cookies are loaded
     __authenticated = False
     # Cache of previously loaded pages
     __pages: Dict[str, bytes] = {}
 
-
-    def __init__(self):
+    def __init__(self, options):
+        self.database_directory = os.path.join(options.database_directory, self.name)
+        self.skip_downloaded = options.skip_downloaded
         self._session = requests.Session()
+        if self.create_storage_dir:
+            os.makedirs(self.database_directory, exist_ok=True)
 
 
     @property
@@ -95,6 +101,11 @@ class Source(Generic[T]):
     def download(self, url: str) -> Result:
         """Download book or series"""
         raise NotImplementedError
+    
+    
+    def on_download_complete(self, audiobook: Audiobook):
+        """Called after the download is complete"""
+        pass
 
 
     def _get_page(self, url: str, use_cache: bool = True, **kwargs) -> bytes:

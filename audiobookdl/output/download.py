@@ -38,7 +38,11 @@ def download(audiobook: Audiobook, options):
     except KeyboardInterrupt:
         logging.book_update("Stopped download")
         logging.book_update("Cleaning up files")
-        shutil.rmtree(output_dir)
+        if len(audiobook.files) == 1:
+            filepath, filepath_tmp = create_filepath(audiobook, output_dir, 0)
+            os.remove(filepath_tmp)
+        else:
+            shutil.rmtree(output_dir)
 
 
 def download_audiobook(audiobook: Audiobook, output_dir: str, options):
@@ -138,14 +142,14 @@ def download_files_with_cli_output(audiobook: Audiobook, output_dir: str) -> Lis
         return filepaths
 
 
-def create_filepath(audiobook: Audiobook, output_dir: str, index: int) -> str:
+def create_filepath(audiobook: Audiobook, output_dir: str, index: int) -> tuple[str, str]:
     """
     Create output file path for file number `index` in `audibook`
 
     :param audiobook: Currently downloading audiobook
     :param output_dir: Directory where file should be stored
     :param index: Index in audiobooks list of files
-    :returns: Filepath
+    :returns: Filepath, Filepath_tmp
     """
     extension = audiobook.files[index].ext
     if len(audiobook.files) == 1:
@@ -154,14 +158,15 @@ def create_filepath(audiobook: Audiobook, output_dir: str, index: int) -> str:
         padded_index = str(index).zfill(int(log10(len(audiobook.files))))
         name = f"Part {padded_index}.{extension}"
         path = os.path.join(output_dir, name)
-    return path
+    path_tmp = f"{path}.tmp"
+    return path, path_tmp
 
 
 def download_file(args: Tuple[Audiobook, str, int, Any]) -> str:
     # Prepare download
     audiobook, output_dir, index, update_progress = args
     file = audiobook.files[index]
-    filepath = create_filepath(audiobook, output_dir, index)
+    filepath, filepath_tmp = create_filepath(audiobook, output_dir, index)
     logging.debug(f"Starting downloading file: {file.url}")
     request = audiobook.session.get(file.url, headers=file.headers, stream=True)
     content_type: Optional[str] =  request.headers.get("Content-type", None)
@@ -177,15 +182,17 @@ def download_file(args: Tuple[Audiobook, str, int, Any]) -> str:
         logging.debug(f"expected_status_code not set by source, status-code is {request.status_code}, please update the source implementation")
     if not file.expected_content_type:
         logging.debug(f"expected_content_type not set by source, content-type is {content_type}, please update the source implementation")
-    # Download file
-    with open(filepath, "wb") as f:
+    # Download file to tmp file
+    with open(filepath_tmp, "wb") as f:
         for chunk in request.iter_content(chunk_size=1024):
             f.write(chunk)
             download_progress = len(chunk)/total_filesize
             update_progress(download_progress)
     # Decrypt file if necessary
     if file.encryption_method:
-        encryption.decrypt_file(filepath, file.encryption_method)
+        encryption.decrypt_file(filepath_tmp, file.encryption_method)
+    # rename file after download is complete
+    os.rename(filepath_tmp, filepath)
     # Return filepath
     return filepath
 

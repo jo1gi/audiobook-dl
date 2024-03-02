@@ -22,6 +22,8 @@ class Config:
     """audiobook-dl config"""
     sources: Dict[str, SourceConfig]
     output_template: Optional[str]
+    database_directory: Optional[str]
+    skip_downloaded: Optional[bool]
 
 
 def load_config(overwrite: Optional[str]) -> Config:
@@ -99,5 +101,7 @@ def structure_config(config_location: str, config_dict: dict) -> Config:
     # Create config object
     return Config(
         sources = sources,
-        output_template = config_dict.get("output_template")
+        output_template = config_dict.get("output_template"),
+        database_directory = config_dict.get("database_directory"),
+        skip_downloaded = config_dict.get("skip_downloaded"),
     )
