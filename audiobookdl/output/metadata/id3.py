@@ -7,6 +7,7 @@ from mutagen import File as MutagenFile
 from mutagen.easyid3 import EasyID3, EasyID3KeyError
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, APIC, CHAP, TIT2, CTOC, CTOCFlags, WCOM, ID3NoHeaderError
+from requests import utils
 
 from typing import Sequence
 
@@ -25,7 +26,10 @@ def commercialurl_get(id3, key):
 def commercialurl_set(id3, key, value):
     id3.delall("WCOM")
     for v in value:
-        id3.add(WCOM(url=v))
+        # scrape urls might contain characters in the unicode range
+        # for audiobooks with non-english titles
+        encoded_url = utils.requote_uri(v)
+        id3.add(WCOM(url=encoded_url))
 
 def commercialurl_delete(id3, key):
     id3.delall("WCOM")
