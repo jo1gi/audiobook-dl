@@ -28,14 +28,13 @@ def main() -> None:
     if not urls:
         logging.simple_help()
         exit()
-    try:
-        for url in urls:
+    for url in urls:
+        try:
             process_url(url, options, config)
-    except AudiobookDLException as e:
-        e.print()
-        if logging.debug_mode:
-            logging.print_traceback()
-        exit(1)
+        except AudiobookDLException as e:
+            e.print()
+            if logging.debug_mode:
+                logging.print_traceback()
 
 
 def process_url(url: str, options, config: Config):
