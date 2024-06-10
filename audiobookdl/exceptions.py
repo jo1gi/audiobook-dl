@@ -38,6 +38,9 @@ class RequestError(AudiobookDLException):
 class UserNotAuthorized(AudiobookDLException):
     error_description = "user_not_authorized"
 
+class CloudflareBlocked(AudiobookDLException):
+    error_description = "cloudflare_blocked"
+
 class MissingBookAccess(AudiobookDLException):
     error_description = "book_access"
 
