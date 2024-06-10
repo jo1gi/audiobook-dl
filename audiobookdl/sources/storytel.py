@@ -1,3 +1,4 @@
+from requests.models import Response
 from .source import Source
 from audiobookdl import (
     AudiobookFile,
@@ -13,6 +14,7 @@ from audiobookdl import (
 from audiobookdl.exceptions import (
     GenericAudiobookDLException,
     UserNotAuthorized,
+    CloudflareBlocked,
     BookNotFound,
     BookHasNoAudiobook,
     BookNotReleased,
@@ -149,20 +151,26 @@ class StorytelSource(Source):
         cipher_text = cipher.encrypt(msg)
         return cipher_text.hex()
 
+    def check_cloudflare_blocked(self, response: Response) -> None:
+        if response.status_code == 403:
+            error_str = "<title>Attention Required! | Cloudflare</title>"
+            if error_str in response.text:
+                raise CloudflareBlocked
+
     def _login(self, url: str, username: str, password: str) -> None:
         self._url = url
         self._username = username
         self._password = self.encrypt_password(password)
         self._session.headers.update(
             {
-                "User-Agent": "Storytel/23.49 (Android 13; Pixel 6) Release/2288481",
+                "User-Agent": "Storytel/24.22 (Android 14; Google Pixel 8 Pro) Release/2288629",
             }
         )
         self._do_login()
 
     def _do_login(self) -> None:
         resp = self._session.post(
-            f"https://www.storytel.com/api/login.action?m=1&token=guestsv&userid=-1&version=23.49&terminal=android&locale=sv&deviceId=995f2562-0e44-4410-b1b9-8d08261f33c4&kidsMode=false",
+            f"https://www.storytel.com/api/login.action?m=1&token=guestsv&userid=-1&version=24.22&terminal=android&locale=sv&deviceId=995f2562-0e44-4410-b1b9-8d08261f33c4&kidsMode=false",
             data={
                 "uid": self._username,
                 "pwd": self._password,
@@ -170,6 +178,8 @@ class StorytelSource(Source):
             headers={"content-type": "application/x-www-form-urlencoded"},
         )
         if resp.status_code != 200:
+            if resp.status_code == 403:
+                self.check_cloudflare_blocked(resp)
             raise UserNotAuthorized
         user_data = resp.json()
         jwt = user_data["accountInfo"]["jwt"]
