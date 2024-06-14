@@ -1,6 +1,9 @@
 import importlib.resources
 from typing import Sequence
 import shutil
+from urllib3.poolmanager import PoolManager
+from requests.adapters import HTTPAdapter
+from ssl import SSLContext
 
 def levenstein_distance(a: str, b: str) -> int:
     """
@@ -37,3 +40,18 @@ def read_asset_file(path: str) -> str:
 def program_in_path(program: str) -> bool:
     """Checks whethher `program` is in the path"""
     return shutil.which(program) is not None
+
+class CustomSSLContextHTTPAdapter(HTTPAdapter):
+    """Transport adapter that allows us to use a custom SSLContext."""
+
+    def __init__(self, ssl_context: SSLContext, **kwargs) -> None:
+        self.ssl_context: SSLContext = ssl_context
+        super().__init__(**kwargs)
+
+    def init_poolmanager(self, connections, maxsize, block=False):
+        self.poolmanager = PoolManager(
+            num_pools=connections,
+            maxsize=maxsize,
+            block=block,
+            ssl_context=self.ssl_context,
+        )
