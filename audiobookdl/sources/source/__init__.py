@@ -2,6 +2,7 @@
 from . import networking
 from audiobookdl import logging, AudiobookFile, Chapter, AudiobookMetadata, Cover, Result, Audiobook, BookId
 from audiobookdl.exceptions import DataNotPresent
+from audiobookdl.utils import CustomSSLContextHTTPAdapter
 
 # External imports
 import requests
@@ -11,6 +12,8 @@ import re
 import os
 from http.cookiejar import MozillaCookieJar
 from typing import Any, Dict, List, Optional, TypeVar, Generic
+from ssl import SSLContext
+import urllib3
 
 T = TypeVar("T")
 
@@ -33,10 +36,10 @@ class Source(Generic[T]):
     # Cache of previously loaded pages
     __pages: Dict[str, bytes] = {}
 
-    def __init__(self, options):
+    def __init__(self, options: Any):
         self.database_directory = os.path.join(options.database_directory, self.name)
         self.skip_downloaded = options.skip_downloaded
-        self._session = requests.Session()
+        self._session: requests.Session = self.create_session(options)
         if self.create_storage_dir:
             os.makedirs(self.database_directory, exist_ok=True)
 
@@ -172,3 +175,18 @@ class Source(Generic[T]):
     post_json = networking.post_json
     get_json = networking.get_json
     get_stream_files = networking.get_stream_files
+
+    def create_ssl_context(self, options: Any) -> SSLContext:
+        ssl_context: SSLContext = urllib3.util.create_urllib3_context()
+        # Prevent the padding extension from appearing in the TLS ClientHello
+        # It's used by Cloudflare for bot detection
+        # See issue #106
+        ssl_context.options &= ~(1 << 4) # SSL_OP_TLSEXT_PADDING
+        return ssl_context
+
+    def create_session(self, options: Any) -> requests.Session:
+        session = requests.Session()
+        ssl_context: SSLContext = self.create_ssl_context(options)
+        # session.adapters.pop("https://", None)
+        session.mount("https://", CustomSSLContextHTTPAdapter(ssl_context))
+        return session
