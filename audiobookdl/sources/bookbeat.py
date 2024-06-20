@@ -1,6 +1,6 @@
 from .source import Source
 from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata, Cover, Audiobook
-from typing import Any, List, Optional, Dict
+from typing import Any, List, Optional, Dict, MutableMapping
 import uuid
 from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess
 import base64
@@ -30,7 +30,7 @@ class BookBeatSource(Source):
         )
 
     def _login(self, url: str, username: str, password: str):
-        headers = {
+        headers: MutableMapping[str, str | bytes] = {
             "accept": "application/hal+json",
             "bb-client": "BookBeatApp",
             "bb-device": self.create_device_id(),

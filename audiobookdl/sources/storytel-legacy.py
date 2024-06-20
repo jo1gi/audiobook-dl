@@ -44,7 +44,7 @@ class StorytelSource(Source):
         resp = self._session.get(
             f"https://www.storytel.com/api/login.action",
             params = {
-                "m": 1,
+                "m": "1",
                 "uid": username,
                 "pwd": password,
             }

@@ -73,7 +73,7 @@ class EreolenSource(Source):
         :param url: Url of information page
         """
 
-        language: pycountry.language.Language = None
+        language: pycountry.language.Language = None # type: ignore
         language_str = self.find_elem_in_page(url, ".field-type-ting-details-language .field-item")
         if language_str == "dansk":
             language = pycountry.languages.get(alpha_3 = "dan")

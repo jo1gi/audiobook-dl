@@ -1,6 +1,6 @@
 from datetime import date
 import requests
-from typing import Dict, Generic, List, Optional, Union, Sequence, Tuple, TypeVar, Any
+from typing import Dict, Generic, List, Optional, Union, Sequence, Tuple, TypeVar, Any, MutableMapping
 import json
 from attrs import define, Factory
 import pycountry
@@ -38,7 +38,7 @@ class AudiobookFile:
     # Title of file
     title: Optional[str] = None
     # Headers for request
-    headers: Dict[str, str] = Factory(dict)
+    headers: MutableMapping[str, str | bytes] = Factory(dict)
     # Encryption method
     encryption_method: Optional[AudiobookFileEncryption] = None
     # Expected content-type of the download request
@@ -56,7 +56,7 @@ class AudiobookMetadata:
     authors: List[str] = Factory(list)
     narrators: List[str] = Factory(list)
     genres: List[str] = Factory(list)
-    language: Optional["pycountry.db.Language"] = None
+    language: Optional["pycountry.db.Language"] = None # type: ignore
     description: Optional[str] = None
     isbn: Optional[str] = None
     publisher: Optional[str] = None
