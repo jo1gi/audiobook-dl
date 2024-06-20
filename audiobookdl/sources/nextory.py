@@ -58,10 +58,10 @@ class NextorySource(Source):
                 "password": password
             },
         )
-        session_response = session_response.json()
+        session_response_json = session_response.json()
         logging.debug(f"{session_response=}")
-        login_token = session_response["login_token"]
-        country = session_response["country"]
+        login_token = session_response_json["login_token"]
+        country = session_response_json["country"]
         self._session.headers.update(
             {
                 "token": login_token,
@@ -73,8 +73,8 @@ class NextorySource(Source):
         profiles_response = self._session.get(
             "https://api.nextory.com/user/v1/me/profiles",
         )
-        profiles_response = profiles_response.json()
-        profile = profiles_response["profiles"][0]
+        profiles_response_json = profiles_response.json()
+        profile = profiles_response_json["profiles"][0]
         login_key = profile["login_key"]
         authorize_response = self._session.post(
             "https://api.nextory.com/user/v1/profile/authorize",
@@ -82,8 +82,8 @@ class NextorySource(Source):
                 "login_key": login_key
             }
         )
-        authorize_response = authorize_response.json()
-        profile_token = authorize_response["profile_token"]
+        authorize_response_json = authorize_response.json()
+        profile_token = authorize_response_json["profile_token"]
         self._session.headers.update({"X-Profile-Token": profile_token})
         logging.debug(f"{profile_token=}")
 
@@ -136,8 +136,8 @@ class NextorySource(Source):
         return self._session.get(
             "https://api.nextory.com/library/v1/me/product_lists/want_to_read/products",
             params = {
-                "page": 0,
-                "per": 1000,
+                "page": "0",
+                "per": "1000",
                 "id": want_to_read_id
             }
         ).json()["products"]
