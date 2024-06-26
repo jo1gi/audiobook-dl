@@ -28,7 +28,7 @@ def find_compatible_source(url: str) -> type[Source]:
     raise NoSourceFound
 
 
-def get_source_classes():
+def get_source_classes() -> list[type[Source]]:
     """Returns a list of all available sources"""
     return [
         AudiobooksdotcomSource,

@@ -137,7 +137,7 @@ class Source(Generic[T]):
         return elem.get(data)
 
 
-    def find_elems_in_page(self, url: str, selector: str, **kwargs) -> list:
+    def find_elems_in_page(self, url: str, selector: str, **kwargs) -> Any:
         """
         Find all html elements in the page from `url` that's matches `selector`.
         Will cache the page.
@@ -177,7 +177,7 @@ class Source(Generic[T]):
     get_stream_files = networking.get_stream_files
 
     def create_ssl_context(self, options: Any) -> SSLContext:
-        ssl_context: SSLContext = urllib3.util.create_urllib3_context()
+        ssl_context: SSLContext = urllib3.util.create_urllib3_context() # type: ignore[attr-defined]
         # Prevent the padding extension from appearing in the TLS ClientHello
         # It's used by Cloudflare for bot detection
         # See issue #106

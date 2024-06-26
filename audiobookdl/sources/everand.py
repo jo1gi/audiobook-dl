@@ -236,7 +236,7 @@ class EverandSource(Source[str]):
 
 
     @staticmethod
-    def get_chapter_title(chapter):
+    def get_chapter_title(chapter) -> str:
         """Extract title for chapter"""
         number = chapter["chapter_number"]
         if number == 0:
