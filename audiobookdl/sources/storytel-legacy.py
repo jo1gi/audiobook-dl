@@ -1,3 +1,4 @@
+from requests.models import Response
 from .source import Source
 from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cover, Audiobook
 from audiobookdl.exceptions import UserNotAuthorized, MissingBookAccess, DataNotPresent
@@ -83,7 +84,7 @@ class StorytelSource(Source):
             raise DataNotPresent
         return parsed.path.split("-")[-1]
 
-    def download_bookshelf(self):
+    def download_bookshelf(self) -> Response:
         """Download bookshelf data"""
         return self._session.get(
             f"https://www.storytel.com/api/getBookShelf.action",
@@ -143,7 +144,7 @@ class StorytelSource(Source):
             return metadata
 
 
-    def download_audiobook_info(self, book_info):
+    def download_audiobook_info(self, book_info) -> dict[str, Any]:
         """Download information about the audiobook files"""
         consumable_id = book_info["book"]["consumableId"]
         url = f"https://api.storytel.net/playback-metadata/consumable/{consumable_id}"

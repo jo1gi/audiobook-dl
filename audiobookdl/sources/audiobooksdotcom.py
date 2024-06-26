@@ -1,6 +1,6 @@
 from .source import Source
 from audiobookdl import AudiobookFile, logging, AudiobookMetadata, Cover, Audiobook
-from audiobookdl.exceptions import NoSourceFound, DataNotPresent
+from audiobookdl.exceptions import NoSourceFound, DataNotPresent, GenericAudiobookDLException
 
 import re
 from typing import List
@@ -56,8 +56,11 @@ class AudiobooksdotcomSource(Source):
 
         :returns: User-Agent string
         """
-        raw = self._session.cookies.get("ci_session", domain="www.audiobooks.com")
-        return unquote(raw).split("\"")[11]
+        raw: str | None = self._session.cookies.get("ci_session", domain="www.audiobooks.com")
+        if not raw:
+            raise GenericAudiobookDLException(f"ci_session missing from cookie")
+        else:
+            return unquote(raw).split("\"")[11]
 
 
     def extract_file(self, scrape_url: str) -> List[AudiobookFile]:

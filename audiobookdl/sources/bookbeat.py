@@ -64,7 +64,7 @@ class BookBeatSource(Source):
         )
 
 
-    def download_license_url(self, book_info):
+    def download_license_url(self, book_info)-> str:
         dl_info = self.get_json(
             "https://api.bookbeat.com/api/downloadinfo/" + str(book_info["bookid"])
         )

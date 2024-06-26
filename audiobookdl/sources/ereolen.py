@@ -101,7 +101,7 @@ class EreolenSource(Source):
         )
 
 
-    def _get_libraries(self):
+    def _get_libraries(self) -> dict:
         """Returns list of available libraries for login"""
         libraries_raw = self.find_in_page(
             LOGIN_PAGE_URL,
