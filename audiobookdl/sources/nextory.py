@@ -159,7 +159,7 @@ class NextorySource(Source):
         raise DataNotPresent
 
 
-    def get_files(self, audio_data) -> list[AudiobookFile]:
+    def get_files(self, audio_data) -> List[AudiobookFile]:
         files = []
         for file in audio_data["files"]:
             # master url redirects to media url
@@ -180,7 +180,7 @@ class NextorySource(Source):
         )
 
 
-    def get_chapters(self, audio_data: dict) -> list[Chapter]:
+    def get_chapters(self, audio_data: dict) -> List[Chapter]:
         chapters = []
         for index, file in enumerate(audio_data["files"]):
             chapters.append(

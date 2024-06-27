@@ -3,7 +3,7 @@ from audiobookdl import AudiobookFile, logging, AudiobookMetadata, Cover, Audiob
 from audiobookdl.exceptions import NoSourceFound, DataNotPresent, GenericAudiobookDLException
 
 import re
-from typing import List
+from typing import List, Union
 from urllib.parse import unquote
 from urllib3.util import parse_url
 import requests
@@ -56,7 +56,7 @@ class AudiobooksdotcomSource(Source):
 
         :returns: User-Agent string
         """
-        raw: str | None = self._session.cookies.get("ci_session", domain="www.audiobooks.com")
+        raw: Union[str, None] = self._session.cookies.get("ci_session", domain="www.audiobooks.com")
         if not raw:
             raise GenericAudiobookDLException(f"ci_session missing from cookie")
         else:

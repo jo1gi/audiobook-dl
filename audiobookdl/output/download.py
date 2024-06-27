@@ -142,7 +142,7 @@ def download_files_with_cli_output(audiobook: Audiobook, output_dir: str) -> Lis
         return filepaths
 
 
-def create_filepath(audiobook: Audiobook, output_dir: str, index: int) -> tuple[str, str]:
+def create_filepath(audiobook: Audiobook, output_dir: str, index: int) -> Tuple[str, str]:
     """
     Create output file path for file number `index` in `audibook`
 

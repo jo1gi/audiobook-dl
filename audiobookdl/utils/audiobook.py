@@ -38,7 +38,7 @@ class AudiobookFile:
     # Title of file
     title: Optional[str] = None
     # Headers for request
-    headers: MutableMapping[str, str | bytes] = Factory(dict)
+    headers: MutableMapping[str, Union[str, bytes]] = Factory(dict)
     # Encryption method
     encryption_method: Optional[AudiobookFileEncryption] = None
     # Expected content-type of the download request
