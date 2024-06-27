@@ -177,7 +177,14 @@ class Source(Generic[T]):
     get_stream_files = networking.get_stream_files
 
     def create_ssl_context(self, options: Any) -> SSLContext:
+        # Custom SSLContext's are broken in requests version 2.32.0/2.32.1/2.32.2
+        # fixed in version 2.32.3: https://github.com/psf/requests/pull/6716
         ssl_context: SSLContext = urllib3.util.create_urllib3_context() # type: ignore[attr-defined]
+
+        # Workaround for regression in requests version 2.32.3
+        # https://github.com/psf/requests/issues/6730
+        ssl_context.load_default_certs()
+
         # Prevent the padding extension from appearing in the TLS ClientHello
         # It's used by Cloudflare for bot detection
         # See issue #106
