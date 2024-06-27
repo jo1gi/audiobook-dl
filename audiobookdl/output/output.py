@@ -100,6 +100,23 @@ def convert_output(filenames: Sequence[str], output_format: str):
         new_paths.append(new_path)
     return new_paths
 
+def get_max_name_length() -> int:
+    """
+    Get the max length for file names supported by the OS
+
+    :returns: max length for file names
+    """
+    try:
+        # should work on Linux/MacOS
+        return os.pathconf(".", "PC_NAME_MAX")
+    except:
+        try:
+            # Windows
+            from ctypes.wintypes import MAX_PATH
+            return MAX_PATH
+        except:
+            # default
+            return 255
 
 def gen_output_location(template: str, metadata: AudiobookMetadata, remove_chars: str) -> str:
     """
@@ -110,7 +127,7 @@ def gen_output_location(template: str, metadata: AudiobookMetadata, remove_chars
     :param remove_chars: List of characters to be removed from the final path
     :returns: `template` with metadata inserted
     """
-    max_name_length = os.pathconf(".", 'PC_NAME_MAX')
+    max_name_length = get_max_name_length()
 
     if metadata is None:
         metadata = {}
