@@ -22,7 +22,7 @@ from audiobookdl.exceptions import (
 )
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
-from typing import Any, List, Dict, Optional
+from typing import Any, List, Dict, Optional, Union
 from urllib3.util import parse_url
 from urllib.parse import urlunparse, parse_qs
 from datetime import datetime, date
@@ -32,7 +32,7 @@ import re
 import os
 
 # fmt: off
-metadata_corrections: dict[str, dict[str, Any]] = {
+metadata_corrections: Dict[str, Dict[str, Any]] = {
     "books": {
         "1623721": { "title": "Bibi & Tina: Schatten über dem Martinshof", "release_date": date(2010,3,12) },
         "1623873": { "title": "Bibi & Tina: Die ungarischen Reiter", "release_date": date(2010,9,10) },
@@ -231,7 +231,7 @@ class StorytelSource(Source):
         list_id: str = self.get_id_from_url(url)
         list_details = self.download_list_books(list_id, list_type, language)
 
-        books: list[BookId[str] | Audiobook] = []
+        books: List[Union[BookId[str], Audiobook]] = []
         for item in list_details["items"]:
             abook_formats = [
                 format for format in item["formats"] if format["type"] == "abook"
@@ -335,7 +335,7 @@ class StorytelSource(Source):
         """
         title = self.find_elems_in_page(url, "h1")[-1].text
         items = self.find_elems_in_page(url, 'a[href*="/books/"]')
-        books: list[BookId[str] | Audiobook] = []
+        books: List[Union[BookId[str], Audiobook]] = []
         for item in items:
             href: str = item.get("href")
             # check for headphone icon to filter out non audiobooks
@@ -362,7 +362,7 @@ class StorytelSource(Source):
         list_type: str,
         languages: str,
         formats: str = "abook",
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """Download details about book list
 
         :param formats: comma serapted list of formats (abook,ebook,podcast)
@@ -372,7 +372,7 @@ class StorytelSource(Source):
 
         # API returns only 10 items per request
         # if the nextPageToken
-        result: dict[str, Any] = {"nextPageToken": False}
+        result: Dict[str, Any] = {"nextPageToken": False}
 
         while result["nextPageToken"] != None:
             params: dict[str, str] = {

@@ -16,9 +16,9 @@ from .yourcloudlibrary import YourCloudLibrarySource
 
 from ..exceptions import NoSourceFound
 import re
-from typing import Iterable, List
+from typing import Iterable, List, Type
 
-def find_compatible_source(url: str) -> type[Source]:
+def find_compatible_source(url: str) -> Type[Source]:
     """Finds the first source that supports the given url"""
     sources = get_source_classes()
     for source in sources:
@@ -28,7 +28,7 @@ def find_compatible_source(url: str) -> type[Source]:
     raise NoSourceFound
 
 
-def get_source_classes() -> list[type[Source]]:
+def get_source_classes() -> List[Type[Source]]:
     """Returns a list of all available sources"""
     return [
         AudiobooksdotcomSource,
