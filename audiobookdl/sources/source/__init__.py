@@ -1,7 +1,7 @@
 # Internal imports
 from . import networking
 from audiobookdl import logging, AudiobookFile, Chapter, AudiobookMetadata, Cover, Result, Audiobook, BookId
-from audiobookdl.exceptions import DataNotPresent
+from audiobookdl.exceptions import DataNotPresent, GenericAudiobookDLException
 from audiobookdl.utils import CustomSSLContextHTTPAdapter
 
 # External imports
@@ -177,19 +177,20 @@ class Source(Generic[T]):
     get_stream_files = networking.get_stream_files
 
     def create_ssl_context(self, options: Any) -> SSLContext:
-        # Custom SSLContext's are broken in requests version 2.32.0/2.32.1/2.32.2
-        # fixed in version 2.32.3: https://github.com/psf/requests/pull/6716
-        ssl_context: SSLContext = urllib3.util.create_urllib3_context() # type: ignore[attr-defined]
+        try:
+            ssl_context: SSLContext = urllib3.util.create_urllib3_context()  # type: ignore[attr-defined]
 
-        # Workaround for regression in requests version 2.32.3
-        # https://github.com/psf/requests/issues/6730
-        ssl_context.load_default_certs()
+            # Workaround for regression in requests version 2.32.3
+            # https://github.com/psf/requests/issues/6730
+            ssl_context.load_default_certs()
 
-        # Prevent the padding extension from appearing in the TLS ClientHello
-        # It's used by Cloudflare for bot detection
-        # See issue #106
-        ssl_context.options &= ~(1 << 4) # SSL_OP_TLSEXT_PADDING
-        return ssl_context
+            # Prevent the padding extension from appearing in the TLS ClientHello
+            # It's used by Cloudflare for bot detection
+            # See issue #106
+            ssl_context.options &= ~(1 << 4) # SSL_OP_TLSEXT_PADDING
+            return ssl_context
+        except AttributeError: # AttributeError: module 'urllib3.util' has no attribute 'create_urllib3_context'
+            raise GenericAudiobookDLException(f"Please update urllib3 to version >= 2 using the command 'pip install -U urllib3'")
 
     def create_session(self, options: Any) -> requests.Session:
         session = requests.Session()

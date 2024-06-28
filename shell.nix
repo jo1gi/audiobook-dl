@@ -3,7 +3,7 @@ with import <nixpkgs> {};
 mkShell {
   buildInputs = [
     ffmpeg
-    (python3.withPackages(ps: with ps; [
+    (python312.withPackages(ps: with ps; [
       mutagen
       requests
       rich
@@ -17,6 +17,7 @@ mkShell {
       tomli
       attrs
       pycountry
+      urllib3
 
       # Test
       pytest
