@@ -24,11 +24,12 @@ dependencies = [
     "m3u8",
     "mutagen",
     "pillow",
+    "pycountry",
     "pycryptodome",
     "requests",
     "rich",
     "tomli",
-    "pycountry",
+    "urllib3>=2",
 ]
 dynamic = ["version"]
 
