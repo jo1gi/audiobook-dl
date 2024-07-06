@@ -80,7 +80,7 @@ information page**
 | --remove-chars    | List of characters that will be removed from output path          |
 | --no-chapters     | Don't include chapters in output file                             |
 | --output-format   | Output file format                                                |
-| --verbose--ffmpeg | Show ffmpeg output in terminal                                    |
+| --verbose-ffmpeg | Show ffmpeg output in terminal                                    |
 | --username        | Username to source (Required when using login)                    |
 | --password        | Password to source (Required when using login)                    |
 | --library         | Specific library on service (Sometimes required when using login) |
