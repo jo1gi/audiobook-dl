@@ -35,11 +35,18 @@ def add_chapters_ffmpeg(filepath: str, chapters: Sequence[Chapter]):
         with open(TMP_CHAPTER_FILE, "w") as f:
             f.write(create_tmp_chapter_file(filepath, chapters))
         subprocess.run(
-            ["ffmpeg", "-y", "-i", filepath, "-i", TMP_CHAPTER_FILE,
-                "-map_metadata", "1", "-c", "copy", TMP_MEDIA_FILE],
+            ["ffmpeg", "-y", 
+             "-i", filepath, 
+             "-i", TMP_CHAPTER_FILE,
+             "-map_chapters", "1",
+             "-c", "copy",
+             "-map", "0",
+             "-metadata:s:a:0", "title=",
+             TMP_MEDIA_FILE],
             capture_output = not logging.ffmpeg_output
         )
         os.remove(filepath)
         os.rename(TMP_MEDIA_FILE, filepath)
     finally:
         os.remove(TMP_CHAPTER_FILE)
+        
