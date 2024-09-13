@@ -460,9 +460,9 @@ class StorytelSource(Source):
         if "description" in book_details:
             metadata.description = book_details["description"]
         if "language" in book_details:
-            if "name" in book_details["language"]:
+            if book_details["language"]:
                 metadata.language = pycountry.languages.get(
-                    name=book_details["language"]["name"]
+                    alpha_2=book_details["language"]
                 )
         if "category" in book_details:
             if "name" in book_details["category"]:
