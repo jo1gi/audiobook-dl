@@ -48,6 +48,7 @@ class NextorySource(Source):
                 "X-Locale": self.LOCALE,
                 "X-Model": "Personal Computer",
                 "X-Device-Id": device_id,
+		"X-Os-Info": "Android"
             }
         )
         # Login for account
