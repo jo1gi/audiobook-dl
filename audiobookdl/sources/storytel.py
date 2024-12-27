@@ -170,7 +170,7 @@ class StorytelSource(Source):
 
     def _do_login(self) -> None:
         resp = self._session.post(
-            f"https://www.storytel.com/api/login.action?m=1&token=guestsv&userid=-1&version=24.22&terminal=android&locale=sv&deviceId=995f2562-0e44-4410-b1b9-8d08261f33c4&kidsMode=false",
+            f"https://www.storytel.com/api/login.action?m=1&token=guestsv&userid=-1&version=24.22&terminal=android&locale=sv&deviceId=42a38c7d-d51a-49f5-a79e-8922e797eccc&kidsMode=false",
             data={
                 "uid": self._username,
                 "pwd": self._password,
