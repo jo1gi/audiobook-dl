@@ -177,6 +177,7 @@ class StorytelSource(Source):
         resp = self._session.post(
             f"https://www.storytel.com/api/login.action?m=1&token=guestsv&userid=-1&version=24.22"
             f"&terminal=android&locale=sv&deviceId={generated_device_id}&kidsMode=false",
+
             data={
                 "uid": self._username,
                 "pwd": self._password,
