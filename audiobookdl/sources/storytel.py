@@ -30,6 +30,7 @@ import pycountry
 import json
 import re
 import os
+import uuid
 
 # fmt: off
 metadata_corrections: Dict[str, Dict[str, Any]] = {
@@ -169,18 +170,25 @@ class StorytelSource(Source):
         self._do_login()
 
     def _do_login(self) -> None:
+        # Generate a new UUID for each request
+        generated_device_id = str(uuid.uuid4())
+
         resp = self._session.post(
-            f"https://www.storytel.com/api/login.action?m=1&token=guestsv&userid=-1&version=24.22&terminal=android&locale=sv&deviceId=42a38c7d-d51a-49f5-a79e-8922e797eccc&kidsMode=false",
+            f"https://www.storytel.com/api/login.action?m=1&token=guestsv&userid=-1&version=24.22"
+            f"&terminal=android&locale=sv&deviceId={generated_device_id}&kidsMode=false",
+
             data={
                 "uid": self._username,
                 "pwd": self._password,
             },
             headers={"content-type": "application/x-www-form-urlencoded"},
         )
+
         if resp.status_code != 200:
             if resp.status_code == 403:
                 self.check_cloudflare_blocked(resp)
             raise UserNotAuthorized
+
         user_data = resp.json()
         jwt = user_data["accountInfo"]["jwt"]
         self._language = user_data["accountInfo"]["lang"]
