@@ -32,7 +32,6 @@ import re
 import os
 import uuid
 
-
 # fmt: off
 metadata_corrections: Dict[str, Dict[str, Any]] = {
     "books": {
@@ -169,7 +168,7 @@ class StorytelSource(Source):
             }
         )
         self._do_login()
-        
+
     def _do_login(self) -> None:
         # Generate a new UUID for each request
         generated_device_id = str(uuid.uuid4())
