@@ -31,6 +31,7 @@ import json
 import re
 import os
 import uuid
+from .utils import read_asset_file
 
 # fmt: off
 metadata_corrections: Dict[str, Dict[str, Any]] = {
@@ -91,6 +92,12 @@ metadata_corrections: Dict[str, Dict[str, Any]] = {
 
 # path data of the headphone icon on the website used to identify audiobooks
 svg_headphone_path = "M8.25 12.371h-.625c-1.38 0-2.5 1.121-2.5 2.505v3.12a2.503 2.503 0 0 0 2.5 2.504h.625c.69 0 1.25-.56 1.25-1.252v-5.627c0-.691-.559-1.25-1.25-1.25Zm-.625 6.254a.628.628 0 0 1-.625-.63v-3.12c0-.347.28-.63.625-.63v4.38ZM12 3C6.41 3 2.178 7.652 2 13v4.375c0 .346.28.625.625.625h.625a.626.626 0 0 0 .625-.627V13c0-4.48 3.646-8.117 8.125-8.117 4.48 0 8.125 3.637 8.125 8.117v4.371c-.035.348.281.629.625.629l.625.001c.346 0 .625-.28.625-.625v-4.411C21.82 7.652 17.59 3 12 3Zm4.375 9.371h-.625c-.69 0-1.25.56-1.25 1.252v5.625c0 .692.56 1.252 1.25 1.252h.625c1.38 0 2.5-1.121 2.5-2.505v-3.12a2.503 2.503 0 0 0-2.5-2.504ZM17 17.996a.628.628 0 0 1-.625.629v-4.379c.345 0 .625.283.625.63v3.12Z"
+
+
+def print_error_file(name: str, **kwargs):
+    msg = importlib_resources.files("audiobookdl").joinpath(f"assets/errors/{name}.txt").read_text().format(**kwargs)
+    msg = msg.strip()
+    error(msg)
 
 
 class StorytelSource(Source):

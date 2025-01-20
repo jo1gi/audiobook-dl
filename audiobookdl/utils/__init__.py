@@ -1,4 +1,4 @@
-import importlib_resources
+import importlib.resources
 from typing import Sequence
 import shutil
 from urllib3.poolmanager import PoolManager
@@ -32,7 +32,7 @@ def nearest_string(input: str, list: Sequence[str]) -> str:
 
 
 def read_asset_file(path: str) -> str:
-    return importlib_resources.files("audiobookdl") \
+    return importlib.resources.files("audiobookdl") \
         .joinpath(path) \
         .read_text(encoding="utf8")
 
