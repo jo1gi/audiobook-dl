@@ -1,4 +1,4 @@
-import importlib.resources
+import importlib_resources
 from typing import Sequence
 import shutil
 from urllib3.poolmanager import PoolManager
@@ -32,7 +32,7 @@ def nearest_string(input: str, list: Sequence[str]) -> str:
 
 
 def read_asset_file(path: str) -> str:
-    return importlib.resources.files("audiobookdl") \
+    return importlib_resources.files("audiobookdl") \
         .joinpath(path) \
         .read_text(encoding="utf8")
 
@@ -55,3 +55,4 @@ class CustomSSLContextHTTPAdapter(HTTPAdapter):
             block=block,
             ssl_context=self.ssl_context,
         )
+

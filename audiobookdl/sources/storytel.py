@@ -156,7 +156,9 @@ class StorytelSource(Source):
         if response.status_code == 403:
             error_str = "<title>Attention Required! | Cloudflare</title>"
             if error_str in response.text:
-                raise CloudflareBlocked
+                raise CloudflareBlocked("Accesso bloccato da Cloudflare. Verifica la tua connessione o riprova più tardi.")
+        if "captcha" in response.text.lower():
+            raise CloudflareBlocked("Blocco da Cloudflare rilevato. Verifica la tua connessione o riprova più tardi.")
 
     def _login(self, url: str, username: str, password: str) -> None:
         self._url = url
@@ -181,7 +183,10 @@ class StorytelSource(Source):
                 "uid": self._username,
                 "pwd": self._password,
             },
-            headers={"content-type": "application/x-www-form-urlencoded"},
+            headers={
+                "content-type": "application/x-www-form-urlencoded",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",  # Updated User-Agent
+            },
         )
 
         if resp.status_code != 200:
