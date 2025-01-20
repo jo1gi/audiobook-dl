@@ -36,3 +36,10 @@ MANIFEST
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+
+# Ambiente virtuale
+venv/
+.env/
+
+# File MP3
+*.mp3
