@@ -5,6 +5,8 @@ from .output.download import download
 from .sources import find_compatible_source
 from .config import load_config, Config, SourceConfig
 
+import cloudscraper  # Aggiunto per gestire Cloudflare
+
 import os
 import sys
 from rich.prompt import Prompt

@@ -7,6 +7,7 @@ from Crypto.Util.Padding import pad
 from typing import Any, List, Optional
 from urllib3.util import parse_url
 from urllib.parse import urlunparse
+import cloudscraper
 
 
 class StorytelSource(Source):
@@ -178,3 +179,10 @@ class StorytelSource(Source):
         cover_url = f"https://www.storytel.com/images/{isbn}/640x640/cover.jpg"
         cover_data = self.get(cover_url)
         return Cover(cover_data, "jpg")
+
+    def download_book_info(self, account_id: str, fulfillment_id: str) -> dict:
+        scraper = cloudscraper.create_scraper()
+        response = scraper.get(
+            f"https://api.findawayworld.com/v4/accounts/{account_id}/audiobooks/{fulfillment_id}"
+        )
+        return response.json()["audiobook"]

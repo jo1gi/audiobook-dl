@@ -4,6 +4,7 @@ import shutil
 from urllib3.poolmanager import PoolManager
 from requests.adapters import HTTPAdapter
 from ssl import SSLContext
+import cloudscraper
 
 def levenstein_distance(a: str, b: str) -> int:
     """
