@@ -47,7 +47,8 @@ def error(msg: str):
 
 def print_error_file(name: str, **kwargs):
     """Print predefined error message"""
-    msg = read_asset_file(f"assets/errors/{name}.txt").format(**kwargs)
+    import importlib_resources
+    msg = importlib_resources.files("audiobookdl").joinpath(f"assets/errors/{name}.txt").read_text().format(**kwargs)
     msg = msg.strip()
     error(msg)
 
