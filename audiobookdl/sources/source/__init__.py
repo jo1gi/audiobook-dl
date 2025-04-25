@@ -5,7 +5,7 @@ from audiobookdl.exceptions import DataNotPresent, GenericAudiobookDLException
 from audiobookdl.utils import CustomSSLContextHTTPAdapter
 
 # External imports
-import requests
+import curl_cffi
 import lxml.html
 from lxml.cssselect import CSSSelector
 import re
@@ -176,25 +176,6 @@ class Source(Generic[T]):
     get_json = networking.get_json
     get_stream_files = networking.get_stream_files
 
-    def create_ssl_context(self, options: Any) -> SSLContext:
-        try:
-            ssl_context: SSLContext = urllib3.util.create_urllib3_context()  # type: ignore[attr-defined]
-
-            # Workaround for regression in requests version 2.32.3
-            # https://github.com/psf/requests/issues/6730
-            ssl_context.load_default_certs()
-
-            # Prevent the padding extension from appearing in the TLS ClientHello
-            # It's used by Cloudflare for bot detection
-            # See issue #106
-            ssl_context.options &= ~(1 << 4) # SSL_OP_TLSEXT_PADDING
-            return ssl_context
-        except AttributeError: # AttributeError: module 'urllib3.util' has no attribute 'create_urllib3_context'
-            raise GenericAudiobookDLException(f"Please update urllib3 to version >= 2 using the command 'pip install -U urllib3'")
-
-    def create_session(self, options: Any) -> requests.Session:
-        session = requests.Session()
-        ssl_context: SSLContext = self.create_ssl_context(options)
-        # session.adapters.pop("https://", None)
-        session.mount("https://", CustomSSLContextHTTPAdapter(ssl_context))
+    def create_session(self, options: Any) -> curl_cffi.requests.Session:
+        session = curl_cffi.requests.Session()
         return session
