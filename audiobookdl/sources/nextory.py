@@ -44,7 +44,7 @@ class NextorySource(Source):
             {
                 # New version headers
                 "X-Application-Id": self.APP_ID,
-                "X-App-Version": "5.4.1",
+                "X-App-Version": "5.47.0",
                 "X-Locale": self.LOCALE,
                 "X-Model": "Personal Computer",
                 "X-Device-Id": device_id,
