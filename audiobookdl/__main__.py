@@ -46,6 +46,8 @@ def process_url(url: str, options, config: Config):
     :param options: Cli options
     :param config: Configuration file options
     """
+    if not (url.startswith("http://") or url.startswith("https://")):
+        url = f"https://{url}"
     logging.log("Finding compatible source")
     source_class = find_compatible_source(url)
     source = source_class(options)

@@ -2,7 +2,7 @@
 
 | Site             | Cookies | Username/Password | Notes                                                                                          |
 |:-----------------|:-------:|:-----------------:|:-----------------------------------------------------------------------------------------------|
-| audiobooks.com   |    ✓    |         ✗         |                                                                                                |
+| audiobooks.com   |    ✓    |         ✗         | Can download all books from library                                                            |
 | Blinkist         |    ✓    |         ✗         |                                                                                                |
 | Chirp            |    ✓    |         ✗         |                                                                                                |
 | eReolen          |    ✓    |         ✓         | Requires library for login                                                                     |

@@ -47,6 +47,21 @@ def download(audiobook: Audiobook, options):
 
 def download_audiobook(audiobook: Audiobook, output_dir: str, options):
     """Download, convert, combine, and add metadata to files from `Audiobook` object"""
+    # Check if file/dir exists and should be skipped
+    if options.skip_downloaded:
+        is_single_file = len(audiobook.files) == 1 or options.combine
+        if is_single_file:
+            if audiobook.files:
+                current_format = audiobook.files[0].ext
+                output_format = options.output_format or current_format
+                output_path = f"{output_dir}.{output_format}"
+                if os.path.exists(output_path):
+                    logging.log(f"Skipping [blue]{audiobook.title}[/], file already exists.")
+                    return
+        elif os.path.isdir(output_dir):  # multiple files, check for directory
+            logging.log(f"Skipping [blue]{audiobook.title}[/], directory already exists.")
+            return
+
     # Downloading files
     filepaths = download_files_with_cli_output(audiobook, output_dir)
     # Converting files

@@ -2,6 +2,7 @@ from audiobookdl.sources import find_compatible_source
 
 TEST_DATA = {
     "https://www.audiobooks.com/book/stream/413879": "Audiobooksdotcom",
+    "https://www.audiobooks.com/browse/library": "Audiobooksdotcom",
     "https://www.bookbeat.no/bok/somethingsomething-999999": "BookBeat",
     "https://ereolen.dk/ting/object/870970-basis%3A53978223": "Ereolen",
     "https://www.everand.com/listen/579426746": "Everand",
