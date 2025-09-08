@@ -113,7 +113,7 @@ def parse_arguments() -> Any:
     parser.add_argument(
         '--skip-downloaded',
         dest="skip_downloaded",
-        help="Skip already downloaded books when downloading series (If supported by source)",
+        help="Skip downloading books if the output file or directory already exists",
         action="store_true",
     )
     parser.add_argument(
