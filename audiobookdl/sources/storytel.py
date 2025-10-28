@@ -164,7 +164,7 @@ class StorytelSource(Source):
         self._password = self.encrypt_password(password)
         self._session.headers.update(
             {
-                "User-Agent": "Storytel/24.22 (Android 14; Google Pixel 8 Pro) Release/2288629",
+                "User-Agent": "Storytel/24.52 (Android 14; Google Pixel 8 Pro) Release/2288809",
             }
         )
         self._do_login()
@@ -174,7 +174,7 @@ class StorytelSource(Source):
         generated_device_id = str(uuid.uuid4())
 
         resp = self._session.post(
-            f"https://www.storytel.com/api/login.action?m=1&token=guestsv&userid=-1&version=24.22"
+            f"https://www.storytel.com/api/login.action?m=1&token=guestsv&userid=-1&version=24.52"
             f"&terminal=android&locale=sv&deviceId={generated_device_id}&kidsMode=false",
 
             data={
@@ -241,6 +241,14 @@ class StorytelSource(Source):
 
         books: List[Union[BookId[str], Audiobook]] = []
         for item in list_details["items"]:
+            # Skip items without required fields
+            if "formats" not in item:
+                logging.debug(f"Skipping item without formats field")
+                continue
+            if "id" not in item:
+                logging.debug(f"Skipping item without id field")
+                continue
+
             abook_formats = [
                 format for format in item["formats"] if format["type"] == "abook"
             ]
@@ -397,6 +405,26 @@ class StorytelSource(Source):
                 params=params,
             )
 
+            # Handle 404 - try fallback languages
+            if resp.status_code == 404:
+                logging.debug(f"List not found with language {languages}, trying fallback languages")
+                fallback_languages = ['en', 'us', 'uk']
+                for fallback_lang in fallback_languages:
+                    if fallback_lang == languages:
+                        continue
+                    params["includeLanguages"] = fallback_lang
+                    resp = self._session.get(
+                        f"https://api.storytel.net/explore/lists/{list_type}/{list_id}",
+                        params=params,
+                    )
+                    if resp.status_code == 200:
+                        logging.debug(f"Successfully retrieved list with language {fallback_lang}")
+                        break
+
+                # If still 404, raise error
+                if resp.status_code == 404:
+                    raise BookNotFound
+
             data = resp.json()
             if result["nextPageToken"] == 0:
                 result = data
@@ -480,7 +508,7 @@ class StorytelSource(Source):
             if "orderInSeries" in book_details["seriesInfo"]:
                 metadata.series_order = book_details["seriesInfo"]["orderInSeries"]
 
-        if not "formats" in book_details:
+        if not "formats" in book_details or not book_details["formats"]:
             raise DataNotPresent
         abook_formats = [f for f in book_details["formats"] if f["type"] == "abook"]
         if len(abook_formats) == 0:
@@ -510,7 +538,14 @@ class StorytelSource(Source):
         """Download information about the audiobook files"""
         consumableId = book_details["consumableId"]
         url = f"https://api.storytel.net/playback-metadata/consumable/{consumableId}"
-        playback_metadata = self._session.get(url).json()
+        response = self._session.get(url)
+
+        # Check HTTP status code before parsing JSON
+        if response.status_code != 200:
+            logging.debug(f"Failed to get playback metadata: {response.status_code}")
+            raise DataNotPresent
+
+        playback_metadata = response.json()
         playback_metadata_path = self._get_playback_metadata_path(consumableId)
         with open(playback_metadata_path, "w") as json_file:
             json_data = json.dumps(playback_metadata, indent=2)
@@ -542,10 +577,19 @@ class StorytelSource(Source):
         return chapters
 
     def download_cover(self, book_details) -> Cover:
+        # Handle missing cover data
+        if "cover" not in book_details or "url" not in book_details["cover"]:
+            logging.debug("Cover data missing, returning empty cover")
+            return Cover(b"", "jpg")
+
         cover_url = book_details["cover"]["url"]
         # cover_url = f"https://www.storytel.com/images/{isbn}/640x640/cover.jpg"
-        cover_data = self.get(cover_url)
-        return Cover(cover_data, "jpg")
+        try:
+            cover_data = self.get(cover_url)
+            return Cover(cover_data, "jpg")
+        except Exception as e:
+            logging.debug(f"Failed to download cover: {e}")
+            return Cover(b"", "jpg")
 
     def on_download_complete(self, audiobook: Audiobook) -> None:
         consumableId = audiobook.source_data["consumableId"]
