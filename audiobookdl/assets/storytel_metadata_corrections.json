@@ -1,0 +1,188 @@
+{
+  "books": {
+    "1623721": {
+      "title": "Bibi & Tina: Schatten über dem Martinshof",
+      "release_date": "2010-03-12"
+    },
+    "1623873": {
+      "title": "Bibi & Tina: Die ungarischen Reiter",
+      "release_date": "2010-09-10"
+    },
+    "1623776": {
+      "title": "Bibi & Tina: Der wilde Hengst",
+      "release_date": "2009-11-20"
+    },
+    "1623780": {
+      "title": "Bibi & Tina: Die geheimnisvolle Köchin",
+      "release_date": "2012-06-08"
+    },
+    "1623767": {
+      "title": "Bibi & Tina: Der Tiger von Rotenbrunn",
+      "release_date": "2013-09-06"
+    },
+    "1623757": {
+      "title": "Bibi & Tina: Die falschen Weihnachtsmänner",
+      "release_date": "2013-11-01"
+    },
+    "1623860": {
+      "title": "Bibi & Tina: Indianerpferde in Gefahr",
+      "release_date": "2014-09-05"
+    },
+    "1623775": {
+      "title": "Bibi & Tina: Der weiße Mustang",
+      "release_date": "2015-09-04"
+    },
+    "1623856": {
+      "title": "Bibi & Tina: Holger verliebt sich",
+      "release_date": "2016-09-09"
+    },
+    "1623760": {
+      "title": "Bibi & Tina: Das Fohlen im Schnee",
+      "release_date": "2017-09-08"
+    },
+    "1623855": {
+      "title": "Bibi & Tina: Ein heißer Sommer",
+      "release_date": "2018-07-06"
+    },
+    "1623857": {
+      "title": "Bibi & Tina: Im Land der weißen Pferde",
+      "release_date": "2019-09-06"
+    },
+    "1048495": {
+      "title": "Bibi & Tina: Der mysteriöse Fremde",
+      "description": "Graf Falko von Falkenstein ist verzweifelt! Er leidet unter Schlaflosigkeit und bittet schließlich einen Wunderheiler um Hilfe. Der mysteriöse Fremde heilt nicht nur den Grafen, sondern wickelt sogar Frau Martin um den Finger. Tina ist gar nicht begeistert und auch Bibi misstraut dem Mann. Als die Freundinnen und Alex versuchen, dem Geheimnis des Heilers auf die Spur zu kommen, überschlagen sich die Ereignisse und die Kinder geraten in Gefahr.",
+      "release_date": "2020-10-23",
+      "_note": "MP3 contains the audio twice in a row (second one starts at 2:34:52)"
+    },
+    "1397689": {
+      "title": "Bibi & Tina: Ein Monster im Wald",
+      "release_date": "2021-10-22"
+    },
+    "1615235": {
+      "title": "Bibi Blocksberg - Hörbuch: Im Tal der wilden Hexen",
+      "release_date": "2010-03-20"
+    },
+    "1615295": {
+      "title": "Bibi Blocksberg - Das verhexte Wunschhaus",
+      "release_date": "2011-03-04"
+    },
+    "1615294": {
+      "title": "Bibi Blocksberg - Die Gewitterhexe",
+      "release_date": "2012-10-19"
+    },
+    "1615236": {
+      "title": "Bibi Blocksberg - Zickia-Alarm!",
+      "release_date": "2013-06-07"
+    },
+    "1615182": {
+      "title": "Bibi Blocksberg - Das verhexte Schwein",
+      "release_date": "2013-10-11"
+    },
+    "1615288": {
+      "title": "Bibi Blocksberg - Bibi total verknallt!",
+      "release_date": "2014-06-06"
+    },
+    "1615205": {
+      "title": "Bibi Blocksberg - Hexkraft gesucht!",
+      "release_date": "2014-10-10"
+    },
+    "1615204": {
+      "title": "Bibi Blocksberg - Wo ist Moni?",
+      "release_date": "2015-06-12"
+    },
+    "1615203": {
+      "title": "Bibi Blocksberg - Gustav, der Hexendrache",
+      "release_date": "2015-10-09"
+    },
+    "1615175": {
+      "title": "Bibi Blocksberg - Abenteuer Indien!",
+      "release_date": "2017-10-13"
+    },
+    "1615201": {
+      "title": "Bibi Blocksberg - Die Schule ist weg!",
+      "release_date": "2018-10-12"
+    },
+    "1022245": {
+      "title": "Bibi Blocksberg - Bibi und Herr Fu",
+      "release_date": "2020-09-18"
+    },
+    "522762": {
+      "title": "Alvin und die Chipmunks: Der Katzenfluch"
+    },
+    "1260956": {
+      "title": "Fast and Furious Spy Racer: Folge 1"
+    },
+    "1878866": {
+      "title": "Ghostforce: Folge 1"
+    },
+    "1878880": {
+      "title": "Ghostforce: Folge 2"
+    },
+    "2642089": {
+      "title": "Ghostforce: Folge 3"
+    },
+    "2642148": {
+      "title": "Ghostforce: Folge 4"
+    },
+    "1168061": {
+      "title": "Leo Da Vinci: Folge 1",
+      "series": "Leo Da Vinci",
+      "series_order": 1
+    },
+    "1176396": {
+      "title": "Leo Da Vinci: Folge 2",
+      "series": "Leo Da Vinci",
+      "series_order": 2
+    },
+    "1178721": {
+      "title": "Leo Da Vinci: Folge 3",
+      "series": "Leo Da Vinci",
+      "series_order": 3
+    },
+    "1176422": {
+      "title": "Leo Da Vinci: Folge 4",
+      "series": "Leo Da Vinci",
+      "series_order": 4
+    },
+    "1176424": {
+      "title": "Leo Da Vinci: Folge 5",
+      "series": "Leo Da Vinci",
+      "series_order": 5
+    },
+    "1176462": {
+      "title": "Leo Da Vinci: Folge 6",
+      "series": "Leo Da Vinci",
+      "series_order": 6
+    },
+    "1262342": {
+      "title": "Leo Da Vinci: Folge 7",
+      "series": "Leo Da Vinci",
+      "series_order": 7
+    },
+    "1263433": {
+      "title": "Leo Da Vinci: Folge 8",
+      "series": "Leo Da Vinci",
+      "series_order": 8
+    },
+    "1263421": {
+      "title": "Leo Da Vinci: Folge 9",
+      "series": "Leo Da Vinci",
+      "series_order": 9
+    },
+    "1309115": {
+      "title": "Leo Da Vinci: Folge 10",
+      "series": "Leo Da Vinci",
+      "series_order": 10
+    },
+    "1320400": {
+      "title": "Leo Da Vinci: Folge 11",
+      "series": "Leo Da Vinci",
+      "series_order": 11
+    },
+    "1328193": {
+      "title": "Leo Da Vinci: Folge 12",
+      "series": "Leo Da Vinci",
+      "series_order": 12
+    }
+  }
+}
