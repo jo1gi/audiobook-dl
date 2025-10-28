@@ -136,7 +136,7 @@ class StorytelSource(Source):
         self._password = self.encrypt_password(password)
         self._session.headers.update(
             {
-                "User-Agent": "Storytel/24.52 (Android 14; Google Pixel 8 Pro) Release/2288809",
+                "User-Agent": "okhttp/3.12.8",
             }
         )
         self._do_login()
@@ -146,7 +146,7 @@ class StorytelSource(Source):
         generated_device_id = str(uuid.uuid4())
 
         resp = self._session.post(
-            f"https://www.storytel.com/api/login.action?m=1&token=guestsv&userid=-1&version=24.52"
+            f"https://www.storytel.com/api/login.action?m=1&token=guestsv&userid=-1&version=5.24.5"
             f"&terminal=android&locale=sv&deviceId={generated_device_id}&kidsMode=false",
 
             data={
@@ -157,21 +157,49 @@ class StorytelSource(Source):
         )
 
         if resp.status_code != 200:
-            if resp.status_code == 403:
+            # Log response details for debugging
+            logging.debug(f"Login failed with status code: {resp.status_code}")
+            try:
+                error_body = resp.text[:500]  # Limit to first 500 chars
+                logging.debug(f"Response body: {error_body}")
+            except Exception:
+                pass
+
+            # Handle specific status codes
+            if resp.status_code == 400:
+                raise UserNotAuthorized(f"Bad request (400): Invalid credentials or request format. Response: {resp.text[:200]}")
+            elif resp.status_code == 401:
+                raise UserNotAuthorized(f"Unauthorized (401): Invalid username or password")
+            elif resp.status_code == 403:
                 self.check_cloudflare_blocked(resp)
-            raise UserNotAuthorized
+                raise UserNotAuthorized(f"Forbidden (403): Access denied. This may be due to region restrictions or API version incompatibility")
+            elif resp.status_code == 429:
+                raise UserNotAuthorized(f"Too many requests (429): Rate limit exceeded. Please try again later")
+            elif resp.status_code >= 500:
+                raise UserNotAuthorized(f"Server error ({resp.status_code}): Storytel API is experiencing issues. Please try again later")
+            else:
+                raise UserNotAuthorized(f"Authentication failed with status code {resp.status_code}. Response: {resp.text[:200]}")
 
         try:
             user_data = resp.json()
+            logging.debug("Successfully parsed login response JSON")
+
             if "accountInfo" not in user_data:
-                raise UserNotAuthorized("Invalid login response: missing accountInfo")
+                logging.debug(f"Response keys: {list(user_data.keys())}")
+                raise UserNotAuthorized(f"Invalid login response: missing accountInfo. Available keys: {list(user_data.keys())}")
+
             if "jwt" not in user_data["accountInfo"] or "lang" not in user_data["accountInfo"]:
-                raise UserNotAuthorized("Invalid login response: missing jwt or lang")
+                logging.debug(f"accountInfo keys: {list(user_data['accountInfo'].keys())}")
+                raise UserNotAuthorized(f"Invalid login response: missing jwt or lang. Available accountInfo keys: {list(user_data['accountInfo'].keys())}")
+
             jwt = user_data["accountInfo"]["jwt"]
             self._language = user_data["accountInfo"]["lang"]
             self._session.headers.update({"authorization": f"Bearer {jwt}"})
-        except json.JSONDecodeError:
-            raise UserNotAuthorized("Invalid login response: could not parse JSON")
+            logging.debug("Login successful, JWT token obtained")
+        except json.JSONDecodeError as e:
+            logging.debug(f"JSON decode error: {e}")
+            logging.debug(f"Response text: {resp.text[:500]}")
+            raise UserNotAuthorized(f"Invalid login response: could not parse JSON. Response: {resp.text[:200]}")
 
     def _relogin_check(self) -> None:
         """
