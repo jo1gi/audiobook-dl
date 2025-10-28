@@ -35,18 +35,45 @@ def combine_audiofiles(filepaths: Sequence[str], tmp_dir: str, output_path: str)
     tmp_output = os.path.join(tmp_dir, f"output_file.{output_extension}")
     shutil.move(filepaths[0], tmp_input)
     for i in range(1, len(filepaths), COMBINE_CHUNK_SIZE):
-        inputs = "|".join(filepaths[i:i+COMBINE_CHUNK_SIZE])
-        subprocess.run(
-            [
-                "ffmpeg",
-                "-i", f"concat:{tmp_input}|{inputs}",
-                "-safe", "0",
-                "-codec", "copy",
-                tmp_output
-            ],
-            capture_output=not logging.ffmpeg_output,
-        )
+        chunk_files = filepaths[i:i+COMBINE_CHUNK_SIZE]
+
+        # Use concat demuxer with file list to avoid "too many open files" error
+        concat_list_path = os.path.join(tmp_dir, "concat_list.txt")
+        with open(concat_list_path, "w") as f:
+            f.write(f"file '{tmp_input}'\n")
+            for filepath in chunk_files:
+                # Escape single quotes in filepath
+                escaped_path = filepath.replace("'", "'\\''")
+                f.write(f"file '{escaped_path}'\n")
+
+        if logging.ffmpeg_output:
+            # Show all output in debug mode
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-f", "concat",
+                    "-safe", "0",
+                    "-i", concat_list_path,
+                    "-c", "copy",
+                    tmp_output
+                ]
+            )
+        else:
+            # Suppress ffmpeg output in non-debug mode
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-f", "concat",
+                    "-safe", "0",
+                    "-i", concat_list_path,
+                    "-c", "copy",
+                    tmp_output
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
         os.remove(tmp_input)
+        os.remove(concat_list_path)
         shutil.move(tmp_output, tmp_input)
     shutil.move(tmp_input, output_path)
     if not os.path.exists(output_path):
@@ -87,15 +114,23 @@ def convert_output(filenames: Sequence[str], output_format: str):
         new_path = f"{path_without_ext}.{output_format}"
         if not output_format == old_ext:
             if can_copy_codec(old_ext, output_format):
-                subprocess.run(
-                    ["ffmpeg", "-i", old_path, "-codec", "copy", new_path],
-                    capture_output=not logging.ffmpeg_output
-                )
+                if logging.ffmpeg_output:
+                    subprocess.run(["ffmpeg", "-i", old_path, "-codec", "copy", new_path])
+                else:
+                    subprocess.run(
+                        ["ffmpeg", "-i", old_path, "-codec", "copy", new_path],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL
+                    )
             else:
-                subprocess.run(
-                    ["ffmpeg", "-i", old_path, new_path],
-                    capture_output=not logging.ffmpeg_output
-                )
+                if logging.ffmpeg_output:
+                    subprocess.run(["ffmpeg", "-i", old_path, new_path])
+                else:
+                    subprocess.run(
+                        ["ffmpeg", "-i", old_path, new_path],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL
+                    )
             os.remove(old_path)
         new_paths.append(new_path)
     return new_paths

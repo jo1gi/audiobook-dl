@@ -4,8 +4,9 @@ import subprocess
 import os
 from typing import Sequence
 
-TMP_CHAPTER_FILE = "chapters.tmp.txt"
-TMP_MEDIA_FILE = "audiobook.tmp.mp4"
+# Temp file names (will be created in the same directory as the output file)
+TMP_CHAPTER_FILENAME = "chapters.tmp.txt"
+TMP_MEDIA_FILENAME = "audiobook.tmp.mp4"
 
 def create_chapter_text(title: str, start: int, end: int) -> str:
     chapter_template = utils.read_asset_file("assets/ffmpeg_chapter_template.txt")
@@ -31,22 +32,37 @@ def create_tmp_chapter_file(filepath: str, chapters: Sequence[Chapter]) -> str:
     return result
 
 def add_chapters_ffmpeg(filepath: str, chapters: Sequence[Chapter]):
+    # Create temp files in the same directory as the output file
+    output_dir = os.path.dirname(filepath) or "."
+    tmp_chapter_file = os.path.join(output_dir, TMP_CHAPTER_FILENAME)
+    tmp_media_file = os.path.join(output_dir, TMP_MEDIA_FILENAME)
+
     try:
-        with open(TMP_CHAPTER_FILE, "w") as f:
+        with open(tmp_chapter_file, "w") as f:
             f.write(create_tmp_chapter_file(filepath, chapters))
-        subprocess.run(
-            ["ffmpeg", "-y", 
-             "-i", filepath, 
-             "-i", TMP_CHAPTER_FILE,
+        result = subprocess.run(
+            ["ffmpeg", "-y",
+             "-i", filepath,
+             "-i", tmp_chapter_file,
              "-map_chapters", "1",
              "-c", "copy",
              "-map", "0",
              "-metadata:s:a:0", "title=",
-             TMP_MEDIA_FILE],
+             tmp_media_file],
             capture_output = not logging.ffmpeg_output
         )
+
+        # Check if ffmpeg succeeded and created the temp file
+        if result.returncode != 0 or not os.path.exists(tmp_media_file):
+            logging.log(f"[yellow]Warning: Failed to add chapters using ffmpeg (return code: {result.returncode})[/yellow]")
+            return
+
         os.remove(filepath)
-        os.rename(TMP_MEDIA_FILE, filepath)
+        os.rename(tmp_media_file, filepath)
     finally:
-        os.remove(TMP_CHAPTER_FILE)
+        if os.path.exists(tmp_chapter_file):
+            os.remove(tmp_chapter_file)
+        # Clean up temp media file if it exists
+        if os.path.exists(tmp_media_file):
+            os.remove(tmp_media_file)
         
