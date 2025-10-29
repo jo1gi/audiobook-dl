@@ -10,6 +10,7 @@ CLI tool for downloading audiobooks from online sources.
 audiobook-dl currently supports downloading from the following sources:
 - [audiobooks.com](https://audiobooks.com)
 - [Blinkist](https://www.blinkist.com)
+- [BookBeat](https://www.bookbeat.com)
 - [Chirp](https://www.chirpbooks.com/)
 - [eReolen](https://ereolen.dk)
 - [Everand (previously Scribd)](https://everand.com)
@@ -39,7 +40,7 @@ or
 ```shell
 git clone https://github.com/jo1gi/audiobook-dl.git
 cd audiobook-dl
-python3 setup.py install
+pip install .
 ```
 
 Some features require [ffmpeg](https://ffmpeg.org/) which can be installed
@@ -64,26 +65,34 @@ username and password (and sometimes library). Use the `--username` and
 ```shell
 audiobook-dl -c <cookie file> <url>
 ```
-**Most sites require you to provide the listening page not not just the
+**Most sites require you to provide the listening page and not just the
 information page**
 
 ## Arguments
 
-| Argument          | Value                                                             |
-|-------------------|-------------------------------------------------------------------|
-| url               | The url of the page where you listen to the audiobook             |
-| -c/--cookie       | Path to a Netscape cookie file                                    |
-| --combine         | Combine all output files into a single file (requires ffmpeg)     |
-| --cover           | Only download cover                                               |
-| -d/--debug        | Print debug information                                           |
-| -o/--output       | Output location                                                   |
-| --remove-chars    | List of characters that will be removed from output path          |
-| --no-chapters     | Don't include chapters in output file                             |
-| --output-format   | Output file format                                                |
-| --verbose-ffmpeg | Show ffmpeg output in terminal                                    |
-| --username        | Username to source (Required when using login)                    |
-| --password        | Password to source (Required when using login)                    |
-| --library         | Specific library on service (Sometimes required when using login) |
+| Argument               | Value                                                             |
+|------------------------|-------------------------------------------------------------------|
+| url                    | The url of the page where you listen to the audiobook             |
+| -c/--cookie            | Path to a Netscape cookie file                                    |
+| --combine              | Combine all output files into a single file (requires ffmpeg)     |
+| --config               | Alternative location of config file                               |
+| --cover                | Only download cover                                               |
+| -d/--debug             | Print debug information                                           |
+| --database_directory   | Directory for sources to store data                               |
+| -f/--output-format     | Output file format                                                |
+| --input-file           | File with one url to download per line                            |
+| --library              | Specific library on service (Sometimes required when using login) |
+| --mp4-audio-encoder    | Audio encoder for MP4/M4A/M4B files (default: aac)                |
+| --no-chapters          | Don't include chapters in output file                             |
+| -o/--output            | Output location                                                   |
+| --password             | Password to source (Required when using login)                    |
+| --print-output         | Prints the output locations instead of downloading                |
+| -q/--quiet             | Quiet mode                                                        |
+| --remove-chars         | List of characters that will be removed from output path          |
+| --skip-downloaded      | Skip downloading books if the output file or directory exists     |
+| --username             | Username to source (Required when using login)                    |
+| --verbose-ffmpeg       | Show ffmpeg output in terminal                                    |
+| --write-json-metadata  | Write metadata in a separate json file                            |
 
 ## Output
 By default, audiobook-dl saves all audiobooks to `{title}` relative to the
@@ -104,7 +113,7 @@ audiobook-dl can be configured using a configuration file, which should be place
 - Mac: `/Users/$user/Library/Application Support/audiobook-dl/audiobook-dl.toml`
 - Linux `$XDG_CONFIG_DIR/audiobook-dl/audiobook-dl.toml`
 
-### Authentications
+### Authentication
 Source credentials can be provided in the configuration file:
 ```toml
 [sources.yourcloudlibrary]
@@ -119,6 +128,22 @@ Cookie files can be specified in a similar way:
 cookie_file = "./everand_cookies.txt"
 ```
 Paths are relative to the configuration directory.
+
+### General Options
+You can also set default values for command-line options in the configuration file:
+```toml
+output_template = "{author}/{title}"
+database_directory = "/path/to/database"
+skip_downloaded = true
+combine = true
+remove_chars = ":/"
+no_chapters = false
+output_format = "m4b"
+write_json_metadata = true
+mp4_audio_encoder = "aac"
+```
+
+All of these options correspond to their command-line argument equivalents.
 
 ## Contributions
 Issues, bug-reports, pull requests or ideas for features and improvements are
