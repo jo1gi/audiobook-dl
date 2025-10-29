@@ -1,6 +1,7 @@
 from .source import Source
 from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata, Cover, Audiobook, logging
 from audiobookdl.exceptions import DataNotPresent, AudiobookDLException
+from audiobookdl.utils.image import normalize_cover_image
 from typing import Any, Optional, Dict, List
 from datetime import datetime
 import hashlib
@@ -362,4 +363,6 @@ class NextorySource(Source):
     def get_cover(self, book_info) -> Cover:
         cover_url = self.find_format_data(book_info)["img_url"]
         cover_data = self.get(cover_url)
-        return Cover(cover_data, "jpg")
+        # Normalize cover image for better compatibility with audiobook apps
+        normalized_data, actual_format = normalize_cover_image(cover_data, "jpg")
+        return Cover(normalized_data, actual_format)
