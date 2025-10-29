@@ -166,10 +166,11 @@ class AudiobookMetadata:
         return result
 
 
-    def as_json(self) -> str:
+    def as_json(self, indent: int = 2) -> str:
         """
         Export metadata as json
 
+        :param indent: JSON indentation level (default 2 for pretty printing)
         :returns: Metadata as json
         """
         class AudiobookMetadataJSONEncoder(json.JSONEncoder):
@@ -180,7 +181,7 @@ class AudiobookMetadata:
                     return z.alpha_3
                 else:
                     return super().default(z)
-        return json.dumps(self.as_dict(), cls=AudiobookMetadataJSONEncoder)
+        return json.dumps(self.as_dict(), cls=AudiobookMetadataJSONEncoder, indent=indent)
 
 
 def add_if_value_exists(metadata: AudiobookMetadata, l: List[Tuple[str, str]]):

@@ -1,6 +1,6 @@
 import argparse
 import os
-import appdirs
+import platformdirs
 from audiobookdl import __version__
 from typing import Any, List
 
@@ -85,6 +85,11 @@ def parse_arguments() -> Any:
         help="Output file format",
     )
     parser.add_argument(
+        '--mp4-audio-encoder',
+        dest="mp4_audio_encoder",
+        help="Audio encoder for MP4/M4A/M4B files (default: aac)",
+    )
+    parser.add_argument(
         '--verbose-ffmpeg',
         dest="ffmpeg_output",
         help="Show ffmpeg output in terminal",
@@ -120,7 +125,7 @@ def parse_arguments() -> Any:
         '--database_directory',
         dest="database_directory",
         help="Directory for sources to store data (default: %(default)s)",
-        default=os.path.join(appdirs.user_config_dir("audiobook-dl", "jo1gi"), "db")
+        default=os.path.join(platformdirs.user_config_dir("audiobook-dl", "jo1gi"), "db")
     )
     parser.add_argument(
         '--write-json-metadata',
