@@ -1,8 +1,22 @@
 from audiobookdl import Chapter, utils, logging
 from mutagen import File as MutagenFile
+from ..ffmpeg_progress import (
+    run_ffmpeg_with_progress,
+    get_media_duration,
+    create_progress_task
+)
 import subprocess
 import os
-from typing import Sequence
+from typing import Sequence, List, Union
+from rich.progress import BarColumn, ProgressColumn, SpinnerColumn
+
+# Progress bar format for ffmpeg operations
+FFMPEG_PROGRESS: List[Union[str, ProgressColumn]] = [
+    SpinnerColumn(),
+    "{task.description}",
+    BarColumn(),
+    "[progress.percentage]{task.percentage:>3.0f}%"
+]
 
 # Temp file names (will be created in the same directory as the output file)
 TMP_CHAPTER_FILENAME = "chapters.tmp.txt"
@@ -40,21 +54,37 @@ def add_chapters_ffmpeg(filepath: str, chapters: Sequence[Chapter]):
     try:
         with open(tmp_chapter_file, "w") as f:
             f.write(create_tmp_chapter_file(filepath, chapters))
-        result = subprocess.run(
-            ["ffmpeg", "-y",
-             "-i", filepath,
-             "-i", tmp_chapter_file,
-             "-map_chapters", "1",
-             "-c", "copy",
-             "-map", "0",
-             "-metadata:s:a:0", "title=",
-             tmp_media_file],
-            capture_output = not logging.ffmpeg_output
-        )
+
+        command = [
+            "ffmpeg", "-y",
+            "-i", filepath,
+            "-i", tmp_chapter_file,
+            "-map_chapters", "1",
+            "-c", "copy",
+            "-map", "0",
+            "-metadata:s:a:0", "title=",
+            tmp_media_file
+        ]
+
+        # In debug mode, skip progress bar and show ffmpeg output directly
+        if logging.ffmpeg_output:
+            result = subprocess.run(command)
+            returncode = result.returncode
+        else:
+            # Run with progress tracking in normal mode
+            duration = get_media_duration(filepath)
+            filename = os.path.basename(filepath)
+            description = f"Adding chapters to {filename}"
+
+            with logging.progress(FFMPEG_PROGRESS) as progress:
+                task = create_progress_task(progress, description, duration)
+                returncode, stdout, stderr = run_ffmpeg_with_progress(
+                    command, progress, task, duration, description
+                )
 
         # Check if ffmpeg succeeded and created the temp file
-        if result.returncode != 0 or not os.path.exists(tmp_media_file):
-            logging.log(f"[yellow]Warning: Failed to add chapters using ffmpeg (return code: {result.returncode})[/yellow]")
+        if returncode != 0 or not os.path.exists(tmp_media_file):
+            logging.log(f"[yellow]Warning: Failed to add chapters using ffmpeg (return code: {returncode})[/yellow]")
             return
 
         os.remove(filepath)
