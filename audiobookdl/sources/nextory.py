@@ -1,10 +1,13 @@
 from .source import Source
 from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata, Cover, Audiobook, logging
 from audiobookdl.exceptions import DataNotPresent, AudiobookDLException
+from audiobookdl.utils.image import normalize_cover_image
 from typing import Any, Optional, Dict, List
+from datetime import datetime
 import hashlib
 import uuid
 import platform
+import pycountry
 
 
 def calculate_checksum(username: str, password: str, salt: str) -> str:
@@ -240,12 +243,113 @@ class NextorySource(Source):
 
 
     def get_metadata(self, book_info) -> AudiobookMetadata:
-        return AudiobookMetadata(
-            title = book_info["title"],
-            authors = [author["name"] for author in book_info["authors"]],
-            narrators = [narrator["name"] for narrator in book_info["narrators"]],
-            description = book_info["description_full"]
-        )
+        # Debug: Log the full book_info structure to understand available fields
+        import json
+        logging.debug(f"Nextory book_info keys: {list(book_info.keys())}")
+        logging.debug(f"Full book_info: {json.dumps(book_info, indent=2, default=str)}")
+
+        # Required fields
+        title = book_info["title"]
+        metadata = AudiobookMetadata(title)
+
+        # Authors
+        for author in book_info["authors"]:
+            metadata.add_author(author["name"])
+
+        # Narrators
+        for narrator in book_info["narrators"]:
+            metadata.add_narrator(narrator["name"])
+
+        # Description
+        if "description_full" in book_info and book_info["description_full"]:
+            metadata.description = book_info["description_full"]
+        elif "description" in book_info and book_info["description"]:
+            metadata.description = book_info["description"]
+
+        # Language - convert language code using pycountry
+        if "language" in book_info and book_info["language"]:
+            language_code = book_info["language"]
+            try:
+                # Try alpha_2 code first (e.g., "en", "sv", "no")
+                language = pycountry.languages.get(alpha_2=language_code)
+                if language is None:
+                    # Try alpha_3 code (e.g., "eng", "swe", "nor")
+                    language = pycountry.languages.get(alpha_3=language_code)
+                if language is not None:
+                    metadata.language = language
+                else:
+                    logging.debug(f"Unknown language code: {language_code}")
+            except Exception as e:
+                logging.debug(f"Error parsing language code '{language_code}': {e}")
+
+        # Series information - Nextory stores series name in "series" and order in top-level "volume"
+        if "series" in book_info and book_info["series"]:
+            if isinstance(book_info["series"], dict):
+                if "name" in book_info["series"]:
+                    metadata.series = book_info["series"]["name"]
+            elif isinstance(book_info["series"], str):
+                metadata.series = book_info["series"]
+
+        # Series order comes from top-level "volume" field, not from series["vol"]
+        if "volume" in book_info and book_info["volume"] is not None:
+            metadata.series_order = book_info["volume"]
+
+        # Extract format-specific metadata (ISBN, publisher, publication_date)
+        # These fields are nested inside the formats array
+        try:
+            format_data = self.find_format_data(book_info)
+
+            # ISBN - located in formats array
+            if "isbn" in format_data and format_data["isbn"]:
+                metadata.isbn = format_data["isbn"]
+
+            # Publisher - located in formats array
+            if "publisher" in format_data and format_data["publisher"]:
+                if isinstance(format_data["publisher"], dict) and "name" in format_data["publisher"]:
+                    metadata.publisher = format_data["publisher"]["name"]
+                elif isinstance(format_data["publisher"], str):
+                    metadata.publisher = format_data["publisher"]
+
+            # Publication date - located in formats array
+            if "publication_date" in format_data and format_data["publication_date"]:
+                date_str = format_data["publication_date"]
+                try:
+                    # Try ISO format first (e.g., "2023-12-15T00:00:00Z")
+                    if 'T' in date_str:
+                        metadata.release_date = datetime.strptime(
+                            date_str.split('.')[0].replace('Z', ''),
+                            "%Y-%m-%dT%H:%M:%S"
+                        ).date()
+                    else:
+                        # Try simple date format (e.g., "2023-12-15")
+                        metadata.release_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                except Exception as e:
+                    logging.debug(f"Error parsing publication_date '{date_str}': {e}")
+        except DataNotPresent:
+            logging.debug("Could not find format data for metadata extraction")
+
+        # Genres/Categories - try multiple possible field structures
+        if "genres" in book_info and book_info["genres"]:
+            if isinstance(book_info["genres"], list):
+                for genre in book_info["genres"]:
+                    if isinstance(genre, dict) and "name" in genre:
+                        metadata.add_genre(genre["name"])
+                    elif isinstance(genre, str):
+                        metadata.add_genre(genre)
+        elif "categories" in book_info and book_info["categories"]:
+            if isinstance(book_info["categories"], list):
+                for category in book_info["categories"]:
+                    if isinstance(category, dict) and "name" in category:
+                        metadata.add_genre(category["name"])
+                    elif isinstance(category, str):
+                        metadata.add_genre(category)
+        elif "category" in book_info and book_info["category"]:
+            if isinstance(book_info["category"], dict) and "name" in book_info["category"]:
+                metadata.add_genre(book_info["category"]["name"])
+            elif isinstance(book_info["category"], str):
+                metadata.add_genre(book_info["category"])
+
+        return metadata
 
 
     def get_chapters(self, audio_data: dict) -> List[Chapter]:
@@ -259,4 +363,6 @@ class NextorySource(Source):
     def get_cover(self, book_info) -> Cover:
         cover_url = self.find_format_data(book_info)["img_url"]
         cover_data = self.get(cover_url)
-        return Cover(cover_data, "jpg")
+        # Normalize cover image for better compatibility with audiobook apps
+        normalized_data, actual_format = normalize_cover_image(cover_data, "jpg")
+        return Cover(normalized_data, actual_format)
