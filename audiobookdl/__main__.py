@@ -25,7 +25,7 @@ def main() -> None:
             options.database_directory = config.database_directory
     options.skip_downloaded = options.skip_downloaded or config.skip_downloaded
     options.combine = options.combine or config.combine
-    options.remove_chars = options.remove_chars or config.remove_chars
+    options.remove_chars = options.remove_chars if options.remove_chars else (config.remove_chars or "")
     options.no_chapters = options.no_chapters or config.no_chapters
     options.output_format = options.output_format or config.output_format
     options.write_json_metadata = options.write_json_metadata or config.write_json_metadata

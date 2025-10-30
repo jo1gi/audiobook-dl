@@ -377,6 +377,8 @@ def _fix_output(title: str) -> str:
 
 def _remove_chars(s: str, chars: str) -> str:
     """Removes `chars` from `s`"""
+    if not chars:
+        return s
     for i in chars:
         s = s.replace(i, "")
     return s
