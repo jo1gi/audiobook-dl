@@ -70,7 +70,7 @@ class NextorySource(Source):
         logging.debug(f"{session_response=}")
         
         
-        login_token = session_response_json.get ("login_token")
+        login_token = session_response_json.get("login_token")
         
         if login_token is None:
             error = session_response_json.get("error", {})
