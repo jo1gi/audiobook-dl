@@ -1,7 +1,10 @@
 from .source import Source
 from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata, Cover, Audiobook, logging
-from audiobookdl.exceptions import DataNotPresent, AudiobookDLException
+from audiobookdl.exceptions import DataNotPresent, AudiobookDLException, UserNotAuthorized, GenericAudiobookDLException
 from typing import Any, Optional, Dict, List
+
+from datetime import date
+from dateutil.relativedelta import relativedelta
 import hashlib
 import uuid
 import platform
@@ -36,6 +39,11 @@ class NextorySource(Source):
     def create_device_id() -> str:
         return str(uuid.uuid3(uuid.NAMESPACE_DNS, "audiobook-dl"))
 
+    def get_compatible_app_version(self):
+        d = date.today() - relativedelta(months=2)
+        # Nextory ios apps have changed their versioning number to 
+        # the format yyyy-mm-dd
+        return f"{d.year}-{d.month}-{d.day}"
 
     def _login(self, url: str, username: str, password: str):
         device_id = self.create_device_id()
@@ -44,12 +52,11 @@ class NextorySource(Source):
             {
                 # New version headers
                 "X-Application-Id": self.APP_ID,
-                "X-App-Version": "5.47.0",
+                "X-App-Version": self.get_compatible_app_version(),
                 "X-Locale": self.LOCALE,
                 "X-Model": "Personal Computer",
                 "X-Device-Id": device_id,
-		"X-Os-Info": "Android"
-            }
+                "X-Os-Info": "ios"            }
         )
         # Login for account
         session_response = self._session.post(
@@ -61,7 +68,21 @@ class NextorySource(Source):
         )
         session_response_json = session_response.json()
         logging.debug(f"{session_response=}")
-        login_token = session_response_json["login_token"]
+        
+        
+        login_token = session_response_json.get ("login_token")
+        
+        if login_token is None:
+            error = session_response_json.get("error", {})
+            reason = error.get("key", {})
+            error_details = error.get("description", "Unknown Error")    
+            if reason == "UserNotFound":
+                raise UserNotAuthorized()
+            else:
+                # 'AppDeprecateError' if "X-App-Version" is incorrect will trigger this
+                raise GenericAudiobookDLException(heading=reason, body=error_details)
+            
+       
         country = session_response_json["country"]
         self._session.headers.update(
             {
