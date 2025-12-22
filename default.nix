@@ -30,7 +30,7 @@ python3.pkgs.buildPythonApplication {
   ];
 
   dependencies = with python3.pkgs; [
-    appdirs
+    platformdirs
     attrs
     cssselect
     importlib-resources

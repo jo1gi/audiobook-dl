@@ -32,61 +32,6 @@ import re
 import os
 import uuid
 
-# fmt: off
-metadata_corrections: Dict[str, Dict[str, Any]] = {
-    "books": {
-        "1623721": { "title": "Bibi & Tina: Schatten über dem Martinshof", "release_date": date(2010,3,12) },
-        "1623873": { "title": "Bibi & Tina: Die ungarischen Reiter", "release_date": date(2010,9,10) },
-        "1623776": { "title": "Bibi & Tina: Der wilde Hengst", "release_date": date(2009,11,20) },
-        "1623780": { "title": "Bibi & Tina: Die geheimnisvolle Köchin", "release_date": date(2012,6,8) },
-        "1623767": { "title": "Bibi & Tina: Der Tiger von Rotenbrunn", "release_date": date(2013,9,6) },
-        "1623757": { "title": "Bibi & Tina: Die falschen Weihnachtsmänner", "release_date": date(2013,11,1) },
-        "1623860": { "title": "Bibi & Tina: Indianerpferde in Gefahr", "release_date": date(2014,9,5) },
-        "1623775": { "title": "Bibi & Tina: Der weiße Mustang", "release_date": date(2015,9,4) },
-        "1623856": { "title": "Bibi & Tina: Holger verliebt sich", "release_date": date(2016,9,9) },
-        "1623760": { "title": "Bibi & Tina: Das Fohlen im Schnee", "release_date": date(2017,9,8) },
-        "1623855": { "title": "Bibi & Tina: Ein heißer Sommer", "release_date": date(2018,7,6) },
-        "1623857": { "title": "Bibi & Tina: Im Land der weißen Pferde", "release_date": date(2019,9,6) },
-        "1048495": { "title": "Bibi & Tina: Der mysteriöse Fremde", "description": "Graf Falko von Falkenstein ist verzweifelt! Er leidet unter Schlaflosigkeit und bittet schließlich einen Wunderheiler um Hilfe. Der mysteriöse Fremde heilt nicht nur den Grafen, sondern wickelt sogar Frau Martin um den Finger. Tina ist gar nicht begeistert und auch Bibi misstraut dem Mann. Als die Freundinnen und Alex versuchen, dem Geheimnis des Heilers auf die Spur zu kommen, überschlagen sich die Ereignisse und die Kinder geraten in Gefahr.", "release_date": date(2020,10,23) }, # MP3 contains the audio twice in a row (second one starts at 2:34:52)
-        "1397689": { "title": "Bibi & Tina: Ein Monster im Wald", "release_date": date(2021,10,22) },
-
-        "1615235": { "title": "Bibi Blocksberg - Hörbuch: Im Tal der wilden Hexen", "release_date": date(2010,3,20) },
-        "1615295": { "title": "Bibi Blocksberg - Das verhexte Wunschhaus", "release_date": date(2011,3,4) },
-        "1615294": { "title": "Bibi Blocksberg - Die Gewitterhexe", "release_date": date(2012,10,19) },
-        "1615236": { "title": "Bibi Blocksberg - Zickia-Alarm!", "release_date": date(2013,6,7) },
-        "1615182": { "title": "Bibi Blocksberg - Das verhexte Schwein", "release_date": date(2013,10,11) },
-        "1615288": { "title": "Bibi Blocksberg - Bibi total verknallt!", "release_date": date(2014,6,6) },
-        "1615205": { "title": "Bibi Blocksberg - Hexkraft gesucht!", "release_date": date(2014,10,10) },
-        "1615204": { "title": "Bibi Blocksberg - Wo ist Moni?", "release_date": date(2015,6,12) },
-        "1615203": { "title": "Bibi Blocksberg - Gustav, der Hexendrache", "release_date": date(2015,10,9) },
-        "1615175": { "title": "Bibi Blocksberg - Abenteuer Indien!", "release_date": date(2017,10,13) },
-        "1615201": { "title": "Bibi Blocksberg - Die Schule ist weg!", "release_date": date(2018,10,12) },
-        "1022245": { "title": "Bibi Blocksberg - Bibi und Herr Fu", "release_date": date(2020,9,18) },
-
-        "522762": { "title": "Alvin und die Chipmunks: Der Katzenfluch" },
-
-        "1260956": { "title": "Fast and Furious Spy Racer: Folge 1" },
-
-        "1878866": { "title": "Ghostforce: Folge 1" },
-        "1878880": { "title": "Ghostforce: Folge 2" },
-        "2642089": { "title": "Ghostforce: Folge 3" },
-        "2642148": { "title": "Ghostforce: Folge 4" },
-
-        "1168061": { "title": "Leo Da Vinci: Folge 1", "series": "Leo Da Vinci", "series_order": 1 },
-        "1176396": { "title": "Leo Da Vinci: Folge 2", "series": "Leo Da Vinci", "series_order": 2 },
-        "1178721": { "title": "Leo Da Vinci: Folge 3", "series": "Leo Da Vinci", "series_order": 3 },
-        "1176422": { "title": "Leo Da Vinci: Folge 4", "series": "Leo Da Vinci", "series_order": 4 },
-        "1176424": { "title": "Leo Da Vinci: Folge 5", "series": "Leo Da Vinci", "series_order": 5 },
-        "1176462": { "title": "Leo Da Vinci: Folge 6", "series": "Leo Da Vinci", "series_order": 6 },
-        "1262342": { "title": "Leo Da Vinci: Folge 7", "series": "Leo Da Vinci", "series_order": 7 },
-        "1263433": { "title": "Leo Da Vinci: Folge 8", "series": "Leo Da Vinci", "series_order": 8 },
-        "1263421": { "title": "Leo Da Vinci: Folge 9", "series": "Leo Da Vinci", "series_order": 9 },
-        "1309115": { "title": "Leo Da Vinci: Folge 10", "series": "Leo Da Vinci", "series_order": 10 },
-        "1320400": { "title": "Leo Da Vinci: Folge 11", "series": "Leo Da Vinci", "series_order": 11 },
-        "1328193": { "title": "Leo Da Vinci: Folge 12", "series": "Leo Da Vinci", "series_order": 12 },
-    }
-}
-# fmt: on
 
 
 # path data of the headphone icon on the website used to identify audiobooks
@@ -101,11 +46,11 @@ class StorytelSource(Source):
     _authentication_methods = [
         "login",
     ]
-    _download_counter = 0
     create_storage_dir = True
 
     def __init__(self, options) -> None:
         super().__init__(options)
+        self._download_counter = 0
         self.database_directory_books = os.path.join(self.database_directory, "books")
         self.database_directory_playback_metadata = os.path.join(
             self.database_directory, "playback-metadata"
@@ -114,6 +59,30 @@ class StorytelSource(Source):
         os.makedirs(self.database_directory_books, exist_ok=True)
         os.makedirs(self.database_directory_playback_metadata, exist_ok=True)
         os.makedirs(self.database_directory_lists, exist_ok=True)
+
+        # Load metadata corrections from JSON file
+        self._metadata_corrections = self._load_metadata_corrections()
+
+    def _load_metadata_corrections(self) -> Dict[str, Dict[str, Any]]:
+        """Load metadata corrections from JSON file with fallback"""
+        try:
+            # Get path to the JSON file relative to this module
+            assets_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets")
+            corrections_file = os.path.join(assets_dir, "storytel_metadata_corrections.json")
+
+            with open(corrections_file, "r") as f:
+                data = json.load(f)
+
+            # Convert date strings to date objects
+            for book_id, corrections in data.get("books", {}).items():
+                if "release_date" in corrections:
+                    date_str = corrections["release_date"]
+                    corrections["release_date"] = datetime.strptime(date_str, "%Y-%m-%d").date()
+
+            return data
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logging.debug(f"Could not load metadata corrections: {e}")
+            return {"books": {}}
 
     def _get_book_path(self, consumableId: str) -> str:
         return os.path.join(self.database_directory_books, f"{consumableId}.json")
@@ -145,6 +114,9 @@ class StorytelSource(Source):
         :returns: Encrypted password
         """
         # Thanks to https://github.com/javsanpar/storytel-tui
+        # SECURITY NOTE: These are Storytel's public client-side encryption keys
+        # used by their Android app for API communication. These are NOT user secrets
+        # and are the same for all users. They are required for the login API endpoint.
         key = b"VQZBJ6TD8M9WBUWT"
         iv = b"joiwef08u23j341a"
         msg = pad(password.encode(), AES.block_size)
@@ -164,7 +136,7 @@ class StorytelSource(Source):
         self._password = self.encrypt_password(password)
         self._session.headers.update(
             {
-                "User-Agent": "Storytel/24.22 (Android 14; Google Pixel 8 Pro) Release/2288629",
+                "User-Agent": "okhttp/3.12.8",
             }
         )
         self._do_login()
@@ -174,7 +146,7 @@ class StorytelSource(Source):
         generated_device_id = str(uuid.uuid4())
 
         resp = self._session.post(
-            f"https://www.storytel.com/api/login.action?m=1&token=guestsv&userid=-1&version=24.22"
+            f"https://www.storytel.com/api/login.action?m=1&token=guestsv&userid=-1&version=5.24.5"
             f"&terminal=android&locale=sv&deviceId={generated_device_id}&kidsMode=false",
 
             data={
@@ -185,19 +157,54 @@ class StorytelSource(Source):
         )
 
         if resp.status_code != 200:
-            if resp.status_code == 403:
-                self.check_cloudflare_blocked(resp)
-            raise UserNotAuthorized
+            # Log response details for debugging
+            logging.debug(f"Login failed with status code: {resp.status_code}")
+            try:
+                error_body = resp.text[:500]  # Limit to first 500 chars
+                logging.debug(f"Response body: {error_body}")
+            except Exception:
+                pass
 
-        user_data = resp.json()
-        jwt = user_data["accountInfo"]["jwt"]
-        self._language = user_data["accountInfo"]["lang"]
-        self._session.headers.update({"authorization": f"Bearer {jwt}"})
+            # Handle specific status codes
+            if resp.status_code == 400:
+                raise UserNotAuthorized(f"Bad request (400): Invalid credentials or request format. Response: {resp.text[:200]}")
+            elif resp.status_code == 401:
+                raise UserNotAuthorized(f"Unauthorized (401): Invalid username or password")
+            elif resp.status_code == 403:
+                self.check_cloudflare_blocked(resp)
+                raise UserNotAuthorized(f"Forbidden (403): Access denied. This may be due to region restrictions or API version incompatibility")
+            elif resp.status_code == 429:
+                raise UserNotAuthorized(f"Too many requests (429): Rate limit exceeded. Please try again later")
+            elif resp.status_code >= 500:
+                raise UserNotAuthorized(f"Server error ({resp.status_code}): Storytel API is experiencing issues. Please try again later")
+            else:
+                raise UserNotAuthorized(f"Authentication failed with status code {resp.status_code}. Response: {resp.text[:200]}")
+
+        try:
+            user_data = resp.json()
+            logging.debug("Successfully parsed login response JSON")
+
+            if "accountInfo" not in user_data:
+                logging.debug(f"Response keys: {list(user_data.keys())}")
+                raise UserNotAuthorized(f"Invalid login response: missing accountInfo. Available keys: {list(user_data.keys())}")
+
+            if "jwt" not in user_data["accountInfo"] or "lang" not in user_data["accountInfo"]:
+                logging.debug(f"accountInfo keys: {list(user_data['accountInfo'].keys())}")
+                raise UserNotAuthorized(f"Invalid login response: missing jwt or lang. Available accountInfo keys: {list(user_data['accountInfo'].keys())}")
+
+            jwt = user_data["accountInfo"]["jwt"]
+            self._language = user_data["accountInfo"]["lang"]
+            self._session.headers.update({"authorization": f"Bearer {jwt}"})
+            logging.debug("Login successful, JWT token obtained")
+        except json.JSONDecodeError as e:
+            logging.debug(f"JSON decode error: {e}")
+            logging.debug(f"Response text: {resp.text[:500]}")
+            raise UserNotAuthorized(f"Invalid login response: could not parse JSON. Response: {resp.text[:200]}")
 
     def _relogin_check(self) -> None:
         """
         There's a ratelimit for the MP3 download, if triggered, it will invalidate all sessions and you'll get an email about suspicios activities on your account
-        To avoid the rate limtier we regularly re-login to get a new session token (which seems to byepass the rate limiter)
+        To avoid the rate limiter we regularly re-login to get a new session token (which seems to bypass the rate limiter)
         """
         if self._download_counter > 0 and self._download_counter % 10 == 0:
             logging.debug("refreshing login")
@@ -225,7 +232,7 @@ class StorytelSource(Source):
             # use API when possible
             elif list_type in ("series", "authors", "narrators"):
                 return self.download_lists_api(url, list_type, language)
-            # some lists are not avaialble via the API, use website scrapting
+            # some lists are not available via the API, use website scraping
             else:
                 return self.download_books_from_website(url)
         raise BookNotFound
@@ -241,6 +248,14 @@ class StorytelSource(Source):
 
         books: List[Union[BookId[str], Audiobook]] = []
         for item in list_details["items"]:
+            # Skip items without required fields
+            if "formats" not in item:
+                logging.debug(f"Skipping item without formats field")
+                continue
+            if "id" not in item:
+                logging.debug(f"Skipping item without id field")
+                continue
+
             abook_formats = [
                 format for format in item["formats"] if format["type"] == "abook"
             ]
@@ -292,10 +307,13 @@ class StorytelSource(Source):
         parsed = parse_url(url)
         if parsed.path is None:
             raise DataNotPresent
-        return parsed.path.split("-")[-1]
+        book_id = parsed.path.split("-")[-1]
+        if not book_id:
+            raise DataNotPresent("Could not extract book ID from URL")
+        return book_id
 
-    @staticmethod
     def _update_metadata(
+        self,
         consumableId: str,
         book_details: Dict[str, Any],
         metadata: AudiobookMetadata,
@@ -305,14 +323,16 @@ class StorytelSource(Source):
         update metadata once all data is available
         """
         # The ISBN is only available from the download link
-        parsed = parse_url(files[0].url)
-        q = parse_qs(parsed.query)
-        if "isbn" in q:
-            isbn = q["isbn"][0]
-            book_details["_download_url_isbn"] = isbn
-            metadata.isbn = isbn
-        if consumableId in metadata_corrections["books"]:
-            corrections = metadata_corrections["books"][consumableId]
+        if len(files) > 0:
+            parsed = parse_url(files[0].url)
+            if parsed.query is not None:
+                q = parse_qs(parsed.query)
+                if "isbn" in q:
+                    isbn = q["isbn"][0]
+                    book_details["_download_url_isbn"] = isbn
+                    metadata.isbn = isbn
+        if consumableId in self._metadata_corrections["books"]:
+            corrections = self._metadata_corrections["books"][consumableId]
             for key, value in corrections.items():
                 logging.log(
                     f"overriding metadata [yellow]{key}[/] from [blue]{getattr(metadata, key)}[/] to [magenta]{value}[/]"
@@ -326,7 +346,12 @@ class StorytelSource(Source):
             json={"items": []},
             headers={"content-type": "application/x-www-form-urlencoded"},
         )
-        data: Dict[str, Any] = resp.json()
+        try:
+            data: Dict[str, Any] = resp.json()
+        except json.JSONDecodeError:
+            raise GenericAudiobookDLException(
+                f"Failed to parse bookshelf response: {resp.status_code}"
+            )
 
         bookshelf_path = os.path.join(self.database_directory_lists, f"bookshelf.json")
         with open(bookshelf_path, "w") as json_file:
@@ -336,11 +361,7 @@ class StorytelSource(Source):
         return data
 
     def download_books_from_website(self, url: str) -> Series[str]:
-        """Download series details
-
-        :param formats: comma serapted list of formats (abook,ebook,podcast)
-        :param languages: comma seperated list of languages (en,de,tr,ar,ru,pl,it,es,sv,fr,nl)
-        """
+        """Download series details from website"""
         title = self.find_elems_in_page(url, "h1")[-1].text
         items = self.find_elems_in_page(url, 'a[href*="/books/"]')
         books: List[Union[BookId[str], Audiobook]] = []
@@ -373,8 +394,8 @@ class StorytelSource(Source):
     ) -> Dict[str, Any]:
         """Download details about book list
 
-        :param formats: comma serapted list of formats (abook,ebook,podcast)
-        :param languages: comma seperated list of languages (en,de,tr,ar,ru,pl,it,es,sv,fr,nl)
+        :param formats: comma separated list of formats (abook,ebook,podcast)
+        :param languages: comma separated list of languages (en,de,tr,ar,ru,pl,it,es,sv,fr,nl)
         """
         nextPageToken = 0
 
@@ -382,7 +403,7 @@ class StorytelSource(Source):
         # if the nextPageToken
         result: Dict[str, Any] = {"nextPageToken": False}
 
-        while result["nextPageToken"] != None:
+        while result["nextPageToken"] is not None:
             params: dict[str, str] = {
                 "includeListDetails": "true",  # include listMetadata,filterOptions,sortOption sections
                 "includeFormats": formats,
@@ -397,7 +418,33 @@ class StorytelSource(Source):
                 params=params,
             )
 
-            data = resp.json()
+            # Handle 404 - try fallback languages
+            if resp.status_code == 404:
+                logging.debug(f"List not found with language {languages}, trying fallback languages")
+                fallback_languages = ['en', 'us', 'uk']
+                for fallback_lang in fallback_languages:
+                    if fallback_lang == languages:
+                        continue
+                    params["includeLanguages"] = fallback_lang
+                    resp = self._session.get(
+                        f"https://api.storytel.net/explore/lists/{list_type}/{list_id}",
+                        params=params,
+                    )
+                    if resp.status_code == 200:
+                        logging.debug(f"Successfully retrieved list with language {fallback_lang}")
+                        break
+
+                # If still 404, raise error
+                if resp.status_code == 404:
+                    raise BookNotFound
+
+            try:
+                data = resp.json()
+            except json.JSONDecodeError:
+                raise GenericAudiobookDLException(
+                    f"Failed to parse list response: {resp.status_code}"
+                )
+
             if result["nextPageToken"] == 0:
                 result = data
             else:
@@ -418,7 +465,12 @@ class StorytelSource(Source):
         )
         if resp.status_code == 404:
             raise BookNotFound
-        data = resp.json()
+        try:
+            data = resp.json()
+        except json.JSONDecodeError:
+            raise GenericAudiobookDLException(
+                f"Failed to parse book details response: {resp.status_code}"
+            )
         return data
 
     def get_audio_url(self, consumableId: str) -> str:
@@ -469,9 +521,13 @@ class StorytelSource(Source):
             metadata.description = book_details["description"]
         if "language" in book_details:
             if book_details["language"]:
-                metadata.language = pycountry.languages.get(
+                language = pycountry.languages.get(
                     alpha_2=book_details["language"]
                 )
+                if language is not None:
+                    metadata.language = language
+                else:
+                    logging.debug(f"Unknown language code: {book_details['language']}")
         if "category" in book_details:
             if "name" in book_details["category"]:
                 metadata.add_genre(book_details["category"]["name"])
@@ -480,7 +536,7 @@ class StorytelSource(Source):
             if "orderInSeries" in book_details["seriesInfo"]:
                 metadata.series_order = book_details["seriesInfo"]["orderInSeries"]
 
-        if not "formats" in book_details:
+        if "formats" not in book_details or not book_details["formats"]:
             raise DataNotPresent
         abook_formats = [f for f in book_details["formats"] if f["type"] == "abook"]
         if len(abook_formats) == 0:
@@ -491,7 +547,7 @@ class StorytelSource(Source):
                 f"found multiple abook formats, please report this audiobook for bugfixing",
             )
 
-        format = book_details["formats"][0]
+        format = abook_formats[0]
         if "isReleased" in format:
             if not format["isReleased"]:
                 raise BookNotReleased
@@ -510,12 +566,24 @@ class StorytelSource(Source):
         """Download information about the audiobook files"""
         consumableId = book_details["consumableId"]
         url = f"https://api.storytel.net/playback-metadata/consumable/{consumableId}"
-        playback_metadata = self._session.get(url).json()
+        response = self._session.get(url)
+
+        # Check HTTP status code before parsing JSON
+        if response.status_code != 200:
+            logging.debug(f"Failed to get playback metadata: {response.status_code}")
+            raise DataNotPresent
+
+        try:
+            playback_metadata = response.json()
+        except json.JSONDecodeError:
+            logging.debug("Failed to parse playback metadata JSON")
+            raise DataNotPresent
+
         playback_metadata_path = self._get_playback_metadata_path(consumableId)
         with open(playback_metadata_path, "w") as json_file:
             json_data = json.dumps(playback_metadata, indent=2)
             json_file.write(json_data)
-        if not "formats" in playback_metadata:
+        if "formats" not in playback_metadata:
             raise DataNotPresent
         for format in playback_metadata["formats"]:
             if format["type"] == "abook":
@@ -526,7 +594,7 @@ class StorytelSource(Source):
         chapters: List[Chapter] = []
         book_title = book_details["title"]
         file_metadata = self.download_audiobook_info(book_details)
-        if not "chapters" in file_metadata:
+        if "chapters" not in file_metadata:
             return []
         start_time = 0
         for chapter in file_metadata["chapters"]:
@@ -542,10 +610,19 @@ class StorytelSource(Source):
         return chapters
 
     def download_cover(self, book_details) -> Cover:
+        # Handle missing cover data
+        if "cover" not in book_details or "url" not in book_details["cover"]:
+            logging.debug("Cover data missing, returning empty cover")
+            return Cover(b"", "jpg")
+
         cover_url = book_details["cover"]["url"]
         # cover_url = f"https://www.storytel.com/images/{isbn}/640x640/cover.jpg"
-        cover_data = self.get(cover_url)
-        return Cover(cover_data, "jpg")
+        try:
+            cover_data = self.get(cover_url)
+            return Cover(cover_data, "jpg")
+        except (OSError, IOError) as e:
+            logging.debug(f"Failed to download cover: {e}")
+            return Cover(b"", "jpg")
 
     def on_download_complete(self, audiobook: Audiobook) -> None:
         consumableId = audiobook.source_data["consumableId"]

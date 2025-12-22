@@ -22,6 +22,9 @@ class FailedCombining(AudiobookDLException):
 class MissingDependency(AudiobookDLException):
     error_description = "missing_dependency"
 
+class MissingEncoder(AudiobookDLException):
+    error_description = "missing_encoder"
+
 class NoFilesFound(AudiobookDLException):
     error_description = "no_files_found"
 

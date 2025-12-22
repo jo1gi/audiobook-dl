@@ -13,7 +13,7 @@ mkShell {
       m3u8
       pycryptodome
       importlib-resources
-      appdirs
+      platformdirs
       tomli
       attrs
       pycountry

@@ -74,7 +74,7 @@ def download_audiobook(audiobook: Audiobook, output_dir: str, options):
         filepaths = [output_path]
     if current_format != output_format:
         logging.book_update("Converting files")
-        filepaths = output.convert_output(filepaths, output_format)
+        filepaths = output.convert_output(filepaths, output_format, options.mp4_audio_encoder)
     # Add metadata
     if len(filepaths) == 1:
         add_metadata_to_file(audiobook, filepaths[0], options)

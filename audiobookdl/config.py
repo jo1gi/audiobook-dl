@@ -4,7 +4,7 @@ from attrs import define, Factory
 from typing import Dict, Optional
 
 import tomli
-import appdirs
+import platformdirs
 import os
 
 
@@ -24,6 +24,12 @@ class Config:
     output_template: Optional[str]
     database_directory: Optional[str]
     skip_downloaded: Optional[bool]
+    combine: Optional[bool]
+    remove_chars: Optional[str]
+    no_chapters: Optional[bool]
+    output_format: Optional[str]
+    write_json_metadata: Optional[bool]
+    mp4_audio_encoder: Optional[str]
 
 
 def load_config(overwrite: Optional[str]) -> Config:
@@ -45,7 +51,7 @@ def config_dir() -> str:
 
     :returns: Path of configuration directory
     """
-    return appdirs.user_config_dir("audiobook-dl", "jo1gi")
+    return platformdirs.user_config_dir("audiobook-dl", "jo1gi")
 
 
 def get_config_location(overwrite: Optional[str]) -> str:
@@ -104,4 +110,10 @@ def structure_config(config_location: str, config_dict: dict) -> Config:
         output_template = config_dict.get("output_template"),
         database_directory = config_dict.get("database_directory"),
         skip_downloaded = config_dict.get("skip_downloaded"),
+        combine = config_dict.get("combine"),
+        remove_chars = config_dict.get("remove_chars"),
+        no_chapters = config_dict.get("no_chapters"),
+        output_format = config_dict.get("output_format"),
+        write_json_metadata = config_dict.get("write_json_metadata"),
+        mp4_audio_encoder = config_dict.get("mp4_audio_encoder"),
     )

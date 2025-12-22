@@ -7,6 +7,7 @@ from .config import load_config, Config, SourceConfig
 
 import os
 import sys
+import platformdirs
 from rich.prompt import Prompt
 from typing import List, Optional, Union
 
@@ -15,9 +16,20 @@ def main() -> None:
     # Parsing arguments
     options = args.parse_arguments()
     config = load_config(options.config_location)
-    options.output_template = options.output_template or config.output_template
-    options.database_directory = options.database_directory or config.database_directory
+    # Use config values if CLI args are at their defaults
+    if options.output_template == "{title}" and config.output_template:
+        options.output_template = config.output_template
+    if config.database_directory:
+        default_db = os.path.join(platformdirs.user_config_dir("audiobook-dl", "jo1gi"), "db")
+        if options.database_directory == default_db:
+            options.database_directory = config.database_directory
     options.skip_downloaded = options.skip_downloaded or config.skip_downloaded
+    options.combine = options.combine or config.combine
+    options.remove_chars = options.remove_chars if options.remove_chars else (config.remove_chars or "")
+    options.no_chapters = options.no_chapters or config.no_chapters
+    options.output_format = options.output_format or config.output_format
+    options.write_json_metadata = options.write_json_metadata or config.write_json_metadata
+    options.mp4_audio_encoder = options.mp4_audio_encoder or config.mp4_audio_encoder
     # Applying arguments as global constants
     logging.debug_mode = options.debug
     logging.quiet_mode = options.quiet
