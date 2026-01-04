@@ -1,4 +1,4 @@
-from requests.models import Response
+from curl_cffi.requests.models import Response
 from .source import Source
 from audiobookdl import (
     AudiobookFile,
@@ -164,7 +164,7 @@ class StorytelSource(Source):
         self._password = self.encrypt_password(password)
         self._session.headers.update(
             {
-                "User-Agent": "Storytel/24.22 (Android 14; Google Pixel 8 Pro) Release/2288629",
+                "User-Agent": "Storytel/24.52 (Android 14; Google Pixel 8 Pro) Release/2288809",
             }
         )
         self._do_login()
