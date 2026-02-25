@@ -44,7 +44,7 @@ class AudiobookFile:
     # Expected content-type of the download request
     expected_content_type: Optional[str] = None
     # Expected status code of the download request
-    expected_status_code: Optional[int] = None
+    expected_status_code: int = 200
 
 
 @define

@@ -185,23 +185,26 @@ def download_file(args: Tuple[Audiobook, str, int, Any]) -> str:
     logging.debug(f"Starting downloading file: {file.url}")
     request = audiobook.session.get(file.url, headers=file.headers, stream=True)
     content_type: Optional[str] =  request.headers.get("Content-type", None)
-    if ((file.expected_content_type and file.expected_content_type != content_type) 
-        or (file.expected_status_code and file.expected_status_code != request.status_code)):
-        raise DownloadError(status_code=request.status_code,
-                            content_type=content_type,
-                            expected_status_code=file.expected_status_code,
-                            expected_content_type=file.expected_content_type,
-                            )
+
+    invalid_content_type = file.expected_content_type and file.expected_content_type != content_type
+    invalid_status_code = file.expected_status_code and file.expected_status_code != request.status_code
+    if invalid_content_type or invalid_status_code:
+        raise DownloadError(
+            status_code=request.status_code,
+            content_type=content_type,
+            expected_status_code=file.expected_status_code,
+            expected_content_type=file.expected_content_type,
+            body = request.content,
+            url = file.url
+        )
+
     total_filesize = int(request.headers["Content-length"])
-    if not file.expected_status_code:
-        logging.debug(f"expected_status_code not set by source, status-code is {request.status_code}, please update the source implementation")
-    if not file.expected_content_type:
-        logging.debug(f"expected_content_type not set by source, content-type is {content_type}, please update the source implementation")
+
     # Download file to tmp file
     with open(filepath_tmp, "wb") as f:
         for chunk in request.iter_content(chunk_size=1024):
             f.write(chunk)
-            download_progress = len(chunk)/total_filesize
+            download_progress = len(chunk) / total_filesize
             update_progress(download_progress)
     # Decrypt file if necessary
     if file.encryption_method:

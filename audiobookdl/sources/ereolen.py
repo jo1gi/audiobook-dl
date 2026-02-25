@@ -1,13 +1,14 @@
 from .source import Source
 from audiobookdl import  AudiobookFile, logging, utils, AudiobookMetadata, Cover, Audiobook
-from audiobookdl.exceptions import UserNotAuthorized, RequestError
+from audiobookdl.exceptions import RequestError, DataNotPresent, BookHasNoAudiobook
 
-from typing import List, Optional, Dict
+from typing import List
 import re
 import json
 import pycountry
-
-LOGIN_PAGE_URL = "https://ereolen.dk/adgangsplatformen/login?destination=/user"
+from urllib.parse import urlparse
+import importlib
+import requests
 
 class EreolenSource(Source):
     _authentication_methods = [
@@ -15,102 +16,98 @@ class EreolenSource(Source):
         "login"
     ]
     names = [ "eReolen" ]
-    login_data = [ "username", "password", "library" ]
+    login_data = [ "username", "password" ]
+    library_domains = utils.read_asset_file("assets/sources/ereolen/libraries.txt").split("\n")
     match = [
-        r"https?://ereolen.dk/ting/object/.+"
+        rf"https://(www.)?({"|".join(library_domains)})/work/work-of:.+",
     ]
 
-    def _login(self, url: str, username: str, password: str, library: str): # type: ignore
-        login_path = self.find_elem_in_page(LOGIN_PAGE_URL, "#borchk-login-form", "action")
-        library_attr_name = self.find_elem_in_page(LOGIN_PAGE_URL, "#borchk-login-form label", "for")
-        libraries = self._get_libraries()
-        logging.debug(f"{login_path=}")
-        logging.debug(f"{library_attr_name=}")
-        logging.debug(f"{libraries=}")
-        if library not in libraries.keys():
-            library = utils.nearest_string(library, list(libraries.keys()))
-            logging.debug(f"No matching library found. Using nearest: {library}")
-        self.post(
+    def _login(self, url: str, username: str, password: str):
+        hostname = urlparse(url).hostname
+        login_page_url = f"https://{hostname}/login"
+        login_path = self.find_elem_in_page(login_page_url, "#borchk-login-form", "action")
+        library_id = self.find_elem_in_page(login_page_url, "#libraryid-input", "value")
+        library_name = self.find_elem_in_page(login_page_url, "#libraryname-input", "value")
+        logging.debug(f"{library_name=} {library_id=}")
+        response = self._session.post(
             f"https://login.bib.dk{login_path}",
             headers = { "Content-Type": "application/x-www-form-urlencoded" },
             data = {
-                library_attr_name: library,
-                "agency": libraries[library],
+                "libraryName": library_name,
+                "agency": library_id,
                 "loginBibDkUserId": username,
                 "pincode": password
-            }
+            },
+            allow_redirects = True,
+            timeout = 20.,
         )
+        user_token = self.find_in_page(
+            f"https://{hostname}/dpl-react/user-tokens",
+            '"user", "(.+)"',
+            1
+        )
+        self._session.headers.update({
+            "Authorization": f"Bearer {user_token}"
+        })
+        logging.debug(f"{user_token=}")
 
 
     def download(self, url: str) -> Audiobook:
-        ajax: Optional[Dict] = self.get_json(f"{url}/listen/ajax")
-        if not ajax:
+        work_id = urlparse(url).path.split("/")[-1]
+        logging.debug(f"{work_id=}")
+
+        # Extract api path
+        api_path_segment = self.find_in_page(url, 'data-fbi-base-url="https://fbi-api.dbc.dk/([^/]+)/graphql"', 1)
+        logging.debug(f"{api_path_segment=}")
+
+        # Fetch metadata
+        metadata = self.post_json(
+            f"https://fbi-api.dbc.dk/{api_path_segment}/graphql",
+            json = {
+                "query": utils.read_asset_file("assets/sources/ereolen/metadata_query.graphql"),
+                "variables": {
+                    "wid": work_id
+                }
+            },
+        )
+        if metadata is None:
             raise RequestError
-        if ajax[1]["title"] != "Lyt":
-            raise UserNotAuthorized
-        id_match = re.search(r"(?<=(o=))[0-9a-f\-]+", ajax[1]["data"])
-        if id_match and id_match.group():
-            book_id = id_match.group()
-            logging.debug(f"{book_id=}")
-        else:
-            logging.debug("Could not find book id")
-            raise UserNotAuthorized
-        meta: Optional[dict] = self.get_json(f"https://audio.api.streaming.pubhub.dk/v1/orders/{book_id}")
-        if meta is None:
-            raise UserNotAuthorized
+        metadata = metadata["data"]["work"]
+
+        # Extract book id
+        book_id: str | None = None
+        for manifestation in metadata["manifestations"]["all"]:
+            if manifestation["materialTypes"][0]["materialTypeSpecific"]["display"] == "lydbog (online)":
+                book_id = manifestation["identifiers"][0]["value"]
+        if book_id is None:
+            raise BookHasNoAudiobook
+        logging.debug(f"{book_id=}")
+
+        # Fetch loans
+        loans = self.get_json("https://pubhub-openplatform.dbc.dk/v1/user/loans?")
+        logging.debug(f"{loans=}")
+        order_id: str | None = None
+        for loan in loans["loans"]:
+            if loan["libraryBook"]["identifier"] == book_id:
+                order_id = loan["orderId"]
+
+        if order_id is None:
+            raise DataNotPresent
+
         return Audiobook(
-            session = self._session,
-            files = self.get_files(book_id),
-            metadata = self.get_metadata(url),
-            cover = self.get_cover(meta),
+            session = requests.Session(),
+            files = self.get_files(order_id),
+            metadata = AudiobookMetadata(
+                title = metadata["titles"]["full"][0],
+                authors = [author["display"] for author in metadata["creators"]],
+                scrape_url = url,
+            ),
+            # cover = self.get_cover(meta),
         )
 
 
-    def get_metadata(self, url: str) -> AudiobookMetadata:
-        """
-        Extract metadata from information page
-
-        :param url: Url of information page
-        """
-
-        language: pycountry.language.Language = None # type: ignore
-        language_str = self.find_elem_in_page(url, ".field-type-ting-details-language .field-item")
-        if language_str == "dansk":
-            language = pycountry.languages.get(alpha_3 = "dan")
-
-        return AudiobookMetadata(
-            title = self.find_elem_in_page(url, ".field-name-ting-title .field-item h1"),
-            authors = [ self.find_elem_in_page(url, ".author") ],
-            narrators = [ self.find_elem_in_page(url, ".field-type-ting-details-audiobook-reader .field-item") ],
-            publisher = self.find_elem_in_page(url, ".field-name-ting-details-publisher .field-item a"),
-            description = self.find_elem_in_page(url, ".field-name-ting-abstract .field-item"),
-            scrape_url = url,
-            language = language,
-        )
-
-
-    def get_cover(self, meta) -> Cover:
-        cover_data = self.get(meta["cover"])
-        return Cover(cover_data, "jpg")
-
-
-    def get_files(self, book_id: str) -> List[AudiobookFile]:
+    def get_files(self, order_id: str) -> List[AudiobookFile]:
         return self.get_stream_files(
-            f"https://audio.api.streaming.pubhub.dk/v1/stream/hls/{book_id}/playlist.m3u8",
-            extension = "mp3"
+            f"https://audio.api.streaming.pubhub.dk/v1/stream/hls/{order_id}/playlist.m3u8",
+            extension = "ts"
         )
-
-
-    def _get_libraries(self) -> dict:
-        """Returns list of available libraries for login"""
-        libraries_raw = self.find_in_page(
-            LOGIN_PAGE_URL,
-            "libraries = ({.+})<",
-            group_index=1
-        )
-        libraries = {}
-        for library in json.loads(libraries_raw)["folk"]:
-            library_name = library["name"]
-            library_id = library["branchId"]
-            libraries[library_name] = library_id
-        return libraries

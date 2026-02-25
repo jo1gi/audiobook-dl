@@ -5,6 +5,7 @@ from urllib3.poolmanager import PoolManager
 from requests.adapters import HTTPAdapter
 from ssl import SSLContext
 
+
 def levenstein_distance(a: str, b: str) -> int:
     """
     Calculates the levenstein distance between `a` and `b`
@@ -23,6 +24,7 @@ def levenstein_distance(a: str, b: str) -> int:
         levenstein_distance(a[1:], b[1:]) # Character is replaced
     )
 
+
 def nearest_string(input: str, list: Sequence[str]) -> str:
     """
     Returns the closest element in `list` to `input` based on the levenstein
@@ -32,6 +34,12 @@ def nearest_string(input: str, list: Sequence[str]) -> str:
 
 
 def read_asset_file(path: str) -> str:
+    """
+    Read audiobook-dl asset file.
+
+    :param path: the path of the asset file relative to the audiobook-dl root dir
+    :returns: the content of the asset file
+    """
     return importlib.resources.files("audiobookdl") \
         .joinpath(path) \
         .read_text(encoding="utf8")
@@ -40,6 +48,7 @@ def read_asset_file(path: str) -> str:
 def program_in_path(program: str) -> bool:
     """Checks whethher `program` is in the path"""
     return shutil.which(program) is not None
+
 
 class CustomSSLContextHTTPAdapter(HTTPAdapter):
     """Transport adapter that allows us to use a custom SSLContext."""

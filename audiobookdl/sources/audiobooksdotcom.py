@@ -24,7 +24,7 @@ class AudiobooksdotcomSource(Source):
         path = parse_url(url).path
         if not path:
             raise NoSourceFound
-        
+
         if "/browse/library" in path:
             # User-Agent has to match the one in the cookies for scraping library
             user_agent = self.extract_useragent_from_cookies()

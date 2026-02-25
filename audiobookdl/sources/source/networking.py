@@ -55,7 +55,8 @@ def get_stream_files(self, url: str, headers={}, extension=None) -> List[Audiobo
         current = AudiobookFile(
             url = seg.absolute_uri,
             ext = extension,
-            headers = headers
+            headers = headers,
+            expected_content_type = "application/octet-stream"
         )
         if hasattr(seg.key, "method") and not seg.key.method == "NONE":
             current.encryption_method = AESEncryption(

@@ -1,0 +1,259 @@
+query getMaterial($wid: String!) {
+  work(id: $wid) {
+    ...WorkMedium
+  }
+}
+fragment WorkMedium on Work {
+  ...WorkSmall
+  materialTypes {
+    materialTypeSpecific {
+      display
+    }
+  }
+  creators {
+    nameSort
+  }
+  mainLanguages {
+    display
+    isoCode
+  }
+  subjects {
+    all {
+      display
+    }
+    dbcVerified {
+      display
+    }
+  }
+  fictionNonfiction {
+    display
+    code
+  }
+  dk5MainEntry {
+    display
+    code
+  }
+  relations {
+    hasReview {
+      pid
+    }
+    hasAdaptation {
+      ownerWork {
+        workId
+        workTypes
+        titles {
+          main
+        }
+      }
+    }
+  }
+}
+fragment WorkSmall on Work {
+  workId
+  titles {
+    full
+    original
+    tvSeries {
+      title
+      season {
+        display
+      }
+    }
+  }
+  abstract
+  creators {
+    display
+    __typename
+  }
+  series {
+    ...SeriesSimple
+  }
+  workYear {
+    year
+  }
+  genreAndForm
+  manifestations {
+    ...ManifestationsSimple
+  }
+}
+fragment SeriesSimple on Series {
+  title
+  isPopular
+  members {
+    numberInSeries
+    work {
+      workId
+      titles {
+        main
+      }
+    }
+  }
+  readThisFirst
+  readThisWhenever
+}
+fragment ManifestationsSimple on Manifestations {
+  all {
+    ...ManifestationsSimpleFields
+  }
+  latest {
+    ...ManifestationsSimpleFields
+  }
+  bestRepresentation {
+    ...ManifestationsSimpleFields
+  }
+}
+fragment ManifestationsSimpleFields on Manifestation {
+  pid
+  genreAndForm
+  source
+  ...WithLanguages
+  titles {
+    main
+    original
+  }
+  fictionNonfiction {
+    display
+    code
+  }
+  materialTypes {
+    materialTypeSpecific {
+      display
+    }
+  }
+  creators {
+    display
+    nameSort
+    __typename
+  }
+  publisher
+  identifiers {
+    type
+    value
+  }
+  contributors {
+    display
+    roles {
+      function {
+        singular
+      }
+    }
+  }
+  contents {
+    heading
+    type
+    raw
+    entries {
+      title {
+        display
+      }
+      creators {
+        persons {
+          display
+          nameSort
+          firstName
+          lastName
+          attributeToName
+        }
+        corporations {
+          display
+          nameSort
+          main
+        }
+      }
+      contributors
+      playingTime
+      sublevel {
+        title {
+          display
+        }
+        contributors
+        playingTime
+        sublevel {
+          title {
+            display
+          }
+          contributors
+          playingTime
+        }
+      }
+    }
+  }
+  edition {
+    summary
+    publicationYear {
+      display
+    }
+  }
+  dateFirstEdition {
+    display
+    year
+  }
+  audience {
+    generalAudience
+    ages {
+      display
+    }
+    childrenOrAdults {
+      display
+      code
+    }
+  }
+  notes {
+    display
+  }
+  languages {
+    notes
+  }
+  physicalDescription {
+    summaryFull
+    numberOfPages
+  }
+  hostPublication {
+    summary
+  }
+  accessTypes {
+    code
+  }
+  access {
+    __typename
+    ... on AccessUrl {
+      origin
+      url
+      loginRequired
+      status
+    }
+    ... on InfomediaService {
+      id
+    }
+    ... on InterLibraryLoan {
+      loanIsPossible
+    }
+    ... on Ereol {
+      origin
+      url
+      canAlwaysBeLoaned
+    }
+    ... on DigitalArticleService {
+      issn
+    }
+  }
+  shelfmark {
+    postfix
+    shelfmark
+  }
+  workYear {
+    year
+  }
+  catalogueCodes {
+    nationalBibliography
+    otherCatalogues
+  }
+}
+fragment WithLanguages on Manifestation {
+  languages {
+    main {
+      display
+      isoCode
+    }
+  }
+}
