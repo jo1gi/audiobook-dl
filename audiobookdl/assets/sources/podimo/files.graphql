@@ -1,1 +1,6 @@
-query ShortLivedAudiobookMediaUrlQuery($id: String!){audiobookAudioById(audiobookId: $id) {url __typename}}
+query ShortLivedAudiobookMediaUrlQuery($id: String!) {
+  audiobookAudioById(audiobookId: $id) {
+    url
+    __typename
+  }
+}

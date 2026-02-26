@@ -57,7 +57,7 @@ def get_stream_files(self, url: str, headers={}, extension=None) -> List[Audiobo
             ext = extension,
             headers = headers
         )
-        if not seg.key.method == "NONE":
+        if hasattr(seg.key, "method") and not seg.key.method == "NONE":
             current.encryption_method = AESEncryption(
                 key = self._get_page(seg.key.absolute_uri, headers=headers),
                 iv = int(seg.key.iv, 0).to_bytes(16, byteorder='big')

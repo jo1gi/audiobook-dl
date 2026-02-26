@@ -44,6 +44,7 @@ python3.pkgs.buildPythonApplication {
     rich
     tomli
     urllib3
+    dateutils
   ];
 
   meta = {

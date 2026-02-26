@@ -18,6 +18,7 @@ mkShell {
       attrs
       pycountry
       urllib3
+      dateutils
 
       # Test
       pytest

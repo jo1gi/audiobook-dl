@@ -1,1 +1,6 @@
-query ShortLivedPodcastMediaUrlQuery($podcastId: String!, $episodeId: String!) {  podcastEpisodeStreamMediaById(podcastId: $podcastId, episodeId: $episodeId) {    url    __typename  }}
+query ShortLivedPodcastMediaUrlQuery($podcastId: String!, $episodeId: String!) {
+  podcastEpisodeAudioById(podcastId: $podcastId, episodeId: $episodeId) {
+    url
+    __typename
+  }
+}

@@ -43,7 +43,7 @@ class PodimoSource(Source[dict]):
         :param variables: Variables for query
         :returns: Response from server
         """
-        return self._session.post(
+        response = self._session.post(
             "https://podimo.com/graphql",
             headers = {"User-Agent": "JS GraphQL"},
             json = {
@@ -52,6 +52,7 @@ class PodimoSource(Source[dict]):
                 "variables": variables
             }
         )
+        return response
 
 
     @staticmethod
@@ -64,14 +65,24 @@ class PodimoSource(Source[dict]):
         if re.match(self.match[0], url):
             return self.download_audiobook(url)
         if re.match(self.match[1], url):
-            return self.download_podcast(url)
+            podcast_id = self.extract_id_from_url(url)
+            return self.download_podcast(podcast_id)
         else:
             raise NoSourceFound
 
 
-    def download_podcast(self, url: str) -> Series[dict]:
+    UUID_REGEX = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8}"
+
+
+    def extract_id_from_info_page(self, url: str) -> str:
+        """Extract podcast id from information page"""
+        return self.find_in_page(url, fr'\\"id\\":\\"({self.UUID_REGEX})\"')
+
+
+
+    def download_podcast(self, podcast_id: str) -> Series[dict]:
         """Download podcast info from Podimo"""
-        podcast_id = self.extract_id_from_url(url)
+        logging.debug(f"{podcast_id=}")
         metadata = self.download_podcast_metadata(podcast_id)
         episodes = self.download_podcast_episode_ids(podcast_id)
         return Series(
@@ -96,7 +107,7 @@ class PodimoSource(Source[dict]):
             operation_name = "PodcastEpisodesResultsQuery",
             query = "podcast_episodes",
             variables = {
-                "limit": 1000,
+                "limit": 100,
                 "offset": 0,
                 "podcastId": podcast_id,
                 "sorting": "PUBLISHED_ASCENDING"
@@ -136,7 +147,7 @@ class PodimoSource(Source[dict]):
                 "podcastId": podcast_id
             }
         )
-        file_url = response.json()["data"]["podcastEpisodeStreamMediaById"]["url"]
+        file_url = response.json()["data"]["podcastEpisodeAudioById"]["url"]
         if "m3u8" in file_url:
             audio_url = file_url.replace("main.m3u8", "stream_audio_high/stream.m3u8")
             return self.get_stream_files(audio_url)
@@ -176,14 +187,11 @@ class PodimoSource(Source[dict]):
 
 
     def get_audiobook_files(self, audiobook_id: str) -> List[AudiobookFile]:
-        response = self._session.post(
-            "https://open.podimo.com/graphql?queryName=ShortLivedAudiobookMediaUrlQuery",
-            json = {
-                "operationName": "ShortLivedAudiobookMediaUrlQuery",
-                "query": read_asset_file("assets/sources/podimo/files.graphql"),
-                "variables": {
-                    "id": audiobook_id
-                }
+        response = self.graphql_request(
+            operation_name = "ShortLivedAudiobookMediaUrlQuery",
+            query = "files",
+            variables = {
+                "id": audiobook_id
             }
         )
         audiobook_url = response.json()["data"]["audiobookAudioById"]["url"]
@@ -191,14 +199,11 @@ class PodimoSource(Source[dict]):
 
 
     def download_book_info(self, audiobook_id: str) -> dict:
-        response = self._session.post(
-            "https://open.podimo.com/graphql?queryName=AudiobookResultsQuery",
-            json = {
-                "operationName": "AudiobookResultsQuery",
-                "query": read_asset_file("assets/sources/podimo/book_info.graphql"),
-                "variables": {
-                    "id": audiobook_id
-                }
+        response = self.graphql_request(
+            operation_name = "AudiobookResultsQuery",
+            query = "book_info",
+            variables = {
+                "id": audiobook_id
             }
         )
         return response.json()["data"]["audiobookById"]
