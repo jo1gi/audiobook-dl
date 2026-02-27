@@ -1,18 +1,21 @@
 from .source import Source
 from audiobookdl import logging
-from audiobookdl.exceptions import NoSourceFound
+from audiobookdl.exceptions import NoSourceFound, DataNotPresent
 from audiobookdl.utils import read_asset_file
 from audiobookdl.utils.audiobook import Audiobook, AudiobookFile, AudiobookMetadata, Cover, Series, BookId, Result
+from audiobookdl.utils import http
 
 import re
 from typing import List
 import requests
 from requests import Response
+from urllib3.util import parse_url
 
 class PodimoSource(Source[dict]):
     match = [
         "https://open.podimo.com/audiobook/[^/]+",
         "https://open.podimo.com/podcast/[^/]+",
+        "https://share.podimo.com/s/[^/]+",
     ]
     names = [ "Podimo" ]
     _authentication_methods = [
@@ -63,10 +66,20 @@ class PodimoSource(Source[dict]):
 
     def download(self, url: str) -> Result:
         if re.match(self.match[0], url):
-            return self.download_audiobook(url)
+            audiobook_id = self.extract_id_from_url(url)
+            logging.debug(f"{audiobook_id=}")
+            return self.download_audiobook(audiobook_id)
         if re.match(self.match[1], url):
             podcast_id = self.extract_id_from_url(url)
             return self.download_podcast(podcast_id)
+        if re.match(self.match[2], url):
+            kind, id = self.retrieve_id_from_share_link(url)
+            logging.debug(f"{kind=} {id=}")
+            if kind == "audiobook":
+                return self.download_audiobook(id)
+            if kind == "podcast":
+                return self.download_podcast(id)
+            raise DataNotPresent
         else:
             raise NoSourceFound
 
@@ -77,6 +90,24 @@ class PodimoSource(Source[dict]):
     def extract_id_from_info_page(self, url: str) -> str:
         """Extract podcast id from information page"""
         return self.find_in_page(url, fr'\\"id\\":\\"({self.UUID_REGEX})\"')
+
+
+    def retrieve_id_from_share_link(self, url: str) -> tuple[str, str]:
+        """
+        Retrieve the id of an item from a share link.
+
+        :param url: the share link url
+        :returns: the id of the shared item
+        """
+        url_with_id = http.redirect_of(url, amount = 2)
+        if url_with_id is None:
+            # describe why
+            raise DataNotPresent
+        parsed = parse_url(url_with_id)
+        if parsed.path is None:
+            raise DataNotPresent
+        path = parsed.path.split("/")
+        return path[-2], path[-1]
 
 
 
@@ -172,9 +203,7 @@ class PodimoSource(Source[dict]):
         return metadata
 
 
-    def download_audiobook(self, url: str) -> Audiobook:
-        audiobook_id = self.extract_id_from_url(url)
-        logging.debug(f"{audiobook_id=}")
+    def download_audiobook(self, audiobook_id: str) -> Audiobook:
         book_info = self.download_book_info(audiobook_id)
         metadata = self.format_audiobook_metadata(book_info)
         return Audiobook(
