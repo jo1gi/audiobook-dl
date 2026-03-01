@@ -5,6 +5,14 @@
 
 CLI tool for downloading audiobooks from online sources.
 
+## Maintainers
+I'm currently looking for maintainers to support the different services. I
+don't use all the services and have a hard time keeping up the support.
+
+If you are interested, please contact me on:
+- Matrix: jo1gi:matrix.org
+- XMPP: verdantislet@movim.eu
+
 ## Supported Services
 audiobook-dl currently supports downloading from the following sources:
 - [audiobooks.com](https://audiobooks.com)
