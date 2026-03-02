@@ -12,7 +12,7 @@ LOCATION_DEFAULTS = {
     'artist': 'NA',
 }
 
-COMBINE_CHUNK_SIZE = 500
+COMBINE_CHUNK_SIZE = 100
 
 def gen_output_filename(booktitle: str, file: Mapping[str, str], template: str) -> str:
     """Generates an output filename based on different attributes of the

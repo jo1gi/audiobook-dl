@@ -60,7 +60,7 @@ audiobook-dl uses Netscape cookie files for authentication in most cases. I use
 from the browser.
 
 Cookies can be placed in current dir as `cookies.txt` or be given with the
-`--cookie` argument.
+`--cookies` argument.
 
 ### Login
 [Some sources](./supported_sites.md) support authentication through login with
@@ -76,21 +76,29 @@ information page**
 
 ## Arguments
 
-| Argument          | Value                                                             |
-|-------------------|-------------------------------------------------------------------|
-| url               | The url of the page where you listen to the audiobook             |
-| -c/--cookie       | Path to a Netscape cookie file                                    |
-| --combine         | Combine all output files into a single file (requires ffmpeg)     |
-| --cover           | Only download cover                                               |
-| -d/--debug        | Print debug information                                           |
-| -o/--output       | Output location                                                   |
-| --remove-chars    | List of characters that will be removed from output path          |
-| --no-chapters     | Don't include chapters in output file                             |
-| --output-format   | Output file format                                                |
-| --verbose-ffmpeg | Show ffmpeg output in terminal                                    |
-| --username        | Username to source (Required when using login)                    |
-| --password        | Password to source (Required when using login)                    |
-| --library         | Specific library on service (Sometimes required when using login) |
+| Argument                 | Value | Example |
+|--------------------------|-------|---------|
+| `urls`                   | One or more urls to download from | `audiobook-dl <url1> <url2>` |
+| `-v`, `--version`        | Print version and exit | `audiobook-dl --version` |
+| `-c`, `--cookies`        | Path to a Netscape cookie file | `audiobook-dl -c cookies.txt <url>` |
+| `--combine`              | Combine all output files into a single file (requires ffmpeg) | `audiobook-dl --combine <url>` |
+| `-o`, `--output`         | Output location/template (default: `{title}`) | `audiobook-dl -o "C:\Audiobooks\{title}" <url>` |
+| `--remove-chars`         | List of characters that will be removed from output path | `audiobook-dl --remove-chars "[]()" <url>` |
+| `-d`, `--debug`          | Print debug information | `audiobook-dl --debug <url>` |
+| `-q`, `--quiet`          | Quiet mode | `audiobook-dl --quiet <url>` |
+| `--print-output`         | Print the output path instead of downloading | `audiobook-dl --print-output <url>` |
+| `--cover`                | Download only cover | `audiobook-dl --cover <url>` |
+| `--no-chapters`          | Don't include chapters in output file | `audiobook-dl --no-chapters <url>` |
+| `-f`, `--output-format`  | Output file format | `audiobook-dl -f mp3 <url>` |
+| `--verbose-ffmpeg`       | Show ffmpeg output in terminal | `audiobook-dl --verbose-ffmpeg --combine <url>` |
+| `--input-file`           | File with one url per line | `audiobook-dl --input-file urls.txt` |
+| `--username`             | Username to source (required when using login) | `audiobook-dl --username "me@example.com" <url>` |
+| `--password`             | Password to source (required when using login) | `audiobook-dl --password "secret" <url>` |
+| `--library`              | Specific library on service (sometimes required when using login) | `audiobook-dl --library dk <url>` |
+| `--skip-downloaded`      | Skip download if output file/folder already exists | `audiobook-dl --skip-downloaded <url>` |
+| `--database_directory`   | Directory for source database/cache | `audiobook-dl --database_directory "C:\audiobook-db" <url>` |
+| `--write-json-metadata`  | Write metadata in a separate `.json` file | `audiobook-dl --write-json-metadata <url>` |
+| `--config`               | Alternative location of config file | `audiobook-dl --config "C:\path\audiobook-dl.toml" <url>` |
 
 ## Output
 By default, audiobook-dl saves all audiobooks to `{title}` relative to the
@@ -98,12 +106,29 @@ current path. This can be changed with the `--output` argument. Path can be
 customized by audiobook with the following fields:
 - `title`
 - `author`
-- `series`
 - `narrator`
+- `genre`
+- `series`
+- `series_order`
+- `publisher`
+- `release_date`
+- `language`
+- `isbn`
+- `description`
+- `scrape_url`
+- `album` (default: `NA`)
+- `artist` (default: `NA`)
 
 Not all fields are available for all audiobooks.
 
 The file extension can be changed with the `--output-format` argument.
+
+### Output examples
+```shell
+audiobook-dl -o "{title}" <url>
+audiobook-dl -o "C:\Audiobooks\{author}\{title}" <url>
+audiobook-dl -o "C:\Audiobooks\{series}\{series_order} - {title}" <url>
+```
 
 ## Configuration
 audiobook-dl can be configured using a configuration file, which should be placed at:
