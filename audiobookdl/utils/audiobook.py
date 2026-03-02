@@ -1,5 +1,5 @@
 from datetime import date
-import requests
+from curl_cffi import requests
 from typing import Dict, Generic, List, Optional, Union, Sequence, Tuple, TypeVar, Any, MutableMapping
 import json
 from attrs import define, Factory
