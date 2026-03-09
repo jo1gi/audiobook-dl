@@ -188,7 +188,7 @@ class NextorySource(Source):
             # TODO Handle redirect correctly
             media_url = file["uri"].replace("master", "media")
             files.extend(
-                self.get_stream_files(media_url, headers=self._session.headers)
+                self.get_stream_files(media_url, headers=self._session.headers, extension="aac")
             )
         return files
 
@@ -203,11 +203,18 @@ class NextorySource(Source):
 
 
     def get_chapters(self, audio_data: dict) -> List[Chapter]:
+        # Some books contain duplicate or out-of-order start offsets.
+        # Normalize starts so chapter metadata stays valid for ffmpeg.
+        starts = []
+        for file in audio_data["files"]:
+            try:
+                starts.append(int(file["start_at"]))
+            except (TypeError, ValueError):
+                continue
+        starts = sorted(set(starts))
         chapters = []
-        for index, file in enumerate(audio_data["files"]):
-            chapters.append(
-                Chapter(title = f"Chapter {index+1}", start = file["start_at"])
-            )
+        for index, start in enumerate(starts):
+            chapters.append(Chapter(title=f"Chapter {index+1}", start=start))
         return chapters
 
 
