@@ -44,6 +44,9 @@ audiobook-dl = "audiobookdl.__main__:main"
 [tool.setuptools.dynamic]
 version = {attr = "audiobookdl.__version__"}
 
+[tool.setuptools.packages.find]
+include = ["audiobookdl*"]
+
 [tool.setuptools.package-data]
 audiobookdl = ["*.txt"]
 
