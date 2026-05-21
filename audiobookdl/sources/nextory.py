@@ -1,13 +1,14 @@
 from .source import Source
-from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata, Cover, Audiobook, logging
-from audiobookdl.exceptions import DataNotPresent, AudiobookDLException, UserNotAuthorized, GenericAudiobookDLException
-from typing import Any, Optional, Dict, List
+from audiobookdl import AudiobookFile, Chapter, AudiobookMetadata, Cover, Audiobook, BookId, Result, Series, logging
+from audiobookdl.exceptions import DataNotPresent, AudiobookDLException, BookHasNoAudiobook, UserNotAuthorized, GenericAudiobookDLException
+from typing import Any, Optional, Dict, List, Union
 
-from datetime import date
+from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 import hashlib
 import uuid
 import platform
+import pycountry
 
 
 def calculate_checksum(username: str, password: str, salt: str) -> str:
@@ -33,6 +34,10 @@ class NextorySource(Source):
     ]
     APP_ID = "200"
     LOCALE = "en_GB"
+
+    # Cache for the want-to-read list so we don't refetch it per book
+    # when downloading the whole list as a Series.
+    _wantlist_cache: Optional[List[dict]] = None
 
 
     @staticmethod
@@ -110,17 +115,56 @@ class NextorySource(Source):
         logging.debug(f"{profile_token=}")
 
 
-    def download(self, url) -> Audiobook:
+    def download(self, url) -> Result:
+        if self._is_wantlist_url(url):
+            return self._download_wantlist()
         book_id = int(url.split("/")[-1].split("-")[-1])
-        want_to_read_list = self.download_want_to_read_list()
-        book_info = self.find_book_info(book_id, want_to_read_list)
+        return self.download_from_id(book_id)
+
+
+    def download_from_id(self, book_id: int) -> Audiobook:
+        book_info = self.find_book_info(book_id, self._get_wantlist())
+        logging.debug(f"nextory book_info keys: {sorted(book_info.keys())}")
         audio_data = self.download_audio_data(book_info)
+        if "files" not in audio_data:
+            logging.debug(f"nextory audio_data without 'files': {audio_data!r}")
+            raise BookHasNoAudiobook
         return Audiobook(
             session = self._session,
             files = self.get_files(audio_data),
             metadata = self.get_metadata(book_info),
             cover = self.get_cover(book_info),
             chapters = self.get_chapters(audio_data)
+        )
+
+
+    @staticmethod
+    def _is_wantlist_url(url: str) -> bool:
+        """Match URLs that refer to the user's want-to-read list rather
+        than a specific book, e.g. ``https://nextory.com/se/want-to-read``."""
+        return "want-to-read" in url.lower()
+
+
+    def _get_wantlist(self) -> List[dict]:
+        """Return the want-to-read list, fetching it at most once per source."""
+        if self._wantlist_cache is None:
+            self._wantlist_cache = self.download_want_to_read_list()
+        return self._wantlist_cache
+
+
+    def _download_wantlist(self) -> Series[int]:
+        """Build a Series of every audiobook currently on the want-to-read list."""
+        books: List[Union[BookId[int], Audiobook]] = []
+        for book_info in self._get_wantlist():
+            try:
+                self.find_format_data(book_info)
+            except DataNotPresent:
+                # No audio format (ebook-only entry) — skip silently.
+                continue
+            books.append(BookId(book_info["id"]))
+        return Series(
+            title = "Nextory want to read",
+            books = books,
         )
 
 
@@ -188,18 +232,76 @@ class NextorySource(Source):
             # TODO Handle redirect correctly
             media_url = file["uri"].replace("master", "media")
             files.extend(
-                self.get_stream_files(media_url, headers=self._session.headers)
+                self.get_stream_files(
+                    media_url,
+                    headers=self._session.headers,
+                    expected_content_type=("audio/aac", "audio/x-aac", "video/MP2T"),
+                )
             )
         return files
 
 
     def get_metadata(self, book_info) -> AudiobookMetadata:
-        return AudiobookMetadata(
+        series_name, series_order = self._extract_series_metadata(book_info)
+        metadata = AudiobookMetadata(
             title = book_info["title"],
             authors = [author["name"] for author in book_info["authors"]],
             narrators = [narrator["name"] for narrator in book_info["narrators"]],
-            description = book_info["description_full"]
+            description = book_info["description_full"],
+            series = series_name,
+            series_order = series_order,
         )
+        # Language sits at the book level as an ISO 639-1 code (e.g. "sv").
+        lang_code = book_info.get("language")
+        if lang_code:
+            language = pycountry.languages.get(alpha_2=lang_code)
+            if language is not None:
+                metadata.language = language
+        # Publisher, ISBN, and publication date live on the audio format.
+        try:
+            audio_format = self.find_format_data(book_info)
+        except DataNotPresent:
+            audio_format = None
+        if audio_format:
+            publisher = audio_format.get("publisher")
+            if isinstance(publisher, dict):
+                publisher_name = publisher.get("name")
+                if publisher_name:
+                    metadata.publisher = publisher_name
+            isbn = audio_format.get("isbn")
+            if isbn:
+                metadata.isbn = str(isbn)
+            pub_date = audio_format.get("publication_date")
+            if pub_date:
+                try:
+                    metadata.release_date = datetime.strptime(pub_date, "%Y-%m-%d").date()
+                except (ValueError, TypeError):
+                    pass
+        return metadata
+
+
+    @staticmethod
+    def _extract_series_metadata(book_info: dict) -> tuple:
+        """Pull series name and position from Nextory's book payload.
+
+        The series object only carries ``name`` and an internal ``vol``
+        grouping (always 0 in observed data). The actual position within
+        the series lives on the top-level ``volume`` field of the book.
+        """
+        series = book_info.get("series")
+        if not series:
+            return None, None
+        name = series.get("name")
+        position = None
+        raw_volume = book_info.get("volume")
+        if raw_volume is not None:
+            try:
+                volume = int(raw_volume)
+                if volume > 0:
+                    position = volume
+            except (TypeError, ValueError):
+                pass
+        return name, position
 
 
     def get_chapters(self, audio_data: dict) -> List[Chapter]:
