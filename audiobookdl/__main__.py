@@ -1,5 +1,5 @@
 from audiobookdl import Source, logging, args, output, __version__
-from .exceptions import AudiobookDLException, BookNotReleased
+from .exceptions import AudiobookDLException, BookHasNoAudiobook, BookNotReleased
 from .utils.audiobook import Audiobook, Series
 from .output.download import download
 from .sources import find_compatible_source
@@ -70,6 +70,16 @@ def process_url(url: str, options, config: Config):
                 process_audiobook(source, audiobook, options)
             except BookNotReleased:
                 logging.log(f"Skipped [blue]{book}[/] (not released)")
+                continue
+            except BookHasNoAudiobook:
+                logging.log(f"Skipped [blue]{book}[/] (no audiobook available)")
+                continue
+            except AudiobookDLException as e:
+                # Don't let a single broken book take down a 200+ book run.
+                # Surface the underlying error and move on.
+                logging.log(f"Skipped [blue]{book}[/] ({e.error_description})")
+                if logging.debug_mode:
+                    logging.print_traceback()
                 continue
 
 
