@@ -36,16 +36,36 @@ def combine_audiofiles(filepaths: Sequence[str], tmp_dir: str, output_path: str)
     shutil.move(filepaths[0], tmp_input)
     for i in range(1, len(filepaths), COMBINE_CHUNK_SIZE):
         inputs = "|".join(filepaths[i:i+COMBINE_CHUNK_SIZE])
-        subprocess.run(
+        concat_input = f"concat:{tmp_input}|{inputs}"
+        result = subprocess.run(
             [
-                "ffmpeg",
-                "-i", f"concat:{tmp_input}|{inputs}",
+                "ffmpeg", "-y",
+                "-i", concat_input,
                 "-safe", "0",
                 "-codec", "copy",
                 tmp_output
             ],
             capture_output=not logging.ffmpeg_output,
         )
+        # Fall back to re-encoding when stream copy fails — some upstream
+        # AAC variants (e.g. multiple RDBs per frame with CRC) trip the
+        # aac_adtstoasc bitstream filter on copy into MP4 containers.
+        produced_output = os.path.exists(tmp_output) and os.path.getsize(tmp_output) > 0
+        if result.returncode != 0 or not produced_output:
+            logging.debug("Combine with codec copy failed, retrying with re-encode")
+            if os.path.exists(tmp_output):
+                os.remove(tmp_output)
+            subprocess.run(
+                [
+                    "ffmpeg", "-y",
+                    "-i", concat_input,
+                    "-safe", "0",
+                    "-c:a", "aac",
+                    "-b:a", "128k",
+                    tmp_output
+                ],
+                capture_output=not logging.ffmpeg_output,
+            )
         os.remove(tmp_input)
         shutil.move(tmp_output, tmp_input)
     shutil.move(tmp_input, output_path)
