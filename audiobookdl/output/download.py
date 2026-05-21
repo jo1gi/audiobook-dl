@@ -186,15 +186,29 @@ def download_file(args: Tuple[Audiobook, str, int, Any]) -> str:
     request = audiobook.session.get(file.url, headers=file.headers, stream=True)
     content_type: Optional[str] =  request.headers.get("Content-type", None)
 
-    invalid_content_type = file.expected_content_type and file.expected_content_type != content_type
+    expected = file.expected_content_type
+    if isinstance(expected, (list, tuple, set)):
+        invalid_content_type = content_type not in expected
+    else:
+        invalid_content_type = expected and expected != content_type
     invalid_status_code = file.expected_status_code and file.expected_status_code != request.status_code
     if invalid_content_type or invalid_status_code:
+        # Bodies for failed downloads can be raw binary audio; passing those
+        # straight to rich.console.print blows up on stray "[/...]" bytes.
+        # Truncate, decode best-effort, and escape any markup.
+        from rich.markup import escape as _escape
+        raw_body = request.content[:512]
+        try:
+            body_text = raw_body.decode("utf-8")
+        except UnicodeDecodeError:
+            body_text = repr(raw_body)
+        safe_body = _escape(body_text)
         raise DownloadError(
             status_code=request.status_code,
             content_type=content_type,
             expected_status_code=file.expected_status_code,
             expected_content_type=file.expected_content_type,
-            body = request.content,
+            body = safe_body,
             url = file.url
         )
 
