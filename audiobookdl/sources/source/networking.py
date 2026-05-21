@@ -45,7 +45,7 @@ def get_json(self, url: str, **kwargs) -> dict:
     return json.loads(resp.decode('utf8'))
 
 
-def get_stream_files(self, url: str, headers={}, extension=None) -> List[AudiobookFile]:
+def get_stream_files(self, url: str, headers={}, extension=None, expected_content_type="application/octet-stream") -> List[AudiobookFile]:
     """Creates a list of audio files from an m3u8 file"""
     playlist = m3u8.load(url, headers=headers)
     files = []
@@ -56,7 +56,7 @@ def get_stream_files(self, url: str, headers={}, extension=None) -> List[Audiobo
             url = seg.absolute_uri,
             ext = extension,
             headers = headers,
-            expected_content_type = "application/octet-stream"
+            expected_content_type = expected_content_type
         )
         if hasattr(seg.key, "method") and not seg.key.method == "NONE":
             current.encryption_method = AESEncryption(
