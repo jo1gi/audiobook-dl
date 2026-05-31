@@ -6,6 +6,7 @@ from audiobookdl.utils.audiobook import Audiobook, AudiobookFile, AudiobookMetad
 from audiobookdl.utils import http
 
 import re
+from datetime import datetime
 from typing import List
 import requests
 from requests import Response
@@ -198,6 +199,12 @@ class PodimoSource(Source[dict]):
             series = episode_info.get("podcastName"),
             description = episode_info.get("description"),
         )
+        pub = episode_info.get("publishDatetime")
+        if pub:
+            # Podimo returns ISO 8601, sometimes with a trailing Z
+            metadata.release_date = datetime.fromisoformat(
+                pub.replace("Z", "+00:00")
+            ).date()
         if episode_info["authorName"]:
             metadata.add_author(episode_info["authorName"])
         return metadata
