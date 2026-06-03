@@ -4,6 +4,7 @@ from audiobookdl.utils.audiobook import AESEncryption
 from typing import Dict, List
 import json
 import os
+import urllib.error
 import m3u8
 import requests
 
@@ -47,7 +48,15 @@ def get_json(self, url: str, **kwargs) -> dict:
 
 def get_stream_files(self, url: str, headers={}, extension=None, expected_content_type="application/octet-stream") -> List[AudiobookFile]:
     """Creates a list of audio files from an m3u8 file"""
-    playlist = m3u8.load(url, headers=headers)
+    # Translate m3u8 fetch failures into AudiobookDLException so series runs can skip the book
+    try:
+        playlist = m3u8.load(url, headers=headers)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            raise exceptions.BookHasNoAudiobook from e
+        raise exceptions.RequestError from e
+    except urllib.error.URLError as e:
+        raise exceptions.RequestError from e
     files = []
     for _, seg in enumerate(playlist.segments):
         if extension is None:
