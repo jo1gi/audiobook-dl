@@ -149,9 +149,11 @@ class AudiobookMetadata:
         if self.scrape_url:
             result["scrape_url"] = self.scrape_url
         if self.series:
-            result["series"] = self.series
-        if self.series_order:
-            result["series_order"] = self.series_order
+            # Audiobookshelf expects series as a string array, e.g. ["Name #1"]
+            if self.series_order is not None:
+                result["series"] = [f"{self.series} #{self.series_order}"]
+            else:
+                result["series"] = [self.series]
         if self.language:
             result["language"] = self.language
         if self.description:
