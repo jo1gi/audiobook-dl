@@ -193,9 +193,7 @@ def download_file(args: Tuple[Audiobook, str, int, Any]) -> str:
         invalid_content_type = expected and expected != content_type
     invalid_status_code = file.expected_status_code and file.expected_status_code != request.status_code
     if invalid_content_type or invalid_status_code:
-        # Bodies for failed downloads can be raw binary audio; passing those
-        # straight to rich.console.print blows up on stray "[/...]" bytes.
-        # Truncate, decode best-effort, and escape any markup.
+        # Failed-download bodies can be raw audio bytes: truncate + escape before rich print
         from rich.markup import escape as _escape
         raw_body = request.content[:512]
         try:

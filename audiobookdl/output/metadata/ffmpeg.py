@@ -64,10 +64,7 @@ def add_chapters_ffmpeg(filepath: str, chapters: Sequence[Chapter]):
                  TMP_MEDIA_FILE],
                 capture_output = not logging.ffmpeg_output
             )
-        # If ffmpeg still failed to produce output, leave the original
-        # file intact (without chapters) rather than crashing the whole
-        # run. The book is still playable, just without embedded chapter
-        # markers.
+        # ffmpeg produced no output: keep the chapterless original instead of crashing the run
         if not (os.path.exists(TMP_MEDIA_FILE) and os.path.getsize(TMP_MEDIA_FILE) > 0):
             logging.log("Could not embed chapters; leaving file as-is")
             return

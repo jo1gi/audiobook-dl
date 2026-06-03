@@ -47,9 +47,7 @@ def combine_audiofiles(filepaths: Sequence[str], tmp_dir: str, output_path: str)
             ],
             capture_output=not logging.ffmpeg_output,
         )
-        # Fall back to re-encoding when stream copy fails — some upstream
-        # AAC variants (e.g. multiple RDBs per frame with CRC) trip the
-        # aac_adtstoasc bitstream filter on copy into MP4 containers.
+        # Re-encode when stream copy fails: some AAC variants trip aac_adtstoasc on copy into MP4
         produced_output = os.path.exists(tmp_output) and os.path.getsize(tmp_output) > 0
         if result.returncode != 0 or not produced_output:
             logging.debug("Combine with codec copy failed, retrying with re-encode")
