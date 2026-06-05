@@ -31,6 +31,9 @@ def create_tmp_chapter_file(filepath: str, chapters: Sequence[Chapter]) -> str:
     return result
 
 def add_chapters_ffmpeg(filepath: str, chapters: Sequence[Chapter]):
+    if MutagenFile(filepath) is None:
+        logging.debug(f"Skipping chapters: {filepath} is a container without chapter support (e.g. raw AAC)")
+        return
     try:
         with open(TMP_CHAPTER_FILE, "w") as f:
             f.write(create_tmp_chapter_file(filepath, chapters))
@@ -40,7 +43,7 @@ def add_chapters_ffmpeg(filepath: str, chapters: Sequence[Chapter]):
              "-i", TMP_CHAPTER_FILE,
              "-map_chapters", "1",
              "-c", "copy",
-             "-map", "0",
+             "-map", "0:a",
              "-metadata:s:a:0", "title=",
              TMP_MEDIA_FILE],
             capture_output = not logging.ffmpeg_output
@@ -59,7 +62,7 @@ def add_chapters_ffmpeg(filepath: str, chapters: Sequence[Chapter]):
                  "-map_chapters", "1",
                  "-c:a", "aac",
                  "-b:a", "128k",
-                 "-map", "0",
+                 "-map", "0:a",
                  "-metadata:s:a:0", "title=",
                  TMP_MEDIA_FILE],
                 capture_output = not logging.ffmpeg_output
