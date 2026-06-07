@@ -46,7 +46,7 @@ def add_chapters_ffmpeg(filepath: str, chapters: Sequence[Chapter]):
             f.write(create_tmp_chapter_file(filepath, chapters))
         result = subprocess.run(
             ["ffmpeg", "-y",
-             "-i", filepath,
+             "-i", f"file:{filepath}",
              "-i", TMP_CHAPTER_FILE,
              "-map_chapters", "1",
              "-c", "copy",
@@ -64,7 +64,7 @@ def add_chapters_ffmpeg(filepath: str, chapters: Sequence[Chapter]):
                 os.remove(TMP_MEDIA_FILE)
             subprocess.run(
                 ["ffmpeg", "-y",
-                 "-i", filepath,
+                 "-i", f"file:{filepath}",
                  "-i", TMP_CHAPTER_FILE,
                  "-map_chapters", "1",
                  "-c:a", "aac",

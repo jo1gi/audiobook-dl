@@ -165,14 +165,15 @@ def convert_output(filenames: Sequence[str], output_format: str):
         path_without_ext, old_ext = os.path.splitext(old_path)
         new_path = f"{path_without_ext}.{output_format}"
         if not output_format == old_ext:
+            # file: prefix so ffmpeg doesn't read a ':' in the filename as a protocol
             if can_copy_codec(old_ext, output_format):
                 subprocess.run(
-                    ["ffmpeg", "-i", old_path, "-codec", "copy", new_path],
+                    ["ffmpeg", "-i", f"file:{old_path}", "-codec", "copy", f"file:{new_path}"],
                     capture_output=not logging.ffmpeg_output
                 )
             else:
                 subprocess.run(
-                    ["ffmpeg", "-i", old_path, new_path],
+                    ["ffmpeg", "-i", f"file:{old_path}", f"file:{new_path}"],
                     capture_output=not logging.ffmpeg_output
                 )
             os.remove(old_path)
