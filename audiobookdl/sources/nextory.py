@@ -228,12 +228,9 @@ class NextorySource(Source):
     def get_files(self, audio_data) -> List[AudiobookFile]:
         files = []
         for file in audio_data["files"]:
-            # master url redirects to media url
-            # TODO Handle redirect correctly
-            media_url = file["uri"].replace("master", "media")
             files.extend(
                 self.get_stream_files(
-                    media_url,
+                    file["uri"],
                     headers=self._session.headers,
                     expected_content_type=("audio/aac", "audio/x-aac", "video/MP2T"),
                 )

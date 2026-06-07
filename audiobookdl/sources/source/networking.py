@@ -57,6 +57,13 @@ def get_stream_files(self, url: str, headers={}, extension=None, expected_conten
         raise exceptions.RequestError from e
     except urllib.error.URLError as e:
         raise exceptions.RequestError from e
+    # A master playlist only lists variant media playlists; follow the first so
+    # callers can pass the master URL directly instead of guessing the media URL.
+    if playlist.is_variant and playlist.playlists:
+        try:
+            playlist = m3u8.load(playlist.playlists[0].absolute_uri, headers=headers)
+        except (urllib.error.HTTPError, urllib.error.URLError) as e:
+            raise exceptions.RequestError from e
     files = []
     for _, seg in enumerate(playlist.segments):
         if extension is None:
