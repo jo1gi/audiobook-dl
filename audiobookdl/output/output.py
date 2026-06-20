@@ -5,6 +5,7 @@ import os
 import shutil
 import platform
 import subprocess
+from multiprocessing.pool import ThreadPool
 from typing import Sequence, Mapping
 
 LOCATION_DEFAULTS = {
@@ -12,7 +13,10 @@ LOCATION_DEFAULTS = {
     'artist': 'NA',
 }
 
-COMBINE_CHUNK_SIZE = 500
+# Number of parallel ffmpeg remux processes when preparing files for combining
+COMBINE_REMUX_THREADS = 16
+# Containers that need the ADTS-to-ASC bitstream filter for raw AAC streams
+MP4_CONTAINERS = ("mp4", "m4a", "m4b", "mov")
 
 def gen_output_filename(booktitle: str, file: Mapping[str, str], template: str) -> str:
     """Generates an output filename based on different attributes of the
@@ -20,6 +24,43 @@ def gen_output_filename(booktitle: str, file: Mapping[str, str], template: str) 
     arguments = {**file, **{"booktitle": booktitle}}
     filename = template.format(**arguments)
     return _fix_output(filename)
+
+
+def _ffmpeg_audio_codec(path: str) -> str:
+    """Returns the codec name of the first audio stream in `path` (empty on failure)"""
+    result = subprocess.run(
+        [
+            "ffprobe", "-v", "error",
+            "-select_streams", "a:0",
+            "-show_entries", "stream=codec_name",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            path,
+        ],
+        capture_output=True, text=True,
+    )
+    return result.stdout.strip()
+
+
+def _remux_to_mpegts(source: str, ts_path: str) -> bool:
+    """
+    Remux a single audio file into an MPEG-TS container.
+
+    Concatenating raw segments directly (e.g. ADTS-AAC) desyncs the decoder at
+    segment boundaries and silently drops most of the audio. Remuxing each
+    segment to MPEG-TS first gives every part clean framing and timestamps, so
+    the following concatenation is lossless.
+
+    :returns: `True` if a non-empty file was produced
+    """
+    result = subprocess.run(
+        ["ffmpeg", "-y", "-i", source, "-c", "copy", "-f", "mpegts", ts_path],
+        capture_output=not logging.ffmpeg_output,
+    )
+    if os.path.exists(ts_path) and os.path.getsize(ts_path) > 0:
+        return True
+    if result.stderr:
+        logging.debug(result.stderr.decode("utf8", "replace"))
+    return False
 
 
 def combine_audiofiles(filepaths: Sequence[str], tmp_dir: str, output_path: str):
@@ -31,43 +72,41 @@ def combine_audiofiles(filepaths: Sequence[str], tmp_dir: str, output_path: str)
     :param output_path: Path of combined audio files
     """
     output_extension = get_extension(output_path)
-    tmp_input = os.path.join(tmp_dir, f"input_file.{output_extension}")
-    tmp_output = os.path.join(tmp_dir, f"output_file.{output_extension}")
-    shutil.move(filepaths[0], tmp_input)
-    for i in range(1, len(filepaths), COMBINE_CHUNK_SIZE):
-        inputs = "|".join(filepaths[i:i+COMBINE_CHUNK_SIZE])
-        concat_input = f"concat:{tmp_input}|{inputs}"
-        result = subprocess.run(
-            [
-                "ffmpeg", "-y",
-                "-i", concat_input,
-                "-safe", "0",
-                "-codec", "copy",
-                tmp_output
-            ],
-            capture_output=not logging.ffmpeg_output,
-        )
-        # Re-encode when stream copy fails: some AAC variants trip aac_adtstoasc on copy into MP4
-        produced_output = os.path.exists(tmp_output) and os.path.getsize(tmp_output) > 0
-        if result.returncode != 0 or not produced_output:
-            logging.debug("Combine with codec copy failed, retrying with re-encode")
-            if os.path.exists(tmp_output):
-                os.remove(tmp_output)
-            subprocess.run(
-                [
-                    "ffmpeg", "-y",
-                    "-i", concat_input,
-                    "-safe", "0",
-                    "-c:a", "aac",
-                    "-b:a", "128k",
-                    tmp_output
-                ],
-                capture_output=not logging.ffmpeg_output,
-            )
-        os.remove(tmp_input)
-        shutil.move(tmp_output, tmp_input)
-    shutil.move(tmp_input, output_path)
-    if not os.path.exists(output_path):
+    ts_dir = os.path.join(tmp_dir, "ts_parts")
+    os.makedirs(ts_dir, exist_ok=True)
+    # Remux every segment to MPEG-TS in parallel (lossless copy)
+    padding = len(str(len(filepaths)))
+    def remux(item):
+        index, source = item
+        ts_path = os.path.join(ts_dir, f"{str(index).zfill(padding)}.ts")
+        return ts_path, _remux_to_mpegts(source, ts_path)
+    with ThreadPool(processes=COMBINE_REMUX_THREADS) as pool:
+        remuxed = pool.map(remux, list(enumerate(filepaths)))
+    ts_paths = []
+    for ts_path, ok in remuxed:
+        if not ok:
+            raise FailedCombining
+        ts_paths.append(ts_path)
+    # Concatenate the MPEG-TS parts losslessly into the output container
+    list_path = os.path.join(tmp_dir, "concat_list.txt")
+    with open(list_path, "w") as f:
+        for ts_path in ts_paths:
+            f.write(f"file '{os.path.abspath(ts_path)}'\n")
+    command = [
+        "ffmpeg", "-y",
+        "-f", "concat",
+        "-safe", "0",
+        "-i", list_path,
+        "-c", "copy",
+    ]
+    # AAC streams need the ADTS-to-ASC bitstream filter when written into MP4-family files
+    if output_extension in MP4_CONTAINERS and _ffmpeg_audio_codec(ts_paths[0]) == "aac":
+        command += ["-bsf:a", "aac_adtstoasc"]
+    command.append(output_path)
+    result = subprocess.run(command, capture_output=not logging.ffmpeg_output)
+    if not (os.path.exists(output_path) and os.path.getsize(output_path) > 0):
+        if result.stderr:
+            logging.debug(result.stderr.decode("utf8", "replace"))
         raise FailedCombining
     shutil.rmtree(tmp_dir)
 
