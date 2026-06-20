@@ -4,6 +4,8 @@ from . import metadata, output, encryption
 
 import os
 import shutil
+import time
+import requests
 from functools import partial
 from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union
 from rich.progress import Progress, BarColumn, ProgressColumn, SpinnerColumn
@@ -19,6 +21,9 @@ DOWNLOAD_PROGRESS: List[Union[str, ProgressColumn]] = [
     BarColumn(),
     "[progress.percentage]{task.percentage:>3.0f}%"
 ]
+
+# Per-file download attempts before giving up (retries transient network/TLS errors)
+DOWNLOAD_ATTEMPTS = 5
 
 
 def download(audiobook: Audiobook, options):
@@ -183,41 +188,59 @@ def download_file(args: Tuple[Audiobook, str, int, Any]) -> str:
     file = audiobook.files[index]
     filepath, filepath_tmp = create_filepath(audiobook, output_dir, index)
     logging.debug(f"Starting downloading file: {file.url}")
-    request = audiobook.session.get(file.url, headers=file.headers, stream=True)
-    content_type: Optional[str] =  request.headers.get("Content-type", None)
-
-    expected = file.expected_content_type
-    if isinstance(expected, (list, tuple, set)):
-        invalid_content_type = content_type not in expected
-    else:
-        invalid_content_type = expected and expected != content_type
-    invalid_status_code = file.expected_status_code and file.expected_status_code != request.status_code
-    if invalid_content_type or invalid_status_code:
-        # Failed-download bodies can be raw audio bytes: truncate + escape before rich print
-        from rich.markup import escape as _escape
-        raw_body = request.content[:512]
+    # Retry transient network failures (e.g. a dropped TLS connection) so one
+    # flaky segment does not crash the whole batch via the thread pool.
+    for attempt in range(DOWNLOAD_ATTEMPTS):
+        advanced = 0.0
         try:
-            body_text = raw_body.decode("utf-8")
-        except UnicodeDecodeError:
-            body_text = repr(raw_body)
-        safe_body = _escape(body_text)
-        raise DownloadError(
-            status_code=request.status_code,
-            content_type=content_type,
-            expected_status_code=file.expected_status_code,
-            expected_content_type=file.expected_content_type,
-            body = safe_body,
-            url = file.url
-        )
+            request = audiobook.session.get(file.url, headers=file.headers, stream=True)
+            content_type: Optional[str] = request.headers.get("Content-type", None)
 
-    total_filesize = int(request.headers["Content-length"])
+            expected = file.expected_content_type
+            if isinstance(expected, (list, tuple, set)):
+                invalid_content_type = content_type not in expected
+            else:
+                invalid_content_type = expected and expected != content_type
+            invalid_status_code = file.expected_status_code and file.expected_status_code != request.status_code
+            if invalid_content_type or invalid_status_code:
+                # Failed-download bodies can be raw audio bytes: truncate + escape before rich print
+                from rich.markup import escape as _escape
+                raw_body = request.content[:512]
+                try:
+                    body_text = raw_body.decode("utf-8")
+                except UnicodeDecodeError:
+                    body_text = repr(raw_body)
+                safe_body = _escape(body_text)
+                raise DownloadError(
+                    status_code=request.status_code,
+                    content_type=content_type,
+                    expected_status_code=file.expected_status_code,
+                    expected_content_type=file.expected_content_type,
+                    body = safe_body,
+                    url = file.url
+                )
 
-    # Download file to tmp file
-    with open(filepath_tmp, "wb") as f:
-        for chunk in request.iter_content(chunk_size=1024):
-            f.write(chunk)
-            download_progress = len(chunk) / total_filesize
-            update_progress(download_progress)
+            total_filesize = int(request.headers["Content-length"])
+
+            # Download file to tmp file
+            with open(filepath_tmp, "wb") as f:
+                for chunk in request.iter_content(chunk_size=1024):
+                    f.write(chunk)
+                    download_progress = len(chunk) / total_filesize
+                    update_progress(download_progress)
+                    advanced += download_progress
+            break
+        except requests.exceptions.RequestException as error:
+            # Undo this attempt's progress before retrying so the bar stays accurate
+            update_progress(-advanced)
+            if attempt + 1 >= DOWNLOAD_ATTEMPTS:
+                raise
+            delay = 2 ** attempt
+            logging.debug(
+                f"Download attempt {attempt + 1}/{DOWNLOAD_ATTEMPTS} failed for "
+                f"{file.url} ({error}); retrying in {delay}s"
+            )
+            time.sleep(delay)
     # Decrypt file if necessary
     if file.encryption_method:
         encryption.decrypt_file(filepath_tmp, file.encryption_method)
