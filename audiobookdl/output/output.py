@@ -41,6 +41,19 @@ def _ffmpeg_audio_codec(path: str) -> str:
     return result.stdout.strip()
 
 
+def _ffprobe_duration(path: str) -> float:
+    """Returns the duration of `path` in seconds (0.0 on failure)"""
+    result = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+         "-of", "default=noprint_wrappers=1:nokey=1", path],
+        capture_output=True, text=True,
+    )
+    try:
+        return float(result.stdout.strip())
+    except ValueError:
+        return 0.0
+
+
 def _remux_to_mpegts(source: str, ts_path: str) -> bool:
     """
     Remux a single audio file into an MPEG-TS container.
@@ -87,18 +100,17 @@ def combine_audiofiles(filepaths: Sequence[str], tmp_dir: str, output_path: str)
         if not ok:
             raise FailedCombining
         ts_paths.append(ts_path)
-    # Concatenate the MPEG-TS parts losslessly into the output container
-    list_path = os.path.join(tmp_dir, "concat_list.txt")
-    with open(list_path, "w") as f:
+    # Binary-concatenate the MPEG-TS parts. The ffmpeg concat *demuxer* aborts
+    # early on some segment junctions (returning success while silently dropping
+    # most of the audio); MPEG-TS is designed for splicing, so a raw byte
+    # concatenation of the remuxed parts is both robust and lossless.
+    combined_ts = os.path.join(tmp_dir, "combined.ts")
+    with open(combined_ts, "wb") as out:
         for ts_path in ts_paths:
-            f.write(f"file '{os.path.abspath(ts_path)}'\n")
-    command = [
-        "ffmpeg", "-y",
-        "-f", "concat",
-        "-safe", "0",
-        "-i", list_path,
-        "-c", "copy",
-    ]
+            with open(ts_path, "rb") as part:
+                shutil.copyfileobj(part, out)
+    # Remux the concatenated stream into the requested output container
+    command = ["ffmpeg", "-y", "-i", combined_ts, "-c", "copy"]
     # AAC streams need the ADTS-to-ASC bitstream filter when written into MP4-family files
     if output_extension in MP4_CONTAINERS and _ffmpeg_audio_codec(ts_paths[0]) == "aac":
         command += ["-bsf:a", "aac_adtstoasc"]
@@ -107,6 +119,16 @@ def combine_audiofiles(filepaths: Sequence[str], tmp_dir: str, output_path: str)
     if not (os.path.exists(output_path) and os.path.getsize(output_path) > 0):
         if result.stderr:
             logging.debug(result.stderr.decode("utf8", "replace"))
+        raise FailedCombining
+    # Guard against silent truncation: the combined file must be about as long
+    # as the concatenated source. A large shortfall means ffmpeg dropped audio.
+    expected = _ffprobe_duration(combined_ts)
+    actual = _ffprobe_duration(output_path)
+    if expected > 0 and actual < expected * 0.98:
+        logging.debug(
+            f"Combined output is shorter than expected "
+            f"({actual:.0f}s vs {expected:.0f}s); combine truncated the audio"
+        )
         raise FailedCombining
     shutil.rmtree(tmp_dir)
 
