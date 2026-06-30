@@ -96,6 +96,9 @@ svg_headphone_path = "M8.25 12.371h-.625c-1.38 0-2.5 1.121-2.5 2.505v3.12a2.503 
 class StorytelSource(Source):
     match = [
         r"https?://(?:www.)?(?:storytel|mofibo).com/(?P<language>\w+)(?:/(?P<language2>\w+))?/(?P<list_type>(?:books|series|authors|narrators|publishers|categories))/.+",
+        # The user's own bookshelf ("want to read"); dispatched in download().
+        # Allows one or two locale segments (e.g. /se/ or /se/sv/).
+        r"https?://(?:www\.)?(?:storytel|mofibo)\.com/\w+(?:/\w+)?/(?:want-to-read|bookshelf)/?$",
     ]
     names = ["Storytel", "Mofibo"]
     _authentication_methods = [
@@ -216,6 +219,11 @@ class StorytelSource(Source):
     def download(self, url: str) -> Result:
         self._relogin_check()
 
+        # Anchor to the final path segment so a catalog URL whose slug merely
+        # contains "bookshelf"/"want-to-read" is not misrouted here.
+        if re.search(r"/(?:want-to-read|bookshelf)/?$", url.split("?")[0].split("#")[0]):
+            return self.download_bookshelf_wtr()
+
         if m := re.match(self.match[0], url):
             language, language2, list_type = m.groups()
             logging.debug(f"download: {url=}, {list_type=}, {language=}, {language2=}")
@@ -254,6 +262,33 @@ class StorytelSource(Source):
 
         return Series(
             title=list_details["title"],
+            books=books,
+        )
+
+    def download_bookshelf_wtr(self) -> Series[str]:
+        """
+        Download every audiobook in the user's bookshelf marked as "want to
+        read" (Storytel state ``WILL_CONSUME``). Entries without a released
+        abook format (e.g. ebook-only) are skipped.
+        """
+        data = self.download_bookshelf()
+        books: List[Union[BookId[str], Audiobook]] = []
+        for item in data.get("items", {}).values():
+            model = item.get("model", {})
+            book_id = model.get("id")
+            if not book_id or model.get("state") != "WILL_CONSUME":
+                continue
+            abook_formats = [
+                format for format in model.get("formats", []) if format.get("type") == "abook"
+            ]
+            if (
+                len(abook_formats) > 0
+                and abook_formats[0].get("isReleased")
+                and not self._skip_download_check(book_id)
+            ):
+                books.append(BookId(book_id))
+        return Series(
+            title="Storytel - Vill läsa",
             books=books,
         )
 
@@ -326,6 +361,9 @@ class StorytelSource(Source):
             json={"items": []},
             headers={"content-type": "application/x-www-form-urlencoded"},
         )
+        if resp.status_code != 200:
+            # e.g. an expired session returns 4xx with a non-book body
+            raise UserNotAuthorized
         data: Dict[str, Any] = resp.json()
 
         bookshelf_path = os.path.join(self.database_directory_lists, f"bookshelf.json")
