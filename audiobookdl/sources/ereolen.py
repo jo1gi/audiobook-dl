@@ -109,5 +109,6 @@ class EreolenSource(Source):
     def get_files(self, order_id: str) -> List[AudiobookFile]:
         return self.get_stream_files(
             f"https://audio.api.streaming.pubhub.dk/v1/stream/hls/{order_id}/playlist.m3u8",
-            extension = "ts"
+            extension = "ts",
+            expected_content_type = "video/mp2t",
         )
