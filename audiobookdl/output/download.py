@@ -25,6 +25,16 @@ DOWNLOAD_PROGRESS: List[Union[str, ProgressColumn]] = [
 # Per-file download attempts before giving up (retries transient network/TLS errors)
 DOWNLOAD_ATTEMPTS = 5
 
+# Exceptions treated as transient and retried. Sources that use curl_cffi (e.g.
+# Chirp, to get past Cloudflare) raise curl_cffi's own error type, which is not a
+# subclass of requests' exception hierarchy, so include it when available.
+RETRYABLE_ERRORS: Tuple[type, ...] = (requests.exceptions.RequestException,)
+try:
+    from curl_cffi.requests import RequestsError as _CurlCffiError
+    RETRYABLE_ERRORS = RETRYABLE_ERRORS + (_CurlCffiError,)
+except ImportError:
+    pass
+
 
 def download(audiobook: Audiobook, options):
     """
@@ -220,17 +230,26 @@ def download_file(args: Tuple[Audiobook, str, int, Any]) -> str:
                     url = file.url
                 )
 
-            total_filesize = int(request.headers["Content-length"])
+            # Chunked responses (e.g. some CloudFront-signed URLs) can omit
+            # Content-Length; fall back to 0 and skip per-chunk progress rather
+            # than crashing with a KeyError or dividing by zero. Match the header
+            # case-insensitively since not every HTTP backend normalises casing.
+            content_length = next(
+                (v for k, v in request.headers.items() if k.lower() == "content-length"),
+                None,
+            )
+            total_filesize = int(content_length) if content_length else 0
 
             # Download file to tmp file
             with open(filepath_tmp, "wb") as f:
                 for chunk in request.iter_content(chunk_size=1024):
                     f.write(chunk)
-                    download_progress = len(chunk) / total_filesize
-                    update_progress(download_progress)
-                    advanced += download_progress
+                    if total_filesize:
+                        download_progress = len(chunk) / total_filesize
+                        update_progress(download_progress)
+                        advanced += download_progress
             break
-        except requests.exceptions.RequestException as error:
+        except RETRYABLE_ERRORS as error:
             # Undo this attempt's progress before retrying so the bar stays accurate
             update_progress(-advanced)
             if attempt + 1 >= DOWNLOAD_ATTEMPTS:

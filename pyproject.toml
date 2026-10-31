@@ -19,6 +19,7 @@ dependencies = [
     "appdirs",
     "attrs",
     "cssselect",
+    "curl_cffi",
     "importlib-resources",
     "lxml",
     "m3u8",
