@@ -36,7 +36,7 @@ def _ffmpeg_audio_codec(path: str) -> str:
             "-of", "default=noprint_wrappers=1:nokey=1",
             path,
         ],
-        capture_output=True, text=True,
+        stdin=subprocess.DEVNULL, capture_output=True, text=True,
     )
     return result.stdout.strip()
 
@@ -46,7 +46,7 @@ def _ffprobe_duration(path: str) -> float:
     result = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration",
          "-of", "default=noprint_wrappers=1:nokey=1", path],
-        capture_output=True, text=True,
+        stdin=subprocess.DEVNULL, capture_output=True, text=True,
     )
     try:
         return float(result.stdout.strip())
@@ -67,6 +67,10 @@ def _remux_to_mpegts(source: str, ts_path: str) -> bool:
     """
     result = subprocess.run(
         ["ffmpeg", "-y", "-i", source, "-c", "copy", "-f", "mpegts", ts_path],
+        # Detach stdin: ffmpeg otherwise puts the controlling terminal into
+        # no-echo mode, and the parallel remux races to restore it, leaving the
+        # terminal broken after a download (see combine_audiofiles).
+        stdin=subprocess.DEVNULL,
         capture_output=not logging.ffmpeg_output,
     )
     if os.path.exists(ts_path) and os.path.getsize(ts_path) > 0:
@@ -115,7 +119,7 @@ def combine_audiofiles(filepaths: Sequence[str], tmp_dir: str, output_path: str)
     if output_extension in MP4_CONTAINERS and _ffmpeg_audio_codec(ts_paths[0]) == "aac":
         command += ["-bsf:a", "aac_adtstoasc"]
     command.append(output_path)
-    result = subprocess.run(command, capture_output=not logging.ffmpeg_output)
+    result = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=not logging.ffmpeg_output)
     if not (os.path.exists(output_path) and os.path.getsize(output_path) > 0):
         if result.stderr:
             logging.debug(result.stderr.decode("utf8", "replace"))
@@ -168,11 +172,13 @@ def convert_output(filenames: Sequence[str], output_format: str):
             if can_copy_codec(old_ext, output_format):
                 subprocess.run(
                     ["ffmpeg", "-i", old_path, "-codec", "copy", new_path],
+                    stdin=subprocess.DEVNULL,
                     capture_output=not logging.ffmpeg_output
                 )
             else:
                 subprocess.run(
                     ["ffmpeg", "-i", old_path, new_path],
+                    stdin=subprocess.DEVNULL,
                     capture_output=not logging.ffmpeg_output
                 )
             os.remove(old_path)

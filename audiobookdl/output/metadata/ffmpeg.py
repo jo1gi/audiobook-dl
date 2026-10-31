@@ -43,6 +43,8 @@ def add_chapters_ffmpeg(filepath: str, chapters: Sequence[Chapter]):
              "-map", "0",
              "-metadata:s:a:0", "title=",
              TMP_MEDIA_FILE],
+            # Detach stdin so ffmpeg never leaves the terminal in no-echo mode
+            stdin = subprocess.DEVNULL,
             capture_output = not logging.ffmpeg_output
         )
         produced_output = (
@@ -62,6 +64,7 @@ def add_chapters_ffmpeg(filepath: str, chapters: Sequence[Chapter]):
                  "-map", "0",
                  "-metadata:s:a:0", "title=",
                  TMP_MEDIA_FILE],
+                stdin = subprocess.DEVNULL,
                 capture_output = not logging.ffmpeg_output
             )
         # ffmpeg produced no output: keep the chapterless original instead of crashing the run
