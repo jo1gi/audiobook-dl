@@ -3,6 +3,7 @@ from audiobookdl import AudiobookFile, Chapter, logging, AudiobookMetadata, Cove
 from audiobookdl.exceptions import DataNotPresent, GenericAudiobookDLException
 
 from typing import Any, List, Optional
+import os
 import pycountry
 
 try:
@@ -39,7 +40,8 @@ AUDIOBOOK_QUERY = (
     "query fetchAudiobook($id:ID!){"
     "audiobook(id:$id){"
     "displayTitle displayAuthors displayNarrators publisher language coverUrl "
-    "tracks{partNumber chapterNumber displayName durationMs mediaUrl}"
+    "tracks{partNumber chapterNumber displayName durationMs mediaUrl} "
+    "supplements{url}"
     "}}"
 )
 
@@ -76,7 +78,8 @@ class ChirpSource(Source):
             files = self.get_files(tracks),
             metadata = self.get_metadata(audiobook),
             cover = self.get_cover(audiobook),
-            chapters = self.get_chapters(tracks)
+            chapters = self.get_chapters(tracks),
+            supplements = self.get_supplements(audiobook)
         )
 
 
@@ -141,6 +144,19 @@ class ChirpSource(Source):
                 title = track["displayName"],
             ))
         return files
+
+
+    def get_supplements(self, audiobook: dict) -> List[AudiobookFile]:
+        """Bonus material (e.g. a PDF booklet) bundled with the audiobook"""
+        supplements = []
+        for supplement in audiobook.get("supplements") or []:
+            url = supplement.get("url")
+            if not url:
+                continue
+            # Derive the extension from the URL path (dropping any query string)
+            ext = os.path.splitext(url.split("?")[0])[1].lstrip(".").lower() or "pdf"
+            supplements.append(AudiobookFile(url=url, ext=ext))
+        return supplements
 
 
     def get_chapters(self, tracks) -> List[Chapter]:
