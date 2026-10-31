@@ -151,6 +151,13 @@ def can_copy_codec(input_format: str, output_format: str) -> bool:
     :param output_format: Output file filetype
     :returns: True if the codec can be copied
     """
+    # MP4-family containers share the same codecs, so converting between them
+    # (e.g. m4a -> m4b) is a lossless container change rather than a re-encode.
+    # The input extension can still carry a leading dot here, so normalise it;
+    # the legacy checks below keep their original (possibly dotted) inputs so
+    # their behaviour is unchanged.
+    if input_format.lstrip(".") in MP4_CONTAINERS and output_format.lstrip(".") in MP4_CONTAINERS:
+        return True
     # TODO Add better verification
     return output_format == "mkv" \
         or output_format == "mka" \

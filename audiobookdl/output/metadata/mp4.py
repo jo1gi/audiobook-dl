@@ -1,3 +1,4 @@
+import os
 import re
 from datetime import date
 
@@ -55,6 +56,20 @@ def add_mp4_metadata(filepath: str, metadata: AudiobookMetadata):
         else:
             audio.tags.RegisterFreeformKey(key, key.capitalize()) # type: ignore
             audio[key] = value
+    audio.save()
+    # Mark `.m4b` files as audiobooks via Apple's "Media Kind" (`stik`) atom so
+    # players enable audiobook behaviour (resume position, bookmarks, speed).
+    if os.path.splitext(filepath)[1].lower() == ".m4b":
+        mark_mp4_as_audiobook(filepath)
+
+
+# Value of the MP4 `stik` (media kind) atom that marks a file as an audiobook
+MP4_MEDIA_KIND_AUDIOBOOK = 2
+
+def mark_mp4_as_audiobook(filepath: str):
+    """Set the MP4 media-kind atom so the file is recognised as an audiobook"""
+    audio = MP4(filepath)
+    audio["stik"] = [MP4_MEDIA_KIND_AUDIOBOOK]
     audio.save()
 
 
