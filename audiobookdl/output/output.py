@@ -34,7 +34,7 @@ def _ffmpeg_audio_codec(path: str) -> str:
             "-select_streams", "a:0",
             "-show_entries", "stream=codec_name",
             "-of", "default=noprint_wrappers=1:nokey=1",
-            path,
+            f"file:{path}",
         ],
         capture_output=True, text=True,
     )
@@ -45,7 +45,7 @@ def _ffprobe_duration(path: str) -> float:
     """Returns the duration of `path` in seconds (0.0 on failure)"""
     result = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-         "-of", "default=noprint_wrappers=1:nokey=1", path],
+         "-of", "default=noprint_wrappers=1:nokey=1", f"file:{path}"],
         capture_output=True, text=True,
     )
     try:
@@ -65,8 +65,9 @@ def _remux_to_mpegts(source: str, ts_path: str) -> bool:
 
     :returns: `True` if a non-empty file was produced
     """
+    # file: prefix so ffmpeg doesn't read a ':' in the path (e.g. "24: Title/Part 1.aac") as a protocol
     result = subprocess.run(
-        ["ffmpeg", "-y", "-i", source, "-c", "copy", "-f", "mpegts", ts_path],
+        ["ffmpeg", "-y", "-i", f"file:{source}", "-c", "copy", "-f", "mpegts", f"file:{ts_path}"],
         capture_output=not logging.ffmpeg_output,
     )
     if os.path.exists(ts_path) and os.path.getsize(ts_path) > 0:
@@ -110,11 +111,11 @@ def combine_audiofiles(filepaths: Sequence[str], tmp_dir: str, output_path: str)
             with open(ts_path, "rb") as part:
                 shutil.copyfileobj(part, out)
     # Remux the concatenated stream into the requested output container
-    command = ["ffmpeg", "-y", "-i", combined_ts, "-c", "copy"]
+    command = ["ffmpeg", "-y", "-i", f"file:{combined_ts}", "-c", "copy"]
     # AAC streams need the ADTS-to-ASC bitstream filter when written into MP4-family files
     if output_extension in MP4_CONTAINERS and _ffmpeg_audio_codec(ts_paths[0]) == "aac":
         command += ["-bsf:a", "aac_adtstoasc"]
-    command.append(output_path)
+    command.append(f"file:{output_path}")
     result = subprocess.run(command, capture_output=not logging.ffmpeg_output)
     if not (os.path.exists(output_path) and os.path.getsize(output_path) > 0):
         if result.stderr:
