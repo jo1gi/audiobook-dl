@@ -150,6 +150,12 @@ def get_urls(options) -> List[str]:
     urls.extend(options.urls)
     # File
     if options.input_file:
-        with open(options.input_file, "r") as f:
-            urls.extend(f.read().split())
+        try:
+            with open(options.input_file, "r") as f:
+                urls.extend(f.read().split())
+        except OSError as error:
+            raise SystemExit(
+                f"Error: cannot read input file '{options.input_file}': "
+                f"{error.strerror or error}"
+            )
     return urls
