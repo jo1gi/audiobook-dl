@@ -3,7 +3,10 @@ from audiobookdl import logging, Chapter, AudiobookMetadata, Cover
 from audiobookdl.utils import program_in_path
 
 import os
+from io import BytesIO
 from typing import Sequence
+
+from PIL import Image
 
 def add_metadata(filepath: str, metadata: AudiobookMetadata):
     """Adds metadata to the given audio file"""
@@ -15,8 +18,26 @@ def add_metadata(filepath: str, metadata: AudiobookMetadata):
         logging.debug("Could not add any metadata")
 
 
+def _normalize_cover(cover: Cover) -> Cover:
+    """Re-encode cover art to JPEG unless it is already JPEG/PNG. Some sources
+    (e.g. Nextory) serve WebP but label it "jpg", which players can't decode."""
+    try:
+        image = Image.open(BytesIO(cover.image))
+        fmt = (image.format or "").lower()
+    except Exception:
+        return cover
+    if fmt == "jpeg":
+        return Cover(cover.image, "jpg")
+    if fmt == "png":
+        return Cover(cover.image, "png")
+    buffer = BytesIO()
+    image.convert("RGB").save(buffer, format="JPEG", quality=90)
+    return Cover(buffer.getvalue(), "jpg")
+
+
 def embed_cover(filepath: str, cover: Cover):
     """Embeds an image into the given audio file"""
+    cover = _normalize_cover(cover)
     if id3.is_id3_file(filepath):
         id3.embed_id3_cover(filepath, cover)
     elif mp4.is_mp4_file(filepath):

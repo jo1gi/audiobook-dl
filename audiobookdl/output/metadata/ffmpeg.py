@@ -17,30 +17,40 @@ def create_chapter_text(title: str, start: int, end: int) -> str:
 
 
 def create_tmp_chapter_file(filepath: str, chapters: Sequence[Chapter]) -> str:
+    length = int(MutagenFile(filepath).info.length * 1000)
+    # ffmpeg fails the whole mux on a chapter whose END precedes its START, so sort
+    # by offset and drop out-of-range/non-advancing entries; this keeps the chapter
+    # list strictly increasing regardless of the source ordering.
+    points = []
+    for chapter in chapters:
+        try:
+            start = int(chapter.start)
+        except (TypeError, ValueError):
+            continue
+        if 0 <= start <= length:
+            points.append((start, chapter.title))
+    points.sort(key=lambda p: p[0])
     result = ";FFMETADATA1\n"
-    for i in range(len(chapters)-1):
-        chapter = chapters[i]
-        result += create_chapter_text(chapter.title, chapter.start, chapters[i+1].start)
-    length = MutagenFile(filepath).info.length*1000
-    last_chapter = chapters[-1]
-    result += create_chapter_text(
-        title = last_chapter.title,
-        start = last_chapter.start,
-        end = int(length)
-    )
+    for i, (start, title) in enumerate(points):
+        end = points[i + 1][0] if i + 1 < len(points) else length
+        if end > start:
+            result += create_chapter_text(title, start, end)
     return result
 
 def add_chapters_ffmpeg(filepath: str, chapters: Sequence[Chapter]):
+    if MutagenFile(filepath) is None:
+        logging.debug(f"Skipping chapters: {filepath} is a container without chapter support (e.g. raw AAC)")
+        return
     try:
         with open(TMP_CHAPTER_FILE, "w") as f:
             f.write(create_tmp_chapter_file(filepath, chapters))
         result = subprocess.run(
             ["ffmpeg", "-y",
-             "-i", filepath,
+             "-i", f"file:{filepath}",
              "-i", TMP_CHAPTER_FILE,
              "-map_chapters", "1",
              "-c", "copy",
-             "-map", "0",
+             "-map", "0:a",
              "-metadata:s:a:0", "title=",
              TMP_MEDIA_FILE],
             capture_output = not logging.ffmpeg_output
@@ -54,12 +64,12 @@ def add_chapters_ffmpeg(filepath: str, chapters: Sequence[Chapter]):
                 os.remove(TMP_MEDIA_FILE)
             subprocess.run(
                 ["ffmpeg", "-y",
-                 "-i", filepath,
+                 "-i", f"file:{filepath}",
                  "-i", TMP_CHAPTER_FILE,
                  "-map_chapters", "1",
                  "-c:a", "aac",
                  "-b:a", "128k",
-                 "-map", "0",
+                 "-map", "0:a",
                  "-metadata:s:a:0", "title=",
                  TMP_MEDIA_FILE],
                 capture_output = not logging.ffmpeg_output

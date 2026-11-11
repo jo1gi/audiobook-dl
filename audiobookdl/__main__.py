@@ -81,6 +81,11 @@ def process_url(url: str, options, config: Config):
                 if logging.debug_mode:
                     logging.print_traceback()
                 continue
+            except Exception as e:
+                logging.log(f"Skipped [blue]{book}[/] (unexpected error: {e})")
+                if logging.debug_mode:
+                    logging.print_traceback()
+                continue
 
 
 def get_cookie_path(options, config: Optional[SourceConfig]) -> Optional[str]:
