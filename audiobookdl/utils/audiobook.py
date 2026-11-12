@@ -201,6 +201,8 @@ class Audiobook:
     chapters: List[Chapter] = Factory(list)
     cover: Optional[Cover] = None
     source_data: Any = None
+    # Supplementary / bonus files (e.g. a PDF booklet) saved alongside the audio
+    supplements: List[AudiobookFile] = Factory(list)
 
     @property
     def title(self) -> str:

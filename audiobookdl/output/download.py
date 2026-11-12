@@ -25,6 +25,16 @@ DOWNLOAD_PROGRESS: List[Union[str, ProgressColumn]] = [
 # Per-file download attempts before giving up (retries transient network/TLS errors)
 DOWNLOAD_ATTEMPTS = 5
 
+# Exceptions treated as transient and retried. Sources that use curl_cffi (e.g.
+# Chirp, to get past Cloudflare) raise curl_cffi's own error type, which is not a
+# subclass of requests' exception hierarchy, so include it when available.
+RETRYABLE_ERRORS: Tuple[type, ...] = (requests.exceptions.RequestException,)
+try:
+    from curl_cffi.requests import RequestsError as _CurlCffiError
+    RETRYABLE_ERRORS = RETRYABLE_ERRORS + (_CurlCffiError,)
+except ImportError:
+    pass
+
 
 def download(audiobook: Audiobook, options):
     """
@@ -85,6 +95,50 @@ def download_audiobook(audiobook: Audiobook, output_dir: str, options):
         add_metadata_to_file(audiobook, filepaths[0], options)
     else:
         add_metadata_to_dir(audiobook, filepaths, output_dir, options)
+    # Bonus material (e.g. a PDF booklet)
+    download_supplements(audiobook, output_dir)
+
+
+def download_supplements(audiobook: Audiobook, output_dir: str) -> None:
+    """
+    Download any supplementary/bonus files alongside the audiobook.
+
+    Placed next to the audio file (single/combined output) or inside the book's
+    directory (multi-file output). A failed bonus file is logged and skipped
+    rather than failing the whole download.
+    """
+    if not audiobook.supplements:
+        return
+    logging.book_update("Downloading bonus material")
+    # In multi-file mode `output_dir` is the book's directory; otherwise the
+    # audio lives at `output_dir.<ext>` and bonus files sit beside it.
+    inside_dir = os.path.isdir(output_dir)
+    base = os.path.join(output_dir, "bonus") if inside_dir else output_dir
+    multiple = len(audiobook.supplements) > 1
+    for index, supplement in enumerate(audiobook.supplements):
+        suffix = f" - {index + 1}" if multiple else ""
+        path = f"{base}{suffix}.{supplement.ext}"
+        download_supplement_file(audiobook.session, supplement, path)
+
+
+def download_supplement_file(session, supplement: AudiobookFile, path: str) -> None:
+    """Download a single supplementary file, retrying transient errors"""
+    for attempt in range(DOWNLOAD_ATTEMPTS):
+        try:
+            response = session.get(supplement.url, headers=supplement.headers)
+            if response.status_code != 200:
+                logging.debug(
+                    f"Skipping bonus file {supplement.url}: status {response.status_code}"
+                )
+                return
+            with open(path, "wb") as f:
+                f.write(response.content)
+            return
+        except RETRYABLE_ERRORS as error:
+            if attempt + 1 >= DOWNLOAD_ATTEMPTS:
+                logging.debug(f"Skipping bonus file {supplement.url}: {error}")
+                return
+            time.sleep(2 ** attempt)
 
 
 def add_metadata_to_file(audiobook: Audiobook, filepath: str, options):
@@ -220,17 +274,26 @@ def download_file(args: Tuple[Audiobook, str, int, Any]) -> str:
                     url = file.url
                 )
 
-            total_filesize = int(request.headers["Content-length"])
+            # Chunked responses (e.g. some CloudFront-signed URLs) can omit
+            # Content-Length; fall back to 0 and skip per-chunk progress rather
+            # than crashing with a KeyError or dividing by zero. Match the header
+            # case-insensitively since not every HTTP backend normalises casing.
+            content_length = next(
+                (v for k, v in request.headers.items() if k.lower() == "content-length"),
+                None,
+            )
+            total_filesize = int(content_length) if content_length else 0
 
             # Download file to tmp file
             with open(filepath_tmp, "wb") as f:
                 for chunk in request.iter_content(chunk_size=1024):
                     f.write(chunk)
-                    download_progress = len(chunk) / total_filesize
-                    update_progress(download_progress)
-                    advanced += download_progress
+                    if total_filesize:
+                        download_progress = len(chunk) / total_filesize
+                        update_progress(download_progress)
+                        advanced += download_progress
             break
-        except requests.exceptions.RequestException as error:
+        except RETRYABLE_ERRORS as error:
             # Undo this attempt's progress before retrying so the bar stays accurate
             update_progress(-advanced)
             if attempt + 1 >= DOWNLOAD_ATTEMPTS:

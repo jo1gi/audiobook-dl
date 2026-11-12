@@ -1,4 +1,6 @@
 /cookies.txt
+# Exported browser cookie files used for authentication (contain live sessions)
+*_cookies.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
