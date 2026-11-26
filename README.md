@@ -49,6 +49,31 @@ cd audiobook-dl
 python3 setup.py install
 ```
 
+### Docker
+The repo contains a `Dockerfile` with audiobook-dl and ffmpeg included.
+
+Build the image:
+```shell
+docker build -t audiobook-dl .
+```
+
+Run it, mounting the directory where audiobooks should be saved to
+`/downloads` (the container's working directory):
+```shell
+docker run --rm -it -v "$PWD/books:/downloads" audiobook-dl -c cookies.txt <url>
+```
+Paths given as arguments (`-c`, `--input-file`, `-o`) are resolved inside the
+container, so put cookie/input files in the mounted directory.
+
+To keep a configuration file and the source database between runs, mount a
+directory to `/config/audiobook-dl` and place `audiobook-dl.toml` there:
+```shell
+docker run --rm -it \
+    -v "$PWD/books:/downloads" \
+    -v "$HOME/.config/audiobook-dl:/config/audiobook-dl" \
+    audiobook-dl <url>
+```
+
 Some features require [ffmpeg](https://ffmpeg.org/) which can be installed
 through most package managers or from [ffmpeg.org/download.html](https://ffmpeg.org/download.html).
 
